@@ -131,12 +131,14 @@ end
             @test AxisRanges.findfirst(==(x), r) == findfirst(==(x), collect(r))
             @test AxisRanges.findfirst(isequal(x), r) == findfirst(isequal(x), collect(r))
 
+            if VERSION >= v"1.2" # <(3) doesn't exist on 1.1, but Base.Fix2 is fine
             for op in (isequal, Base.:(==), Base.:<, Base.:<=, Base.:>, Base.:>=)
 
                 @test AxisRanges.findall(op(x), r) == findall(op(x), collect(r))
                 @test AxisRanges.findall(op(x), r) isa AbstractRange
                 # T = typeof(AxisRanges.findall(op(x), r))
                 # T <: AbstractRange || @info "$op($x) $r  -> $T"
+            end
             end
 
         end
