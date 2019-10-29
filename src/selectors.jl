@@ -29,7 +29,7 @@ end
 Between(lo,hi) = Between(promote(lo,hi)...)
 
 Base.show(io::IO, s::All{T}) where {T} =
-    print(io, "All(",s.ind,") ::Selector{",T,"}")
+    print(io, "All(",s.val,") ::Selector{",T,"}")
 
 Base.show(io::IO, s::Near{T}) where {T} =
     print(io, "Near(",s.val,") ::Selector{",T,"}")
@@ -48,7 +48,7 @@ findindex(sel::Between, range::AbstractArray) = findall(x -> sel.lo <= x <= sel.
 
 This exists to let you mix in square-bracket indexing,
 like `A(:b, Near(3.14), Index[4:5], "f")`.
-You may also write `Index[end]`.
+You may also write `Index[end]`, although not yet `Index[end-2]`.
 """
 struct Index{T} <: Selector{T}
     ind::T
@@ -67,5 +67,3 @@ Base.lastindex(::Type{Index}) = LastIndex()
 Index(::LastIndex) = LastIndex()
 
 findindex(sel::LastIndex, range::AbstractArray) = lastindex(range)
-
-# Base.checkindex(::Type{Bool}, range::AbstractUnitRange, ::LastIndex) = true
