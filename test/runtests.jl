@@ -47,6 +47,7 @@ end
     for N in [N1, N2, N3]
         @test ranges(N) == (['a', 'b', 'c'], 10:10:40)
         @test names(N) == (:obs, :iter)
+        @test propertynames(N) == (:obs, :iter)
 
         @test N(obs='a', iter=40) == N[obs=1, iter=4]
         @test N(obs='a') == N('a') == N[1,:]
