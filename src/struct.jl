@@ -19,12 +19,17 @@ Base.parent(x::RangeArray) = x.data
 
 ranges(x::RangeArray) = Tuple(x.ranges)
 ranges(x::RangeArray{T,N}, d) where {T,N} = d<=N ? x.ranges[d] : Base.OneTo(1)
-ranges(x::RangeArray{T,1}, d) where {T,N} = d==1 ? x.ranges[] : Base.OneTo(1)
+ranges(x::RangeArray{T,1}, d) where {T} = d==1 ? x.ranges[] : Base.OneTo(1)
 
 Base.IndexStyle(A::RangeArray) = IndexCartesian()
 
 for (bget, rget) in [(:getindex, :range_getindex), (:view, :range_view)]
     @eval begin
+
+        @inline function Base.$bget(A::RangeArray, I::Integer...)
+            @boundscheck checkbounds(A.data, I...)
+            @inbounds getindex(A.data, I...)
+        end
 
         @inline function Base.$bget(A::RangeArray, I...)
             @boundscheck checkbounds(A.data, I...)
@@ -100,7 +105,7 @@ and `findindex(array, range) = intersect(array, range)`.
 It also understands functions `findindex(<(4), range) = findall(x -> x<4, range)`,
 and selectors like `All(key)` and `Between(lo,hi)`.
 """
-function findindex(a, r::AbstractArray)
+@inline function findindex(a, r::AbstractArray)
     i = findfirst(isequal(a), r)
     i === nothing && error("could not find key $a in range $r")
     i

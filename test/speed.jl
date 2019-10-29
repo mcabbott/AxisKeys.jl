@@ -6,11 +6,11 @@ using AxisRanges, BenchmarkTools # Julia 1.2 + macbook escape
 mat = wrapdims(rand(3,4), 11:13, 21:24)
 bothmat = wrapdims(mat.data, x=11:13, y=21:24)
 
-@btime $mat[3, 4]    # 6.702 ns
-@btime $mat(13, 24)  # 8.095 ns
+@btime $mat[3, 4]    # 4.199 ns
+@btime $mat(13, 24)  # 5.974 ns
 
 @btime $bothmat[x=3, y=4]   # 302.390 ns (6 allocations: 144 bytes)
-@btime $bothmat(x=13, y=24) # 79.345 ns (2 allocations: 64 bytes)
+@btime $bothmat(x=13, y=24) # 70.117 ns (2 allocations: 64 bytes)
 
 ind_collect(A) = [A[ijk...] for ijk in Iterators.ProductIterator(axes(A))]
 key_collect(A) = [A(vals...) for vals in Iterators.ProductIterator(ranges(A))]
@@ -18,8 +18,8 @@ key_collect(A) = [A(vals...) for vals in Iterators.ProductIterator(ranges(A))]
 bigmat = wrapdims(rand(100,100), 1:100, 1:100);
 
 @btime ind_collect($(bigmat.data)); # 10.905 μs (4 allocations: 78.25 KiB)
-@btime ind_collect($bigmat);        # 57.268 μs (4 allocations: 78.25 KiB)
-@btime key_collect($bigmat);        # 95.520 μs (4 allocations: 78.27 KiB)
+@btime ind_collect($bigmat);        # 21.029 μs (4 allocations: 78.25 KiB)
+@btime key_collect($bigmat);        # 36.470 μs (4 allocations: 78.27 KiB)
 
 #===== other packages =====#
 
