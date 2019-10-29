@@ -53,14 +53,14 @@ end
 # Any NamedDimsArray + RangeArray combination is callable:
 
 Base.@propagate_inbounds (A::NamedDimsArray{L,T,N,<:RangeArray})(args...) where {L,T,N} =
-    get_from_args(A, args...)
+    getkey(A, args...)
 
 Base.@propagate_inbounds (A::RangeArray{T,N,<:NamedDimsArray})(;kw...) where {T,N} =
-    get_from_kw(A, kw)
+    getkey(A; kw...)
 Base.@propagate_inbounds (A::NamedDimsArray{L,T,N,<:RangeArray})(;kw...) where {L,T,N} =
-    get_from_kw(A, kw)
+    getkey(A; kw...)
 
-Base.@propagate_inbounds function get_from_kw(A, kw)
+Base.@propagate_inbounds function getkey(A; kw...)
     list = names(A)
     issubset(kw.itr, list) || error("some keywords not in list of names!")
     args = map(s -> Base.sym_in(s, kw.itr) ? getfield(kw.data, s) : Colon(), list)

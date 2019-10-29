@@ -10,6 +10,9 @@ using Test, AxisRanges, OffsetArrays
     @test R('b') == R[2,:]
     @test ranges(R(20)) == (['a', 'b', 'c'],)
 
+    @test AxisRanges.setkey!(R, 123, 'a', 10) == 123
+    @test R[1,1] == 123
+
     @test_throws Exception R(:nope) # ideally ArgumentError
     @test_throws Exception R('z')   # ideally BoundsError
     @test_throws Exception R(99)
@@ -124,6 +127,7 @@ end
 
     @test AxisRanges.map(+, Ref(2), (3,))[] == 5
     @test AxisRanges.map(+, Ref(2), (3,)) isa Ref
+    @test AxisRanges.map(+, (2,), Ref(3)) isa Ref
 
     for r in (Base.OneTo(5), 2:5)
         for x in -2:7

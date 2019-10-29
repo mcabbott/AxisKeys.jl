@@ -9,6 +9,7 @@ filter(f, t::Base.Any16) = Tuple(filter(f, collect(t)))
 map(args...) = Base.map(args...)
 map(f, r::Base.RefValue) = Ref(f(r[]))
 map(f, r::Base.RefValue, t::Tuple) = Ref(f(r[], first(t)))
+map(f, t::Tuple, r::Base.RefValue) = Ref(f(first(t), r[]))
 
 getindex(args...) = Base.getindex(args...)
 getindex(r::Base.RefValue, i::Int) = i==1 ? r[] : error("nope")

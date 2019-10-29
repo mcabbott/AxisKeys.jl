@@ -49,7 +49,7 @@ end
 
 """
     (A::RangeArray)("a", 2.0, :γ) == A[1, 2, 3]
-    A(:γ) == view(A, :,:,3)
+    A(:γ) == A[:, :, 3]
 
 `RangeArray`s are callable, and this behaves much like indexing,
 except using the contents of the ranges, not the integer indices.
@@ -57,36 +57,34 @@ except using the contents of the ranges, not the integer indices.
 When all `ranges(A)` have distinct `eltype`s,
 then a single index may be used to indicate a slice.
 """
-Base.@propagate_inbounds (A::RangeArray)(args...) = get_from_args(A, args...)
+Base.@propagate_inbounds (A::RangeArray)(args...) = getkey(A, args...)
 
-Base.@propagate_inbounds function get_from_args(A, args...)
-    ranges = AxisRanges.ranges(A)
-
+Base.@propagate_inbounds function getkey(A, args...)
     if length(args) == ndims(A)
-        inds = map((v,r) -> findindex(v,r), args, ranges)
-        # any(inds .=== nothing) && error("no matching entries found!") # very slow!
-        # @boundscheck checkbounds(A, inds...) # TODO add methods to checkbounds for nothing?
-        # return @inbounds getindex(A, inds...)
+        inds = map((v,r) -> findindex(v,r), args, ranges(A))
         return getindex(A, inds...)
 
-
-    elseif length(args)==1 && allunique_types(map(eltype, ranges)...)
-        d = findfirst(T -> args[1] isa T, eltype.(ranges))
-        i = findindex(first(args), ranges[d])
+    elseif length(args)==1 && allunique_types(map(eltype, ranges(A))...)
+        d = findfirst(T -> args[1] isa T, map(eltype, ranges(A)))
+        i = findindex(first(args), ranges(A,d))
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
-        # @boundscheck checkbounds(A, inds...)
-        # return @inbounds getindex(A, inds...)
         return getindex(A, inds...)
 
     end
 
     if length(args)==1
-        error("can only use one entry with all distinct types")
+        error("can only use one key when all ranges have distinct eltypes")
     elseif length(args) != ndims(A)
-        error("wrong number of ranges")
+        error("wrong number of keys")
     else
         error("can't understand what to do with $args")
     end
+end
+
+Base.@propagate_inbounds function setkey!(A, val, args...)
+    length(args) == ndims(A) || error("wrong number of keys")
+    inds = map((v,r) -> findindex(v,r), args, ranges(A))
+    setindex!(A, val, inds...)
 end
 
 @generated allunique_types(x, y...) = (x in y) ? false : :(allunique_types($(y...)))
@@ -102,7 +100,11 @@ and `findindex(array, range) = intersect(array, range)`.
 It also understands functions `findindex(<(4), range) = findall(x -> x<4, range)`,
 and selectors like `All(key)` and `Between(lo,hi)`.
 """
-findindex(a, r::AbstractArray) = findfirst(isequal(a), r)
+function findindex(a, r::AbstractArray)
+    i = findfirst(isequal(a), r)
+    i === nothing && error("could not find key $a in range $r")
+    i
+end
 
 findindex(a::Colon, r::AbstractArray) = Colon()
 
