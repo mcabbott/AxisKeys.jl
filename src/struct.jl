@@ -5,6 +5,8 @@ mutable struct RangeArray{T,N,AT,RT} <: AbstractArray{T,N}
     ranges::RT
 end
 
+RangeVector{T,AT,RT} = RangeArray{T,1,AT,RT}
+
 function RangeArray(data::AbstractArray{T,N}, ranges::Union{Tuple,Base.RefValue} = axes(data)) where {T,N}
     length(ranges) == N || error("wrong number of ranges")
     all(r -> r isa AbstractVector, ranges) || error("ranges must be AbstractVectors")
@@ -131,8 +133,6 @@ findindex(a::AbstractArray, r::AbstractArray) = intersect(a, r)
 
 findindex(f::Function, r::AbstractArray) = findall(f, r)
 
-using NamedDims
-
 """
     wrapdims(A, :i, :j)
     wrapdims(A, 1:10, ['a', 'b', 'c'])
@@ -143,21 +143,8 @@ or a nested pair of both. Performs some sanity checks.
 
 When both are present, it makes a `RangeArray{...,NamedDimsArray{...}}`... for now?
 """
-wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
-    NamedDimsArray(A, (n, names...))
 wrapdims(A::AbstractArray, r::Union{AbstractVector,Nothing}, ranges::Union{AbstractVector,Nothing}...) =
     RangeArray(A, check_ranges(A, (r, ranges...)))
-wrapdims(A::AbstractArray; kw...) =
-    # if rand() < 0.5
-    #     NamedDimsArray(RangeArray(A, check_ranges(A, values(kw.data))), check_names(A,kw.itr))
-    # else
-        RangeArray(NamedDimsArray(A, check_names(A, kw.itr)), check_ranges(A, values(kw.data)))
-    # end
-
-function check_names(A, names)
-    ndims(A) == length(names) || error("wrong number of names")
-    names
-end
 
 using OffsetArrays
 

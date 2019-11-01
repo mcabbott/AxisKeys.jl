@@ -1,5 +1,19 @@
 using NamedDims
 
+wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
+    NamedDimsArray(A, (n, names...))
+wrapdims(A::AbstractArray; kw...) =
+    # if rand() < 0.5
+    #     NamedDimsArray(RangeArray(A, check_ranges(A, values(kw.data))), check_names(A,kw.itr))
+    # else
+        RangeArray(NamedDimsArray(A, check_names(A, kw.itr)), check_ranges(A, values(kw.data)))
+    # end
+
+function check_names(A, names)
+    ndims(A) == length(names) || error("wrong number of names")
+    names
+end
+
 Base.names(A::RangeArray{T,N,<:NamedDimsArray{L}}) where {T,N,L} = L
 Base.names(A::RangeArray{T,N,<:NamedDimsArray{L}}, d) where {T,N,L} = d <= N ? L[d] : :_
 Base.names(A::NamedDimsArray{L}) where {L} = L # 🏴‍☠️
@@ -59,7 +73,6 @@ namedaxes(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
 @inline @propagate_inbounds function Base.getindex(A::RangeArray; kw...)
     hasnames(A) || error("must have names!")
     inds = NamedDims.order_named_inds(names(A); kw...)
-    # A[inds...]
     getindex(A, inds...)
 end
 
