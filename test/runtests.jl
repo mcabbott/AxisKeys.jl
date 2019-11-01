@@ -1,4 +1,4 @@
-using Test, AxisRanges, NamedDims, OffsetArrays
+using Test, AxisRanges, NamedDims, OffsetArrays, Tables
 
 @testset "basics" begin
     R = RangeArray(rand(1:99, 3,4), (['a', 'b', 'c'], 10:10:40))
@@ -152,6 +152,16 @@ end
     o = OffsetArray(rand(1:99, 5), -2:2)
     w = wrapdims(o, i='a':'e')
     @test w[i=-2] == w('a')
+end
+
+@testset "tables" begin
+    R = wrapdims(rand(2,3), 11:12, 21:23)
+    N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
+
+    @test keys(first(Tables.rows(R))) == (:dim_1, :dim_2, :value)
+    @test keys(first(Tables.rows(N))) == (:a, :b, :value)
+
+    @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
 end
 
 @testset "non-piracy" begin

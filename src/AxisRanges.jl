@@ -12,6 +12,8 @@ include("selectors.jl")
 
 export All, Near, Between, Index
 
+include("tables.jl")
+
 include("functions.jl")
 
 include("push.jl")
