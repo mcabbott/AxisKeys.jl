@@ -154,7 +154,9 @@ end
 
 @testset "non-piracy" begin
     @test AxisRanges.filter(iseven, (1,2,3,4)) === (2,4)
-    @test 0 == @allocated AxisRanges.filter(iseven, (1,2,3,4))
+    if VERSION >= v"1.2" # fails on 1.0
+        @test 0 == @allocated AxisRanges.filter(iseven, (1,2,3,4))
+    end
 
     @test AxisRanges.map(sqrt, Ref(4))[] == 2.0
     @test AxisRanges.map(sqrt, Ref(4)) isa Ref
