@@ -13,6 +13,12 @@ map(f, t::Tuple, r::Base.RefValue) = Ref(f(first(t), r[]))
 
 filter(f, r::Base.RefValue) = f(r[]) ? Tuple(r) : ()
 
+# https://github.com/JuliaLang/julia/pull/29679 -> Compat.jl
+if VERSION < v"1.1.0-DEV.472"
+    isnothing(::Any) = false
+    isnothing(::Nothing) = true
+end
+
 #===== Speeding up with same results =====#
 
 # https://github.com/JuliaLang/julia/pull/33674
