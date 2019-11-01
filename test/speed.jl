@@ -5,21 +5,27 @@ using AxisRanges, BenchmarkTools # Julia 1.2 + macbook escape
 
 mat = wrapdims(rand(3,4), 11:13, 21:24)
 bothmat = wrapdims(mat.data, x=11:13, y=21:24)
+bothmat2 = wrapdims(mat.data, x=collect(11:13), y=collect(21:24))
 
 @btime $mat[3, 4]    # 4.199 ns
-@btime $mat(13, 24)  # 5.974 ns
+@btime $mat(13, 24)  # 5.870 ns
 
-@btime $bothmat[x=3, y=4]   # 302.390 ns (6 allocations: 144 bytes)
-@btime $bothmat(x=13, y=24) # 70.117 ns (2 allocations: 64 bytes)
+@btime $bothmat[3,4]        # 4.202 ns
+@btime $bothmat[x=3, y=4]   # 41.050 ns (2 allocations: 64 bytes)
+@btime $bothmat(13, 24)     # 5.874 ns
+@btime $bothmat(x=13, y=24) # 43.302 ns (2 allocations: 64 bytes)
+@btime $bothmat2(13, 24)    # 18.949 ns
 
-ind_collect(A) = [A[ijk...] for ijk in Iterators.ProductIterator(axes(A))]
-key_collect(A) = [A(vals...) for vals in Iterators.ProductIterator(ranges(A))]
+ind_collect(A) = [@inbounds(A[ijk...]) for ijk in Iterators.ProductIterator(axes(A))]
+key_collect(A) = [@inbounds(A(vals...)) for vals in Iterators.ProductIterator(ranges(A))]
 
 bigmat = wrapdims(rand(100,100), 1:100, 1:100);
+bigmat2 = wrapdims(rand(100,100), collect(1:100), collect(1:100));
 
-@btime ind_collect($(bigmat.data)); # 10.905 μs (4 allocations: 78.25 KiB)
-@btime ind_collect($bigmat);        # 21.029 μs (4 allocations: 78.25 KiB)
-@btime key_collect($bigmat);        # 36.470 μs (4 allocations: 78.27 KiB)
+@btime ind_collect($(bigmat.data)); #  8.811 μs (4 allocations: 78.25 KiB)
+@btime ind_collect($bigmat);        # 11.525 μs (4 allocations: 78.25 KiB)
+@btime key_collect($bigmat);        # 25.933 μs (4 allocations: 78.27 KiB)
+@btime key_collect($bigmat2);      # 697.077 μs (5 allocations: 78.27 KiB)
 
 #===== other packages =====#
 
@@ -29,24 +35,34 @@ of1 = OffsetArray(rand(3,4), 11:13, 21:24)
 
 @btime $of1[13,24] # 3.652 ns
 
+bigoff = OffsetArray(bigmat.data, 1:100, 1:100);
+@btime ind_collect($bigoff);        # 15.372 μs (5 allocations: 78.30 KiB)
+
 using AxisArrays
 
 ax1 = AxisArray(rand(3,4), 11:13, 21:24)
 ax2 = AxisArray(rand(3,4), :x, :y)
 
 @btime $ax1[3,4] # 1.421 ns
+@btime $ax2[3,4] # 1.421 ns
 @btime $ax2[Axis{:x}(3), Axis{:y}(4)] # 1.696 ns
 
 @btime $ax1[atvalue(13), atvalue(24)] # 21.348 ns
+
+bigax = AxisArray(bigmat.data, 1:100, 1:100);
+bigax2 = AxisArray(bigmat.data, collect(1:100), collect(1:100));
+ax_collect(A) = [@inbounds(A[atvalue(vals[1]), atvalue(vals[2])]) for vals in Iterators.ProductIterator(AxisArrays.axes(A))]
+@btime ind_collect($bigax);        # 9.946 μs (4 allocations: 78.25 KiB)
+@btime ax_collect($bigax);         # 212.160 μs (6 allocations: 78.34 KiB)
+@btime ax_collect($bigax2);        # 511.157 μs (5 allocations: 78.27 KiB)
 
 using NamedDims
 
 na1 = NamedDimsArray(rand(3,4), (:x, :y))
 
-@btime $na1[3,4] # 17.286 ns
+@btime $na1[3,4]       #   1.421 ns
 @btime $na1[x=3, y=4]  # 222.721 ns (6 allocations: 192 bytes)
-@btime (m -> m[x=3, y=4])($na1)  # 221.138 ns (6 allocations: 192 bytes)
-@btime (m -> @inbounds getindex(m; x=3, y=4))($na1)  # 222.652 ns (6 allocations: 192 bytes)
+                     # -> 40.467 ns (2 allocations: 64 bytes) with PR#76
 
 using DimensionalData
 using DimensionalData: X, Y, @dim, Forward
@@ -58,6 +74,7 @@ dd3 = DimensionalArray(rand(3,4), (X(11:13), Y(21:24)))
 
 @btime $dd1[3,4] # 1.421 ns
 # @btime $dd1[At(13), At(24)] # StackOverflowError?
+# dd1[Dim{:x}(1), Dim{:y}(2)] # StackOverflowError?
 
 @btime $dd2[At(13), At(24)] # 23.394 ns
 @btime $dd2[dd_x <| At(13), dd_y <| At(24)] # 23.172 ns
@@ -123,3 +140,5 @@ r2 = accelerate(r1, SortIndex);
 r0 = 1:1000
 @btime A.findall(<(99), $r0); # 0.029 ns (0 allocations: 0 bytes)
 
+bigmat3 = wrapdims(rand(100,100), accelerate(collect(1:100),SortIndex), accelerate(collect(1:100),SortIndex));
+@btime key_collect($bigmat3);      # 765.999 μs (5 allocations: 78.27 KiB) -- slower, findfirst.

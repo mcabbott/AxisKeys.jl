@@ -1,3 +1,4 @@
+using Base: @propagate_inbounds, OneTo
 
 mutable struct RangeArray{T,N,AT,RT} <: AbstractArray{T,N}
     data::AT
@@ -17,9 +18,9 @@ Base.axes(x::RangeArray) = axes(x.data)
 
 Base.parent(x::RangeArray) = x.data
 
-ranges(x::RangeArray) = Tuple(x.ranges)
-ranges(x::RangeArray{T,N}, d) where {T,N} = d<=N ? x.ranges[d] : Base.OneTo(1)
-ranges(x::RangeArray{T,1}, d) where {T} = d==1 ? x.ranges[] : Base.OneTo(1)
+ranges(x::RangeArray) = _Tuple(x.ranges)
+ranges(x::RangeArray{T,N}, d) where {T,N} = d<=N ? x.ranges[d] : OneTo(1)
+ranges(x::RangeArray{T,1}, d) where {T} = d==1 ? x.ranges[] : OneTo(1)
 
 Base.IndexStyle(A::RangeArray) = IndexCartesian()
 
@@ -27,26 +28,34 @@ for (bget, rget) in [(:getindex, :range_getindex), (:view, :range_view)]
     @eval begin
 
         @inline function Base.$bget(A::RangeArray, I::Integer...)
-            @boundscheck checkbounds(A.data, I...)
-            @inbounds getindex(A.data, I...)
+            # @boundscheck println("boundscheck getindex/view integers $I")
+            @boundscheck checkbounds(parent(A), I...)
+            @inbounds Base.$bget(parent(A), I...)
         end
 
-        @inline function Base.$bget(A::RangeArray, I...)
+        @inline @propagate_inbounds function Base.$bget(A::RangeArray, I...)
+            # @boundscheck println("boundscheck getindex/view general $I")
             @boundscheck checkbounds(A.data, I...)
-            data = @inbounds getindex(A.data, I...)
+            data = @inbounds Base.$bget(parent(A), I...)
 
             @boundscheck map(checkbounds, A.ranges, I)
-            ranges = @inbounds $rget(A.ranges, I)
+            ranges = $rget(A.ranges, I)
 
             ranges isa Tuple{} ? data : RangeArray(data, ranges)
         end
 
-        $rget(ranges, inds) = filter(r -> r isa AbstractArray, map($bget, ranges, inds))
+        @inline function $rget(ranges, inds)
+            got = map(ranges, inds) do r,i
+                i isa Integer ? nothing : @inbounds Base.$bget(r,i)
+            end
+            filter(r -> r isa AbstractArray, got)
+        end
 
     end
 end
 
-@inline function Base.setindex!(A::RangeArray, val, I...)
+@inline @propagate_inbounds function Base.setindex!(A::RangeArray, val, I...)
+    # @boundscheck println("boundscheck setindex! $I")
     @boundscheck checkbounds(A, I...)
     @inbounds setindex!(A.data, val, I...)
     val
@@ -62,18 +71,22 @@ except using the contents of the ranges, not the integer indices.
 When all `ranges(A)` have distinct `eltype`s,
 then a single index may be used to indicate a slice.
 """
-Base.@propagate_inbounds (A::RangeArray)(args...) = getkey(A, args...)
+@inline @propagate_inbounds (A::RangeArray)(args...) = getkey(A, args...)
 
-Base.@propagate_inbounds function getkey(A, args...)
+@inline function getkey(A, args...)
     if length(args) == ndims(A)
-        inds = map((v,r) -> findindex(v,r), args, ranges(A))
-        return getindex(A, inds...)
+        inds = map(findindex, args, ranges(A))
+        # @boundscheck println("boundscheck getkey $args -> $inds")
+        @boundscheck checkbounds(A, inds...)
+        return @inbounds getindex(A, inds...)
 
     elseif length(args)==1 && allunique_types(map(eltype, ranges(A))...)
         d = findfirst(T -> args[1] isa T, map(eltype, ranges(A)))
         i = findindex(first(args), ranges(A,d))
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
-        return getindex(A, inds...)
+        # @boundscheck println("boundscheck getkey $args -> $inds")
+        @boundscheck checkbounds(A, inds...)
+        return @inbounds getindex(A, inds...)
 
     end
 
@@ -95,6 +108,7 @@ end
 @generated allunique_types(x, y...) = (x in y) ? false : :(allunique_types($(y...)))
 allunique_types(x::DataType) = true
 
+# https://docs.julialang.org/en/v1/base/arrays/#Base.to_indices
 """
     findindex(key, range)
 
@@ -116,6 +130,8 @@ findindex(a::Colon, r::AbstractArray) = Colon()
 findindex(a::AbstractArray, r::AbstractArray) = intersect(a, r)
 
 findindex(f::Function, r::AbstractArray) = findall(f, r)
+
+using NamedDims
 
 """
     wrapdims(A, :i, :j)

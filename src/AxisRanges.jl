@@ -16,7 +16,7 @@ include("functions.jl")
 
 include("push.jl")
 
-# include("broadcast.jl")
+include("broadcast.jl")
 
 include("show.jl")
 

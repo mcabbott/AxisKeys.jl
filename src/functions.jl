@@ -44,6 +44,32 @@ function Base.permutedims(A::RangeArray, perm)
     RangeArray(data, new_ranges)#, copy(A.meta))
 end
 
+function Base.vcat(A::RangeArray, Bs::RangeArray...)
+    data = vcat(parent(A), map(parent, Bs)...)
+    new_range_1 = range_vcat(ranges(A,1), ranges.(Bs,1)...)
+    if ndims(A) == 1
+        new_ranges = (new_range_1,)
+    else
+        new_ranges = (new_range_1, who_wins(ranges(A,2), ranges.(Bs,2)...))
+    end
+    RangeArray(data, new_ranges)
+end
+
+function Base.hcat(A::RangeArray, Bs::RangeArray...)
+    data = hcat(parent(A), map(parent, Bs)...)
+    new_range_1 = who_wins(ranges(A,1), ranges.(Bs,1)...)
+    if ndims(A) == 1
+        new_ranges = (new_range_1, axes(data,2))
+    else
+        new_ranges = (new_range_1, range_vcat(ranges(A,2), ranges.(Bs,2)...))
+    end
+    RangeArray(data, new_ranges)
+end
+
+range_vcat(a::AbstractVector, b::AbstractVector) = vcat(a,b)
+range_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
+range_vcat(a,b,cs...) = range_vcat(range_vcat(a,b),cs...)
+
 using LinearAlgebra
 
 for (mod, fun, lazy) in [(Base, :permutedims, false),

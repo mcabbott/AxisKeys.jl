@@ -11,18 +11,20 @@ map(f, r::Base.RefValue) = Ref(f(r[]))
 map(f, r::Base.RefValue, t::Tuple) = Ref(f(r[], first(t)))
 map(f, t::Tuple, r::Base.RefValue) = Ref(f(first(t), r[]))
 
-getindex(args...) = Base.getindex(args...)
-getindex(r::Base.RefValue, i::Int) = i==1 ? r[] : error("nope")
-
 filter(f, r::Base.RefValue) = f(r[]) ? Tuple(r) : ()
 
 #===== Speeding up with same results =====#
 
 # https://github.com/JuliaLang/julia/pull/33674
-# Tuple(args...) = Base.Tuple(args...) # infinite loops?
-# Tuple(r::Base.RefValue) = tuple(r[])
-Base.Tuple(r::Base.RefValue) = tuple(r[])
-
+# Tuple(arg) = Base.Tuple(arg)
+# Tuple(r::Base.RefValue) = tuple(getindex(r))
+# Tuple(t::Tuple) = t # fix an ambiguity
+# That causes a stackoverflow from check_ranges's Tuple(Array{AbstractArray...})
+# which I can't sort out! Out solution is actual piracy:
+# Base.Tuple(r::Base.RefValue) = tuple(r[])
+# The other option is just to call it something else in ranges(A)
+_Tuple(t::Tuple) = t
+_Tuple(r::Base.RefValue) = tuple(getindex(r))
 
 findfirst(args...) = Base.findfirst(args...)
 findall(args...) = Base.findall(args...)

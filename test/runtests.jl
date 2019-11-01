@@ -1,4 +1,4 @@
-using Test, AxisRanges, OffsetArrays
+using Test, AxisRanges, NamedDims, OffsetArrays
 
 @testset "basics" begin
     R = RangeArray(rand(1:99, 3,4), (['a', 'b', 'c'], 10:10:40))
@@ -39,6 +39,20 @@ end
 end
 
 @testset "names" begin
+    # constructor
+    @test names(wrapdims(rand(3), :a)) == (:a,)
+    @test names(wrapdims(rand(3), b=1:3), 1) == :b
+    @test ranges(wrapdims(rand(3), b=1:3)) == (1:3,)
+
+    @test namedranges(wrapdims(rand(3), b=1:3)) === (b = 1:3,)
+    @test namedaxes(wrapdims(rand(3), b=1:3)) === (b = Base.OneTo(3),)
+
+    # internal functions of NamedDims
+    @test NamedDims.names(rand(2,2)) === (:_, :_)
+    @test NamedDims.order_named_inds((:a, :b, :c); a=1, c=2:3) === (1, Colon(), 2:3)
+    @test_skip 0 == @allocated NamedDims.order_named_inds((:a, :b, :c); a=1, c=2:3)
+
+    # indexing etc, of commutative wrappers
     data = rand(1:99, 3,4)
     N1 = wrapdims(data, obs = ['a', 'b', 'c'], iter = 10:10:40)
     N2 = NamedDimsArray(RangeArray(data, ranges(N1)), names(N1))
@@ -47,7 +61,8 @@ end
     for N in [N1, N2, N3]
         @test ranges(N) == (['a', 'b', 'c'], 10:10:40)
         @test names(N) == (:obs, :iter)
-        @test propertynames(N) == (:obs, :iter)
+        @test_skip propertynames(N) == (:obs, :iter)
+        @test_skip N.obs == ['a', 'b', 'c']
 
         @test N(obs='a', iter=40) == N[obs=1, iter=4]
         @test N(obs='a') == N('a') == N[1,:]
@@ -63,7 +78,7 @@ end
 @testset "functions" begin
     M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
 
-    # Reductions
+    # reductions
     M1 = sum(M, dims=1)
     @test ranges(M1, 1) === Base.OneTo(1)
 
@@ -94,10 +109,27 @@ end
     @test ranges(genM) == ('a':'c', 2:5)
     @test_broken names(genM) == (:r, :c)
 
+    # concatenation
+    @test ranges(hcat(M,M)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5])
+    @test ranges(vcat(M,M)) == (['a', 'b', 'c', 'a', 'b', 'c'], 2:5)
+    V = wrapdims(rand(1:99, 3), r=['a', 'b', 'c'])
+    @test ranges(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1])
+    @test ranges(hcat(V,V),2) === Base.OneTo(2)
+    @test_broken hcat(M, ones(3)) == hcat(M.data, ones(3))
+
     # copy, similar, etc
     @test ranges(copy(M)) == ('a':'c', 2:5)
     @test zero(M)('a',2) == 0
     @test eltype(similar(M, Float64)) == Float64
+end
+
+@testset "broadcasting" begin
+
+    using AxisRanges: who_wins
+    @test who_wins(1:2, [1,2]) === 1:2
+    @test who_wins(1:2, 1.0:2.0) === 1:2
+    @test who_wins(Base.OneTo(2), [3,4]) == [3,4]
+
 end
 
 @testset "mutation" begin
@@ -111,7 +143,7 @@ end
     @test ranges(push!(V2, 0)) === (Base.OneTo(4),)
     @test ranges(append!(V2, [7,7])) === (Base.OneTo(6),)
 
-    # @test_broken append!(V2, V)
+    @test ranges(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40]
 end
 
 @testset "offset" begin
@@ -122,6 +154,7 @@ end
 
 @testset "non-piracy" begin
     @test AxisRanges.filter(iseven, (1,2,3,4)) === (2,4)
+    @test 0 == @allocated AxisRanges.filter(iseven, (1,2,3,4))
 
     @test AxisRanges.map(sqrt, Ref(4))[] == 2.0
     @test AxisRanges.map(sqrt, Ref(4)) isa Ref
@@ -129,6 +162,11 @@ end
     @test AxisRanges.map(+, Ref(2), (3,))[] == 5
     @test AxisRanges.map(+, Ref(2), (3,)) isa Ref
     @test AxisRanges.map(+, (2,), Ref(3)) isa Ref
+    @test 0 == @allocated AxisRanges.map(+, (2,), Ref(3))
+
+    @test AxisRanges._Tuple((1,2)) === (1,2)
+    @test AxisRanges._Tuple(Ref(3)) === (3,)
+    @test 0 == @allocated AxisRanges._Tuple(Ref(3))
 
     for r in (Base.OneTo(5), 2:5)
         for x in -2:7

@@ -37,7 +37,6 @@ C("dog", Index[3])      # mix of range and integer indexing
 While no special types are provided for these ranges,
 you could use for instance the arrays from [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
 whose elements are hashed for fast lookup. 
-
 When a dimension’s range is a Julia range, then there are some fast overloads
 for things like `findall(<=(42), 10:10:100)`. For vectors, `push!(A, 0.72)` should also
 figure out how to extend the range with more steps.
@@ -46,9 +45,9 @@ figure out how to extend the range with more steps.
 The larger goal is roughly to divide up the functionality of [AxisArrays.jl](https://github.com/JuliaArrays/AxisArrays.jl)
 among smaller packages.
 -->
-Broadcasting does not work yet, sadly.
+Broadcasting does not work yet, sadly. But surely can be borrowed from [Tokazama](https://github.com/Tokazama/AbstractIndices.jl)'s package?
 
-It's also slow at the moment -- see [test/speed.jl](test/speed.jl) for some numbers.
+It's not as fast as it could be, right now -- see [test/speed.jl](test/speed.jl) for some numbers.
 
 And finally, there’s no obvious notation for `setkey!(A, value, key)`.
 One idea is to make selectors could work backwards, allowing `A[Key(key)] = val`.

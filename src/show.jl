@@ -8,7 +8,11 @@ function _summary(io, x)
     else
         print(io, join(size(x), " × "), " ", typeof(x))
     end
-    println(io, "\nwith range", ndims(x)>1 ? "s:" : ":")
+    if hasnames(x)
+        println(io, "\nwith named range", ndims(x)>1 ? "s:" : ":")
+    else
+        println(io, "\nwith range", ndims(x)>1 ? "s:" : ":")
+    end
     for d in 1:ndims(x)
         if hasnames(x)
             println(io, "  ", names(x,d), " ∈ ", ranges(x,d))

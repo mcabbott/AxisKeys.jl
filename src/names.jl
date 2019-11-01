@@ -34,40 +34,41 @@ namedaxes(A::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} = NamedTuple{L}(a
 namedaxes(A::RangeArray{T,N,<:NamedDimsArray{L}}) where {L,T,N} = NamedTuple{L}(axes(A))
 namedaxes(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
 
-# A.stuff
-
-Base.propertynames(A::NamedDimsArray{L,T,N,<:RangeArray}, private=false) where {L,T,N} =
+# A.stuff -- these seem to cost quite a bit of speed
+#=
+@inline Base.propertynames(A::NamedDimsArray{L,T,N,<:RangeArray}, private=false) where {L,T,N} =
     private ? (L..., fieldnames(typeof(A))) : L
-Base.propertynames(A::RangeArray{T,N,<:NamedDimsArray{L}}, private=false) where {L,T,N} =
+@inline Base.propertynames(A::RangeArray{T,N,<:NamedDimsArray{L}}, private=false) where {L,T,N} =
     private ? (L..., fieldnames(typeof(A))) : L
 
-Base.getproperty(A::NamedDimsArray{L,T,N,<:RangeArray}, s::Symbol) where {L,T,N} =
+@inline Base.getproperty(A::NamedDimsArray{L,T,N,<:RangeArray}, s::Symbol) where {L,T,N} =
     Base.sym_in(s, L) ? ranges(A, NamedDims.dim(L, s)) : getfield(A, s)
-Base.getproperty(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {L,T,N} =
+@inline Base.getproperty(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {L,T,N} =
     Base.sym_in(s, L) ? ranges(A, NamedDims.dim(L, s)) : getfield(A, s)
-Base.getproperty(A::NamedDimsArray{L}, s::Symbol) where {L} =
+@inline Base.getproperty(A::NamedDimsArray{L}, s::Symbol) where {L} =
     Base.sym_in(s, L) ? axes(A, NamedDims.dim(L, s)) : getfield(A, s)
+=#
 
 # Keyword indexing of RangeArray:
 
-Base.@propagate_inbounds function Base.getindex(A::RangeArray; kw...)
+@inline @propagate_inbounds function Base.getindex(A::RangeArray; kw...)
     hasnames(A) || error("must have names!")
-    dims = NamedDims.dim(names(A), keys(kw))
-    inds = ntuple(d -> d in dims ? values(kw)[d] : (:), ndims(A))
+    inds = NamedDims.order_named_inds(names(A); kw...)
+    # A[inds...]
     getindex(A, inds...)
 end
 
 # Any NamedDimsArray + RangeArray combination is callable:
 
-Base.@propagate_inbounds (A::NamedDimsArray{L,T,N,<:RangeArray})(args...) where {L,T,N} =
+@inline @propagate_inbounds (A::NamedDimsArray{L,T,N,<:RangeArray})(args...) where {L,T,N} =
     getkey(A, args...)
 
-Base.@propagate_inbounds (A::RangeArray{T,N,<:NamedDimsArray})(;kw...) where {T,N} =
+@inline @propagate_inbounds (A::RangeArray{T,N,<:NamedDimsArray})(;kw...) where {T,N} =
     getkey(A; kw...)
-Base.@propagate_inbounds (A::NamedDimsArray{L,T,N,<:RangeArray})(;kw...) where {L,T,N} =
+@inline @propagate_inbounds (A::NamedDimsArray{L,T,N,<:RangeArray})(;kw...) where {L,T,N} =
     getkey(A; kw...)
 
-Base.@propagate_inbounds function getkey(A; kw...)
+@inline @propagate_inbounds function getkey(A; kw...)
     list = names(A)
     issubset(kw.itr, list) || error("some keywords not in list of names!")
     args = map(s -> Base.sym_in(s, kw.itr) ? getfield(kw.data, s) : Colon(), list)
