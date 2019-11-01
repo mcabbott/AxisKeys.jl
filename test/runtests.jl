@@ -44,7 +44,7 @@ end
     @test R(Nearest(23)) == R[:, 2]
     @test R(Between(17,23)) == R[:, 2:2]
     @test R(Base.Fix2(<=,23)) == R[:, 1:2]
-    @test_broken ranges(Base.Fix2(<=,23)), 2) isa AbstractRange
+    @test_broken ranges(R(Base.Fix2(<=,23)), 2) isa AbstractRange
 
     @test_throws BoundsError V(Index[99])
     @test_throws Exception R(Nearest(23.5)) # ideally ArgumentError
