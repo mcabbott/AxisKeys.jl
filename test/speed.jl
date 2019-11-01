@@ -1,7 +1,9 @@
 
 using AxisRanges, BenchmarkTools # Julia 1.2 + macbook escape
 
+#==============================#
 #===== getkey vs getindex =====#
+#==============================#
 
 mat = wrapdims(rand(3,4), 11:13, 21:24)
 bothmat = wrapdims(mat.data, x=11:13, y=21:24)
@@ -27,9 +29,12 @@ bigmat2 = wrapdims(rand(100,100), collect(1:100), collect(1:100));
 @btime key_collect($bigmat);        # 25.933 μs (4 allocations: 78.27 KiB)
 @btime key_collect($bigmat2);      # 697.077 μs (5 allocations: 78.27 KiB)
 
-#===== other packages =====#
 
-using OffsetArrays
+#==========================#
+#===== other packages =====#
+#==========================#
+
+using OffsetArrays                      #===== OffsetArrays =====#
 
 of1 = OffsetArray(rand(3,4), 11:13, 21:24)
 
@@ -38,7 +43,8 @@ of1 = OffsetArray(rand(3,4), 11:13, 21:24)
 bigoff = OffsetArray(bigmat.data, 1:100, 1:100);
 @btime ind_collect($bigoff);        # 15.372 μs (5 allocations: 78.30 KiB)
 
-using AxisArrays
+
+using AxisArrays                        #===== AxisArrays =====#
 
 ax1 = AxisArray(rand(3,4), 11:13, 21:24)
 ax2 = AxisArray(rand(3,4), :x, :y)
@@ -56,15 +62,36 @@ ax_collect(A) = [@inbounds(A[atvalue(vals[1]), atvalue(vals[2])]) for vals in It
 @btime ax_collect($bigax);         # 212.160 μs (6 allocations: 78.34 KiB)
 @btime ax_collect($bigax2);        # 511.157 μs (5 allocations: 78.27 KiB)
 
-using NamedDims
 
-na1 = NamedDimsArray(rand(3,4), (:x, :y))
+using NamedArrays                       #===== NamedArrays =====#
 
-@btime $na1[3,4]       #   1.421 ns
-@btime $na1[x=3, y=4]  # 222.721 ns (6 allocations: 192 bytes)
+na1 = NamedArray(rand(3,4))
+
+na2 = copy(na1);
+setnames!(na2, ["a", "b", "c"], 1); na2
+setnames!(na2, string.(1:4) .* "th", 2); na2 # must be strings, and all different
+
+@btime $na1[3,4]     # 4.467 ns
+@btime $na2["c",4]   # 22.592 ns
+@btime $na2["c","4th"] # 40.851 ns
+# This lookup is via OrderedDict{String,Int64}
+@btime $na2.dicts[2]["4th"] # 22.225 ns
+
+na1.dimnames == (:A, :B)
+# @btime na1[:A => 3, :B => 4] # error
+@btime $na2[:A => "c", :B => "4th"] # 1.077 μs (29 allocations: 2.02 KiB)
+
+
+using NamedDims                         #===== NamedDims =====#
+
+nd1 = NamedDimsArray(rand(3,4), (:x, :y))
+
+@btime $nd1[3,4]       #   1.421 ns
+@btime $nd1[x=3, y=4]  # 222.721 ns (6 allocations: 192 bytes)
                      # -> 40.467 ns (2 allocations: 64 bytes) with PR#76
 
-using DimensionalData
+
+using DimensionalData                   #===== DimensionalData =====#
 using DimensionalData: X, Y, @dim, Forward
 
 dd1 = DimensionalArray(rand(3,4), Dim{:x}(11:13), Dim{:y}(21:24))
@@ -82,7 +109,9 @@ dd3 = DimensionalArray(rand(3,4), (X(11:13), Y(21:24)))
 @btime $dd3[X <| At(13), Y <| At(24)] # 23.256 ns
 @btime (m -> m[X <| At(13), Y <| At(24)])($dd3) # 23.396 ns
 
-using AbstractIndices # https://github.com/Tokazama/AbstractIndices.jl
+
+using AbstractIndices                   #===== AbstractIndices =====#
+# https://github.com/Tokazama/AbstractIndices.jl
 
 ai1 = IndicesArray(rand(3,4), 11:13, 21:24)
 ai2 = IndicesArray(rand(3,4); x=11:13, y=21:24)
@@ -93,7 +122,10 @@ ai3 = IndicesArray(rand(3,4), 11:13.0, 21:24.0)
 # ai2[x=13,y=24]
 @btime $ai3[13.0, 24.0] # 31.437 ns
 
+
+#=============================#
 #===== fast range lookup =====#
+#=============================#
 
 const A = AxisRanges
 const B = Base
@@ -116,7 +148,10 @@ using Base: OneTo
 B.findall( <(10), 1:1000) isa Vector
 A.findall( <(10), 1:1000) isa OneTo
 
-#===== AcceleratedArrays =====#
+
+#==============================#
+#===== accelerated lookup =====#
+#==============================#
 
 using AcceleratedArrays
 
@@ -142,3 +177,36 @@ r0 = 1:1000
 
 bigmat3 = wrapdims(rand(100,100), accelerate(collect(1:100),SortIndex), accelerate(collect(1:100),SortIndex));
 @btime key_collect($bigmat3);      # 765.999 μs (5 allocations: 78.27 KiB) -- slower, findfirst.
+
+
+using DataStructures
+
+v1 = (1:100)[sortperm(rand(100))];
+@btime findfirst(isequal(10), $v1) # 54.311 ns
+
+v2 = let
+    d = OrderedDict{Int, Int}()
+    for (i,k) in enumerate(v1)
+        d[k] = i
+    end
+    d
+end
+@btime $v2[10] # 7.818 ns
+
+v3 = accelerate(v1, UniqueHashIndex);
+@btime findfirst(isequal(10), v3) # 144.299 ns
+
+
+using CategoricalArrays
+
+ca1 = wrapdims(rand(4), x = CategoricalArray(["a", "b", "a", "b"]))
+ca1("a")
+ca1(==("a"))
+
+v4 = CategoricalArray(v1)
+v4[1] == v1[1]
+@btime findfirst(isequal(10), $v4) # 187.328 ns
+
+#===================#
+#===== The End =====#
+#===================#
