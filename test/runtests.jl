@@ -1,5 +1,7 @@
 using Test, AxisRanges, NamedDims, OffsetArrays, Tables
 
+# AxisRanges.OUTER[] = :nda # changes behaviour of wrapdims
+
 @testset "basics" begin
     R = RangeArray(rand(1:99, 3,4), (['a', 'b', 'c'], 10:10:40))
     @test ranges(R) == (['a', 'b', 'c'], 10:10:40)
@@ -41,8 +43,8 @@ end
     @test R(==('a')) == R[1:1, :]
     @test R(Nearest(23)) == R[:, 2]
     @test R(Between(17,23)) == R[:, 2:2]
-    @test R(<=(23)) == R[:, 1:2]
-    @test_broken ranges(R(<=(23)), 2) isa AbstractRange
+    @test R(Base.Fix2(<=,23)) == R[:, 1:2]
+    @test_broken ranges(Base.Fix2(<=,23)), 2) isa AbstractRange
 
     @test_throws BoundsError V(Index[99])
     @test_throws Exception R(Nearest(23.5)) # ideally ArgumentError
@@ -114,15 +116,15 @@ end
 
     # map & collect
     mapM =  map(exp, M)
-    @test ranges(mapM) == ('a':'c', 2:5)
+    @test ranges(mapM) == ('a':'c', 2:5) # fails with nda(ra(...)), has lost ranges?
     @test names(mapM) == (:r, :c)
 
     genM =  [exp(x) for x in M]
-    @test ranges(genM) == ('a':'c', 2:5)
+    @test ranges(genM) == ('a':'c', 2:5) # fails with nda(ra(...))
     @test_broken names(genM) == (:r, :c)
 
     # concatenation
-    @test ranges(hcat(M,M)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5])
+    @test ranges(hcat(M,M)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5]) # fails with nda(ra(...))
     @test ranges(vcat(M,M)) == (['a', 'b', 'c', 'a', 'b', 'c'], 2:5)
     V = wrapdims(rand(1:99, 3), r=['a', 'b', 'c'])
     @test ranges(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1])
@@ -157,7 +159,7 @@ end
     @test ranges(push!(V2, 0)) === (Base.OneTo(4),)
     @test ranges(append!(V2, [7,7])) === (Base.OneTo(6),)
 
-    @test ranges(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40]
+    @test ranges(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40] # fails with nda(ra(...))
 end
 
 @testset "offset" begin
@@ -171,9 +173,9 @@ end
     N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
 
     @test keys(first(Tables.rows(R))) == (:dim_1, :dim_2, :value)
-    @test keys(first(Tables.rows(N))) == (:a, :b, :value)
+    @test keys(first(Tables.rows(N))) == (:a, :b, :value) # fails with nda(ra(...))
 
-    @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
+    @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12] # fails with nda(ra(...))
 end
 
 @testset "non-piracy" begin

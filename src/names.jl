@@ -2,12 +2,15 @@ using NamedDims
 
 wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
     NamedDimsArray(A, (n, names...))
-wrapdims(A::AbstractArray; kw...) =
-    # if rand() < 0.5
-    #     NamedDimsArray(RangeArray(A, check_ranges(A, values(kw.data))), check_names(A,kw.itr))
-    # else
-        RangeArray(NamedDimsArray(A, check_names(A, kw.itr)), check_ranges(A, values(kw.data)))
-    # end
+function wrapdims(A::AbstractArray; kw...)
+    L = check_names(A, kw.itr)
+    R = check_ranges(A, values(kw.data))
+    OUTER[] == :RangeArray ?
+        RangeArray(NamedDimsArray(A, L), R) :
+        NamedDimsArray(RangeArray(A, R), L)
+end
+
+const OUTER = Ref(:RangeArray)
 
 function check_names(A, names)
     ndims(A) == length(names) || error("wrong number of names")
