@@ -28,14 +28,24 @@ end
     @test V(Between(0.1, 0.3)) == V[2:4]
 
     @test V(Index[1]) == V[1]
+    @test V(Index[2:3]) == V[2:3]
     @test V(Index[end]) == V[end]
 
     V2 = wrapdims(rand(Int8, 5), [1,2,3,2,1])
     @test V2(==(2)) == V2[[2,4]]
+    @test V2(==(2.0)) == V2[[2,4]]
     @test V2(Nearest(2.3)) == V2[2]
     @test V2(Between(0.5, 1.5)) == V2[[1,5]]
 
+    R = RangeArray(rand(1:99, 3,4), (['a', 'b', 'c'], 10:10:40))
+    @test R(==('a')) == R[1:1, :]
+    @test R(Nearest(23)) == R[:, 2]
+    @test R(Between(17,23)) == R[:, 2:2]
+    @test R(<=(23)) == R[:, 1:2]
+    @test_broken ranges(R(<=(23)), 2) isa AbstractRange
+
     @test_throws BoundsError V(Index[99])
+    @test_throws Exception R(Nearest(23.5)) # ideally ArgumentError
 end
 
 @testset "names" begin
@@ -117,7 +127,9 @@ end
     V = wrapdims(rand(1:99, 3), r=['a', 'b', 'c'])
     @test ranges(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1])
     @test ranges(hcat(V,V),2) === Base.OneTo(2)
-    @test_broken hcat(M, ones(3)) == hcat(M.data, ones(3))
+
+    @test hcat(M, ones(3)) == hcat(M.data, ones(3))
+    @test_broken ranges(hcat(M, ones(3))) == ('a':1:'c', 2:6)
 
     # copy, similar, etc
     @test ranges(copy(M)) == ('a':'c', 2:5)
