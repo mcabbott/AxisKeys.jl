@@ -43,12 +43,14 @@ end
     @test names(wrapdims(rand(3), :a)) == (:a,)
     @test names(wrapdims(rand(3), b=1:3), 1) == :b
     @test ranges(wrapdims(rand(3), b=1:3)) == (1:3,)
+    @test ranges(wrapdims(rand(3), b=1:3), :b) == 1:3
 
     @test namedranges(wrapdims(rand(3), b=1:3)) === (b = 1:3,)
     @test namedaxes(wrapdims(rand(3), b=1:3)) === (b = Base.OneTo(3),)
 
     # internal functions of NamedDims
     @test NamedDims.names(rand(2,2)) === (:_, :_)
+    @test NamedDims.dim((:a, :b, :c), :b) == 2
     @test NamedDims.order_named_inds((:a, :b, :c); a=1, c=2:3) === (1, Colon(), 2:3)
     @test_skip 0 == @allocated NamedDims.order_named_inds((:a, :b, :c); a=1, c=2:3)
 

@@ -13,7 +13,12 @@ NamedDims.unname(A::RangeArray{T,N,<:NamedDimsArray{L}}) where {T,N,L} =
     RangeArray(unname(A.data), A.ranges)
 
 ranges(A::NamedDimsArray{L,T,N,<:RangeArray}) where {T,N,L} = ranges(parent(A))
-ranges(A::NamedDimsArray{L,T,N,<:RangeArray}, d) where {T,N,L} = ranges(parent(A), d)
+ranges(A::NamedDimsArray{L,T,N,<:RangeArray}, d::Int) where {T,N,L} = ranges(parent(A), d)
+
+ranges(A::NamedDimsArray{L,T,N,<:RangeArray}, s::Symbol) where {T,N,L} =
+    ranges(parent(A), NamedDims.dim(L,s))
+ranges(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {T,N,L} =
+    ranges(A, NamedDims.dim(L,s))
 
 hasranges(A::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} = true
 hasranges(A::RangeArray) = true

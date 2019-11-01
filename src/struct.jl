@@ -19,8 +19,8 @@ Base.axes(x::RangeArray) = axes(x.data)
 Base.parent(x::RangeArray) = x.data
 
 ranges(x::RangeArray) = _Tuple(x.ranges)
-ranges(x::RangeArray{T,N}, d) where {T,N} = d<=N ? x.ranges[d] : OneTo(1)
-ranges(x::RangeArray{T,1}, d) where {T} = d==1 ? x.ranges[] : OneTo(1)
+ranges(x::RangeArray{T,N}, d::Int) where {T,N} = d<=N ? x.ranges[d] : OneTo(1)
+ranges(x::RangeArray{T,1}, d::Int) where {T} = d==1 ? x.ranges[] : OneTo(1)
 
 Base.IndexStyle(A::RangeArray) = IndexCartesian()
 
