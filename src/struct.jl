@@ -83,7 +83,18 @@ then a single index may be used to indicate a slice.
         return @inbounds getindex(A, inds...)
 
     elseif length(args)==1 && allunique_types(map(eltype, ranges(A))...)
-        d = findfirst(T -> args[1] isa T, map(eltype, ranges(A)))
+        arg = first(args)
+        rtypes = map(eltype, ranges(A))
+        d = findfirst(T -> arg isa T, rtypes) # First look for direct match
+        if isnothing(d)
+            d = findfirst(T -> arg isa supertype(T), rtypes)
+            if arg isa Base.Fix2 || hasproperty(arg, :x) # Next try for a function
+                d = findfirst(T -> arg.x isa T, rtypes)
+            elseif arg isa Selector
+                d = findfirst(T -> eltype(arg) isa T, rtypes)
+            end
+            isnothing(d) && error("can't find which dimension for $args")
+        end
         i = findindex(first(args), ranges(A,d))
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
         # @boundscheck println("boundscheck getkey $args -> $inds")

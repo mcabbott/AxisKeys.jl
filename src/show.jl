@@ -30,4 +30,5 @@ end
 _typeof(::RangeArray{T,N,AT,RT}) where {T,N,AT,RT} =
     string("RangeArray{…,", AT, ",…}")
 _typeof(::RangeArray{T,N,<:NamedDimsArray{L,T,N,AT},RT}) where {T,N,L,AT,RT} =
-    string("RangeArray{…,NamedDimsArray{⋯,", AT, "},…}")
+    string("RangeArray{…,NamedDimsArray{…,", AT, "},…}")
+_typeof(x) = string(typeof(x))

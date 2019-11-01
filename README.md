@@ -29,9 +29,10 @@ Instead of a single value you may also give a function, for instance `A(<(35))`
 looks up `is = findall(t -> t<35, ranges(A,1))` and returns the vector `A[is]`,
 with its range trimmed to match. You may also give one of a few special selectors:
 ```julia
-A(Near(12.5))           # the one nearest element
+A(Nearest(12.5))        # the one nearest element
 C(time = Between(1,3))  # matrix with all times in this range
 C("dog", Index[3])      # mix of range and integer indexing
+C(!=("dog"))            # unambigous as range eltypes are unique
 ```
 
 While no special types are provided for these ranges,
@@ -45,13 +46,28 @@ figure out how to extend the range with more steps.
 The larger goal is roughly to divide up the functionality of [AxisArrays.jl](https://github.com/JuliaArrays/AxisArrays.jl)
 among smaller packages.
 -->
-Broadcasting does not work yet, sadly. But surely can be borrowed from [Tokazama](https://github.com/Tokazama/AbstractIndices.jl)?
+* Broadcasting does not work yet, sadly. But surely can be borrowed from [Tokazama](https://github.com/Tokazama/AbstractIndices.jl)?
 
-It's not as fast as it could be, right now -- see [test/speed.jl](test/speed.jl) for some numbers.
+* It's not as fast as it could be, right now -- see [test/speed.jl](test/speed.jl) for some numbers.
 
-It tries to support the [Tables.jl](https://github.com/JuliaData/Tables.jl) interface,
+* It tries to support the [Tables.jl](https://github.com/JuliaData/Tables.jl) interface,
 for example `DataFrame(Tables.rows(C))` has column names `[:obs, :time, :value]`.
 
-And finally, there’s no obvious notation for `setkey!(A, value, key)`.
+* And finally, there’s no obvious notation for `setkey!(A, value, key)`.
 One idea is to make selectors could work backwards, allowing `A[Key(key)] = val`.
 Or a macro `@set A(key) = val`.
+
+Links to the zoo of similar packages:
+
+* Anciet, pre-1.0: [AxisArrays](https://github.com/JuliaArrays/AxisArrays.jl), 
+  [NamedArrays](https://github.com/davidavdav/NamedArrays.jl).
+  Also perhaps [AxisArrayPlots](https://github.com/jw3126/AxisArrayPlots.jl),
+  [LabelledArrays](https://github.com/JuliaDiffEq/LabelledArrays.jl).
+
+* New, or in progress: [NamedDims](https://github.com/invenia/NamedDims.jl), 
+  [DimensionalData](https://github.com/rafaqz/DimensionalData.jl),
+  [AbstractIndices](https://github.com/Tokazama/AbstractIndices.jl),
+  [IndexedDims](https://github.com/invenia/IndexedDims.jl).
+
+* Discussion: [AxisArraysFuture](https://github.com/JuliaCollections/AxisArraysFuture/issues/1),
+  [AxisArrays#84](https://github.com/JuliaArrays/AxisArrays.jl/issues/84). 

@@ -23,16 +23,16 @@ end
 @testset "selectors" begin
     V = wrapdims(rand(Int8, 11), 0:0.1:1)
 
-    @test V(All(0.1)) == V[2:2]
-    @test V(Near(0.12)) == V(0.1) == V[2]
+    @test V(==(0.1)) == V[2:2]
+    @test V(Nearest(0.12)) == V(0.1) == V[2]
     @test V(Between(0.1, 0.3)) == V[2:4]
 
     @test V(Index[1]) == V[1]
     @test V(Index[end]) == V[end]
 
     V2 = wrapdims(rand(Int8, 5), [1,2,3,2,1])
-    @test V2(All(2)) == V2[[2,4]]
-    @test V2(Near(2.3)) == V2[2]
+    @test V2(==(2)) == V2[[2,4]]
+    @test V2(Nearest(2.3)) == V2[2]
     @test V2(Between(0.5, 1.5)) == V2[[1,5]]
 
     @test_throws BoundsError V(Index[99])

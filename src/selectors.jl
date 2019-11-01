@@ -1,23 +1,28 @@
 
 selector_doc = """
-    All(val)
-    Near(val)
+    Nearest(val)
     Between(lo, hi)
 
-These modify indexing according to `ranges(A)`, to match all instead of first,
-`B(time = Near(3))` (nearest entry according to `abs2(t-3)` of named dimension `:time`)
-or `C(iter = Between(10,20))` (matches `10 <= n <= 20`).
+These selectors modify lookup using `ranges(A)`:
+`B(time = Nearest(3))` matches one entry with minimum `abs2(t-3)` of named dimension `:time`.
+`C("cat", Between(10,20))` matches all entries with `10 <= iter <= 20`).
+
+    ==(val)
+    <(val)
+
+Note that any functions can be used similarly, like C(!=("dog"), <=(33)).
+They ultimately call `findall(==(val), range(A,d))`.
+
+Functions of type `Base.Fix2`, and `Selector`s, also allow a dimension
+to be chose by `eltype`, provided `map(eltype, ranges(A))` are all unique.
+
+See also `Index[i]`.
 """
 
 abstract type Selector{T} end
 
 @doc selector_doc
-struct All{T} <: Selector{T}
-    val::T
-end
-
-@doc selector_doc
-struct Near{T} <: Selector{T}
+struct Nearest{T} <: Selector{T}
     val::T
 end
 
@@ -28,18 +33,15 @@ struct Between{T} <: Selector{T}
 end
 Between(lo,hi) = Between(promote(lo,hi)...)
 
-Base.show(io::IO, s::All{T}) where {T} =
-    print(io, "All(",s.val,") ::Selector{",T,"}")
+Base.eltype(s::Nearest{T}) where {T} = T
+Base.show(io::IO, s::Nearest{T}) where {T} =
+    print(io, "Nearest(",s.val,") ::Selector{",T,"}")
 
-Base.show(io::IO, s::Near{T}) where {T} =
-    print(io, "Near(",s.val,") ::Selector{",T,"}")
-
+Base.eltype(s::Between{T}) where {T} = T
 Base.show(io::IO, s::Between{T}) where {T} =
     print(io, "Between(",s.lo,", ",s.hi,") ::Selector{",T,"}")
 
-findindex(sel::All, range::AbstractArray) = findall(isequal(sel.val), range)
-
-findindex(sel::Near, range::AbstractArray) = argmin(map(x -> abs2(x-sel.val), range))
+findindex(sel::Nearest, range::AbstractArray) = argmin(map(x -> abs2(x-sel.val), range))
 
 findindex(sel::Between, range::AbstractArray) = findall(x -> sel.lo <= x <= sel.hi, range)
 
@@ -47,7 +49,7 @@ findindex(sel::Between, range::AbstractArray) = findall(x -> sel.lo <= x <= sel.
     Index[i]
 
 This exists to let you mix in square-bracket indexing,
-like `A(:b, Near(3.14), Index[4:5], "f")`.
+like `A(:b, Nearest(3.14), Index[4:5], "f")`.
 You may also write `Index[end]`, although not yet `Index[end-2]`.
 """
 struct Index{T} <: Selector{T}

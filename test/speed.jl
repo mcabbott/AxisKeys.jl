@@ -120,8 +120,18 @@ ai3 = IndicesArray(rand(3,4), 11:13.0, 21:24.0)
 # ai1[3,4] # all errors?
 # ai1[13,24]
 # ai2[x=13,y=24]
+@btime $ai3[3,4] # 2.530 ns
 @btime $ai3[13.0, 24.0] # 31.437 ns
 
+
+using IndexedDims                       #===== IndexedDims =====#
+# https://github.com/invenia/IndexedDims.jl
+
+id1 = IndexedDimsArray(rand(3,4), 11:13, 21:24)
+id2 = IndexedDimsArray(rand(3,4), 11.0:13.0, 21.0:24.0)
+
+@btime $id1[3,4] # 1.695 ns
+@btime $id2[11.0, 24.0] # 544.219 ns
 
 #=============================#
 #===== fast range lookup =====#

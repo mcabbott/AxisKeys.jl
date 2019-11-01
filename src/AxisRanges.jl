@@ -10,7 +10,7 @@ export NamedDimsArray, namedranges, namedaxes
 
 include("selectors.jl")
 
-export All, Near, Between, Index
+export Nearest, Between, Index
 
 include("tables.jl")
 
