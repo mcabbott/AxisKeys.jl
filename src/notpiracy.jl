@@ -74,6 +74,12 @@ findall(eq::Base.Fix2{typeof(<=),Int}, r::Base.OneTo{Int}) =
 findall(eq::Base.Fix2{typeof(<=)}, r::UnitRange{T}) where T =
     intersect(Base.OneTo(trunc(T,eq.x) - first(r) + 1), eachindex(r))
 
+findall(eq::Base.Fix2{typeof(<=)}, r::StepRange{T}) where T =
+# findall(eq::Base.Fix2{typeof(<=)}, r::AbstractRange{T}) where T =
+    eq.x < r.start ? OneTo(0) :
+    eq.x >= r.stop ? OneTo(length(r)) :
+    OneTo(trunc(Int, div(eq.x - first(r), step(r))) + 1)
+
 findall(eq::Base.Fix2{typeof(<),Int}, r::Base.OneTo{Int}) =
     eq.x <= 1 ? Base.OneTo(0) :
     eq.x > r.stop ? r :
@@ -81,6 +87,9 @@ findall(eq::Base.Fix2{typeof(<),Int}, r::Base.OneTo{Int}) =
 
 findall(eq::Base.Fix2{typeof(<)}, r::UnitRange{T}) where T =
     intersect(Base.OneTo(trunc(T,eq.x - first(r))), eachindex(r))
+
+# findall(eq::Base.Fix2{typeof(<)}, r::StepRange{T}) where T =
+#     Base.OneTo(trunc(Int, div(eq.x - first(r) - 1, step(r))) + 1)
 
 findall(eq::Base.Fix2{typeof(>=),Int}, r::Base.OneTo{Int}) =
     eq.x <= 1 ? UnitRange(r) :
@@ -97,3 +106,10 @@ findall(eq::Base.Fix2{typeof(>),Int}, r::Base.OneTo{Int}) =
 
 findall(eq::Base.Fix2{typeof(>)}, r::OrdinalRange{T}) where T =
     intersect(UnitRange(trunc(T,eq.x) - first(r) + 2, length(r)), eachindex(r))
+
+findall(eq::Base.Fix2{typeof(>)}, r::StepRange{T}) where T =
+# findall(eq::Base.Fix2{typeof(>)}, r::AbstractRange{T}) where T =
+    eq.x < r.start ? (1:length(r)) :
+    eq.x >= r.stop ? (1:0) :
+    UnitRange(trunc(Int, div(eq.x - first(r), step(r))) + 2, length(r))
+
