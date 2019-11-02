@@ -71,7 +71,7 @@ end
 
 """
     (A::RangeArray)("a", 2.0, :γ) == A[1, 2, 3]
-    A(:γ) == A[:, :, 3]
+    A(:γ) == view(A, :, :, 3)
 
 `RangeArray`s are callable, and this behaves much like indexing,
 except that it searches for the given keys in `ranges(A)`,
@@ -79,6 +79,7 @@ instead of `axes(A)` for indices.
 
 A single key may be used to indicate a slice, provided that its type
 only matches the eltype of one `range(A,d)`.
+You can also slice explicitly with `A("a", :, :)`, both of these return a `view`.
 
 Also accepts functions like `A(<=(2.0))` and selectors,
 see `Nearest` and `Index`.
@@ -90,7 +91,11 @@ see `Nearest` and `Index`.
         inds = map(findindex, args, ranges(A))
         # @boundscheck println("boundscheck getkey $args -> $inds")
         @boundscheck checkbounds(A, inds...)
-        return @inbounds getindex(A, inds...)
+        if inds isa NTuple{<:Any, Integer}
+            return @inbounds getindex(A, inds...)
+        else
+            return @inbounds view(A, inds...)
+        end
 
     elseif length(args)==1
         arg = first(args)
@@ -115,7 +120,7 @@ see `Nearest` and `Index`.
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
         # @boundscheck println("boundscheck getkey $args -> $inds")
         @boundscheck checkbounds(A, inds...)
-        return @inbounds getindex(A, inds...)
+        return @inbounds view(A, inds...)
 
     end
 

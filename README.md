@@ -55,7 +55,7 @@ for example `DataFrame(Tables.rows(C))` has column names `[:obs, :time, :value]`
 
 * And finally, there’s no obvious notation for `setkey!(A, value, key)`.
 One idea is to make selectors could work backwards, allowing `A[Key(key)] = val`.
-Or a macro `@set A(key) = val`.
+Or a macro `@set A(key) = val`. For now, you can write `C("dog") .= 1:10` since it's a view.
 
 Links to the zoo of similar packages:
 

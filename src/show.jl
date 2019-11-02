@@ -32,3 +32,5 @@ _typeof(::RangeArray{T,N,AT,RT}) where {T,N,AT,RT} =
 _typeof(::RangeArray{T,N,<:NamedDimsArray{L,T,N,AT},RT}) where {T,N,L,AT,RT} =
     string("RangeArray{…,NamedDimsArray{…,", AT, "},…}")
 _typeof(x) = string(typeof(x))
+
+# Base.showarg(io, C("dog").data.data, false)
