@@ -70,6 +70,24 @@ range_vcat(a::AbstractVector, b::AbstractVector) = vcat(a,b)
 range_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
 range_vcat(a,b,cs...) = range_vcat(range_vcat(a,b),cs...)
 
+function Base.sort(A::RangeArray; dims, kw...)
+    dims′ = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+    data = sort(parent(A); dims=dims′, kw...)
+    # sorts each (say) col independently, thus range along them loses meaning.
+    new_ranges = ntuple(d -> d==dims′ ? OneTo(size(A,d)) : ranges(A,d), ndims(A))
+    RangeArray(data, new_ranges)
+end
+function Base.sort(A::RangeVector; kw...)
+    perm = sortperm(parent(A); kw...)
+    RangeArray(parent(A)[perm], (ranges(A,1)[perm],))
+end
+
+function Base.sortslices(A::RangeArray; dims, kw...)
+    dims′ = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+    data = sortslices(parent(A); dims=dims′, kw...)
+    # It would be nice to sort the range to match, but there is no sortpermslices.
+end
+
 using LinearAlgebra
 
 for (mod, fun, lazy) in [(Base, :permutedims, false),
@@ -81,7 +99,9 @@ for (mod, fun, lazy) in [(Base, :permutedims, false),
     end
 end
 
+Base.reshape(A::RangeArray, dims::Union{Colon, Int64}...) = reshape(parent(A), dims...)
+
 for fun in [:copy, :deepcopy, :similar, :zero, :one]
-    @eval Base.$fun(A::RangeArray) = RangeArray($fun(A.data), map(copy, A.ranges))
+    @eval Base.$fun(A::RangeArray) = RangeArray($fun(A.data), map(copy, ranges(A)))
 end
-Base.similar(A::RangeArray, T::Type) = RangeArray(similar(A.data, T), map(copy, A.ranges))
+Base.similar(A::RangeArray, T::Type) = RangeArray(similar(A.data, T), map(copy, ranges(A)))

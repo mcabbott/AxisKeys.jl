@@ -1,5 +1,6 @@
 
 M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
+V = wrapdims(rand(1:99, 10), v=10:10:100)
 
 @testset "dims" begin
 
@@ -24,6 +25,14 @@ M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
     @test names(M3') == (:_, :r)
 
     @test_throws ArgumentError sum(M, dims=:nope)
+
+    # sort
+    @test sort(V)(20) == V(20)
+
+    @test ranges(sort(M, dims=:c), :c) isa Base.OneTo
+    @test ranges(sort(M, dims=:c), :r) == 'a':'c'
+
+    @test sortslices(M, dims=:c) isa NamedDimsArray
 
 end
 @testset "map etc" begin
