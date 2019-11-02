@@ -37,6 +37,9 @@ ranges(A::NamedDimsArray{L,T,N,<:RangeArray}, s::Symbol) where {T,N,L} =
 ranges(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {T,N,L} =
     ranges(A, NamedDims.dim(L,s))
 
+Base.axes(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {T,N,L} =
+    axes(A, NamedDims.dim(L,s))
+
 hasranges(A::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} = true
 hasranges(A::RangeArray) = true
 hasranges(A) = false

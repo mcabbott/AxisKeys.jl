@@ -26,8 +26,8 @@ bigmat2 = wrapdims(rand(100,100), collect(1:100), collect(1:100));
 
 @btime ind_collect($(bigmat.data)); #  8.811 μs (4 allocations: 78.25 KiB)
 @btime ind_collect($bigmat);        # 11.525 μs (4 allocations: 78.25 KiB)
-@btime key_collect($bigmat);        # 25.933 μs (4 allocations: 78.27 KiB)
-@btime key_collect($bigmat2);      # 697.077 μs (5 allocations: 78.27 KiB)
+@btime key_collect($bigmat);        # 25.933 μs (4 allocations: 78.27 KiB) -- fast range lookup
+@btime key_collect($bigmat2);      # 697.077 μs (5 allocations: 78.27 KiB) -- findfirst(...) lookup
 
 
 #==========================#
@@ -58,9 +58,9 @@ ax2 = AxisArray(rand(3,4), :x, :y)
 bigax = AxisArray(bigmat.data, 1:100, 1:100);
 bigax2 = AxisArray(bigmat.data, collect(1:100), collect(1:100));
 ax_collect(A) = [@inbounds(A[atvalue(vals[1]), atvalue(vals[2])]) for vals in Iterators.ProductIterator(AxisArrays.axes(A))]
-@btime ind_collect($bigax);        # 9.946 μs (4 allocations: 78.25 KiB)
-@btime ax_collect($bigax);         # 212.160 μs (6 allocations: 78.34 KiB)
-@btime ax_collect($bigax2);        # 511.157 μs (5 allocations: 78.27 KiB)
+@btime ind_collect($bigax);        # 9.946 μs (4 allocations: 78.25 KiB) -- indexing
+@btime ax_collect($bigax);         # 212.160 μs (6 allocations: 78.34 KiB) -- range lookup?
+@btime ax_collect($bigax2);        # 511.157 μs (5 allocations: 78.27 KiB) -- compare to findfirst(...) time
 
 
 using NamedArrays                       #===== NamedArrays =====#
@@ -123,6 +123,12 @@ ai3 = IndicesArray(rand(3,4), 11:13.0, 21:24.0)
 @btime $ai3[3,4] # 2.530 ns
 @btime $ai3[13.0, 24.0] # 31.437 ns
 
+bigai = IndicesArray(bigmat.data, 1:100.0, 1:100.0);
+ai_collect(A) = [@inbounds(A[vals...]) for vals in Iterators.ProductIterator(map(collect, axes(A)))]
+# I think axes(A) in ind_collect() is resulting in lookup not indexing:
+@btime ind_collect($bigai);        # 645.921 μs (30205 allocations: 1.00 MiB) -- compare to findfirst(...) time?
+@btime ai_collect($bigai);         #  24.656 μs (8 allocations: 80.05 KiB) -- compare to indexing
+
 
 using IndexedDims                       #===== IndexedDims =====#
 # https://github.com/invenia/IndexedDims.jl
@@ -132,6 +138,12 @@ id2 = IndexedDimsArray(rand(3,4), 11.0:13.0, 21.0:24.0)
 
 @btime $id1[3,4] # 1.695 ns
 @btime $id2[11.0, 24.0] # 544.219 ns
+
+bigid = IndexedDimsArray(bigmat.data, 1:100.0, 1:100.0);
+idx_collect(A) = [@inbounds(A[vals...]) for vals in Iterators.ProductIterator(A.indexes)]
+
+@btime ind_collect($bigid);         # 12.167 μs (4 allocations: 78.25 KiB)
+@btime idx_collect($bigid);     # 26.015 ms (150004 allocations: 14.42 MiB) -- compare to findfirst(...) time?
 
 #=============================#
 #===== fast range lookup =====#
