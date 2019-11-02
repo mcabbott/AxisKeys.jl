@@ -41,6 +41,10 @@ for (bget, rget) in [(:getindex, :range_getindex), (:view, :range_view)]
             @inbounds Base.$bget(parent(A), I)
         end
 
+        @inline function Base.$bget(A::RangeArray, ::Colon)
+            Base.$bget(parent(A), :)
+        end
+
         @inline @propagate_inbounds function Base.$bget(A::RangeArray, I...)
             # @boundscheck println("boundscheck getindex/view general $I")
             @boundscheck checkbounds(parent(A), I...)

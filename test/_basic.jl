@@ -14,6 +14,9 @@
     @test AxisRanges.setkey!(R, 123, 'a', 10) == 123
     @test R[1,1] == 123
 
+    @test R[:] == vec(R.data)
+    @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1]
+
     @test_throws Exception R(:nope) # ideally ArgumentError
     @test_throws Exception R('z')   # ideally BoundsError
     @test_throws Exception R(99)
