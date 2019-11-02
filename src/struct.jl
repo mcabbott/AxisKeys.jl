@@ -74,10 +74,14 @@ end
     A(:γ) == A[:, :, 3]
 
 `RangeArray`s are callable, and this behaves much like indexing,
-except using the contents of the ranges, not the integer indices.
+except that it searches for the given keys in `ranges(A)`,
+instead of `axes(A)` for indices.
 
-When all `ranges(A)` have distinct `eltype`s,
-then a single index may be used to indicate a slice.
+A single key may be used to indicate a slice, provided that its type
+only matches the eltype of one `range(A,d)`.
+
+Also accepts functions like `A(<=(2.0))` and selectors,
+see `Nearest` and `Index`.
 """
 @inline @propagate_inbounds (A::RangeArray)(args...) = getkey(A, args...)
 
@@ -88,23 +92,26 @@ then a single index may be used to indicate a slice.
         @boundscheck checkbounds(A, inds...)
         return @inbounds getindex(A, inds...)
 
-    elseif length(args)==1 && allunique_types(map(eltype, ranges(A))...)
+    elseif length(args)==1
         arg = first(args)
         rtypes = map(eltype, ranges(A))
 
-        d = findfirst(T -> arg isa T, rtypes) # First look for direct match
-
-        if isnothing(d)
-            d = findfirst(T -> arg isa supertype(T), rtypes)
+        ds = findall(T -> arg isa T, rtypes) # First look for direct match
+        if isempty(ds)
             if arg isa Base.Fix2 || hasproperty(arg, :x) # Next try for a function
-                d = findfirst(T -> arg.x isa T, rtypes)
+                ds = findall(T -> arg.x isa T, rtypes)
             elseif arg isa Selector
-                d = findfirst(T -> eltype(arg) <: T, rtypes)
+                ds = findall(T -> eltype(arg) <: T, rtypes)
+            else
+                ds = findall(T -> arg isa supertype(T), rtypes) # esp. for AbstractString
             end
-            isnothing(d) && error("can't find which dimension for $args")
+            isempty(ds) && error("can't find which dimension for $args")
         end
+        length(ds) >= 2 && error(
+            "key $arg is ambiguous, its type matches dimensions $(Tuple(ds))")
 
-        i = findindex(first(args), ranges(A,d))
+        d = first(ds)
+        i = findindex(arg, ranges(A,d))
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
         # @boundscheck println("boundscheck getkey $args -> $inds")
         @boundscheck checkbounds(A, inds...)
@@ -112,12 +119,10 @@ then a single index may be used to indicate a slice.
 
     end
 
-    if length(args)==1
-        error("can only use one key when all ranges have distinct eltypes")
-    elseif length(args) != ndims(A)
-        error("wrong number of keys")
+    if length(args) != ndims(A)
+        error("wrong number of keys: got $(length(args)) arguments, expected ndims(A) = $(ndims(A))")
     else
-        error("can't understand what to do with $args")
+        error("can't understand what to do with $args, sorry")
     end
 end
 
@@ -127,8 +132,8 @@ Base.@propagate_inbounds function setkey!(A, val, args...)
     setindex!(A, val, inds...)
 end
 
-@generated allunique_types(x, y...) = (x in y) ? false : :(allunique_types($(y...)))
-allunique_types(x::DataType) = true
+# @generated allunique_types(x, y...) = (x in y) ? false : :(allunique_types($(y...)))
+# allunique_types(x::DataType) = true
 
 # https://docs.julialang.org/en/v1/base/arrays/#Base.to_indices
 """
@@ -136,10 +141,10 @@ allunique_types(x::DataType) = true
 
 This is usually `findfirst(isequal(key), range)`,
 but understands `findindex(:, range) = range`,
-and `findindex(array, range) = intersect(array, range)`.
+and `findindex(array, range)`.
 
 It also understands functions `findindex(<(4), range) = findall(x -> x<4, range)`,
-and selectors like `All(key)` and `Between(lo,hi)`.
+and selectors like `Nearest(key)` and `Between(lo,hi)`.
 """
 @inline function findindex(a, r::AbstractArray)
     i = findfirst(isequal(a), r)
@@ -149,7 +154,7 @@ end
 
 findindex(a::Colon, r::AbstractArray) = Colon()
 
-findindex(a::AbstractArray, r::AbstractArray) = intersect(a, r)
+findindex(a::AbstractArray, r::AbstractArray) = [findfirst(isequal(x), r) for x in a]
 
 findindex(f::Function, r::AbstractArray) = findall(f, r)
 
@@ -159,9 +164,12 @@ findindex(f::Function, r::AbstractArray) = findall(f, r)
     wrapdims(A, i=1:10, j=['a', 'b', 'c'])
 
 Function for constructing either a `NamedDimsArray`, a `RangeArray`,
-or a nested pair of both. Performs some sanity checks.
+or a nested pair of both.
+Performs some sanity checks which are skipped by `RangeArray` constructor.
+Giving `nothing` as a range will result in `ranges(A,d) == axes(A,d)`.
 
-When both are present, it makes a `RangeArray{...,NamedDimsArray{...}}`... for now?
+By default it wraps in this order: `RangeArray{...,NamedDimsArray{...}}`.
+This tests a flag `AxisRanges.OUTER[] == :RangeArray` which you can change.
 """
 wrapdims(A::AbstractArray, r::Union{AbstractVector,Nothing}, ranges::Union{AbstractVector,Nothing}...) =
     RangeArray(A, check_ranges(A, (r, ranges...)))
@@ -173,7 +181,7 @@ function check_ranges(A, ranges)
     checked = map(enumerate(ranges)) do (d,r)
         r === nothing && return axes(A,d)
         size(A,d) == length(r) || error("wrong length of ranges")
-        if axes(A,d) != axes(r,1) # error("range's axis does not match array's")
+        if axes(A,d) != axes(r,1)
             r = OffsetArray(r, axes(A,d))
         end
         if eltype(r) == Symbol
