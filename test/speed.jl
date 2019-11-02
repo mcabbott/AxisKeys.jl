@@ -9,14 +9,14 @@ mat = wrapdims(rand(3,4), 11:13, 21:24)
 bothmat = wrapdims(mat.data, x=11:13, y=21:24)
 bothmat2 = wrapdims(mat.data, x=collect(11:13), y=collect(21:24))
 
-@btime $mat[3, 4]    # 4.199 ns
-@btime $mat(13, 24)  # 5.870 ns
+@btime $mat[3, 4]    # 1.699 ns
+@btime $mat(13, 24)  # 5.312 ns
 
-@btime $bothmat[3,4]        # 4.202 ns
+@btime $bothmat[3,4]        # 1.700 ns
 @btime $bothmat[x=3, y=4]   # 41.050 ns (2 allocations: 64 bytes)
 @btime $bothmat(13, 24)     # 5.874 ns
 @btime $bothmat(x=13, y=24) # 43.302 ns (2 allocations: 64 bytes)
-@btime $bothmat2(13, 24)    # 18.949 ns
+@btime $bothmat2(13, 24)    # 16.719 ns
 
 ind_collect(A) = [@inbounds(A[ijk...]) for ijk in Iterators.ProductIterator(axes(A))]
 key_collect(A) = [@inbounds(A(vals...)) for vals in Iterators.ProductIterator(ranges(A))]
@@ -24,10 +24,10 @@ key_collect(A) = [@inbounds(A(vals...)) for vals in Iterators.ProductIterator(ra
 bigmat = wrapdims(rand(100,100), 1:100, 1:100);
 bigmat2 = wrapdims(rand(100,100), collect(1:100), collect(1:100));
 
-@btime ind_collect($(bigmat.data)); #  8.811 μs (4 allocations: 78.25 KiB)
-@btime ind_collect($bigmat);        # 11.525 μs (4 allocations: 78.25 KiB)
-@btime key_collect($bigmat);        # 25.933 μs (4 allocations: 78.27 KiB) -- fast range lookup
-@btime key_collect($bigmat2);      # 697.077 μs (5 allocations: 78.27 KiB) -- findfirst(...) lookup
+@btime ind_collect($(bigmat.data)); #  9.117 μs (4 allocations: 78.25 KiB)
+@btime ind_collect($bigmat);        # 11.530 μs (4 allocations: 78.25 KiB)
+@btime key_collect($bigmat);        # 20.671 μs (4 allocations: 78.27 KiB) -- fast range lookup
+@btime key_collect($bigmat2);      # 718.804 μs (5 allocations: 78.27 KiB) -- findfirst(..., vector) lookup
 
 
 #==========================#

@@ -48,12 +48,13 @@ among smaller packages.
 -->
 * Broadcasting does not work yet, sadly. But surely can be borrowed from [Tokazama](https://github.com/Tokazama/AbstractIndices.jl)?
 
-* It's not as fast as it could be, right now -- see [test/speed.jl](test/speed.jl) for some numbers.
+* See [test/speed.jl](test/speed.jl) for some numbers / comparisons; 
+  keyword indexing is not as fast as one could hope.
 
 * It tries to support the [Tables.jl](https://github.com/JuliaData/Tables.jl) interface,
 for example `DataFrame(Tables.rows(C))` has column names `[:obs, :time, :value]`.
 
-* And finally, there’s no obvious notation for `setkey!(A, value, key)`.
+* There’s no very obvious notation for `setkey!(A, value, key)`.
 One idea is to make selectors could work backwards, allowing `A[Key(key)] = val`.
 Or a macro `@set A(key) = val`. For now, you can write `C("dog") .= 1:10` since it's a view.
 

@@ -1,6 +1,6 @@
 using Base: @propagate_inbounds, OneTo
 
-mutable struct RangeArray{T,N,AT,RT} <: AbstractArray{T,N}
+struct RangeArray{T,N,AT,RT} <: AbstractArray{T,N}
     data::AT
     ranges::RT
 end
@@ -91,11 +91,7 @@ see `Nearest` and `Index`.
         inds = map(findindex, args, ranges(A))
         # @boundscheck println("boundscheck getkey $args -> $inds")
         @boundscheck checkbounds(A, inds...)
-        if inds isa NTuple{<:Any, Integer}
-            return @inbounds getindex(A, inds...)
-        else
-            return @inbounds view(A, inds...)
-        end
+        return @inbounds get_or_view(A, inds...)
 
     elseif length(args)==1
         arg = first(args)
@@ -131,14 +127,14 @@ see `Nearest` and `Index`.
     end
 end
 
-Base.@propagate_inbounds function setkey!(A, val, args...)
+@propagate_inbounds get_or_view(A, inds::Integer...) = getindex(A, inds...)
+@propagate_inbounds get_or_view(A, inds...) = view(A, inds...)
+
+@propagate_inbounds function setkey!(A, val, args...)
     length(args) == ndims(A) || error("wrong number of keys")
     inds = map((v,r) -> findindex(v,r), args, ranges(A))
     setindex!(A, val, inds...)
 end
-
-# @generated allunique_types(x, y...) = (x in y) ? false : :(allunique_types($(y...)))
-# allunique_types(x::DataType) = true
 
 # https://docs.julialang.org/en/v1/base/arrays/#Base.to_indices
 """
