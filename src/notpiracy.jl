@@ -5,12 +5,6 @@ filter(args...) = Base.filter(args...)
 filter(f, xs::Tuple) = Base.afoldl((ys, x) -> f(x) ? (ys..., x) : ys, (), xs...)
 filter(f, t::Base.Any16) = Tuple(filter(f, collect(t)))
 
-# https://github.com/JuliaLang/julia/pull/29679 -> Compat.jl
-if VERSION < v"1.1.0-DEV.472"
-    isnothing(::Any) = false
-    isnothing(::Nothing) = true
-end
-
 # https://github.com/JuliaLang/julia/pull/30496 -> Compat.jl
 if VERSION < v"1.2.0-DEV.272"
     Base.@pure hasfield(::Type{T}, name::Symbol) where T =
