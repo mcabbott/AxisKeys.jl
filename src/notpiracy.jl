@@ -5,14 +5,6 @@ filter(args...) = Base.filter(args...)
 filter(f, xs::Tuple) = Base.afoldl((ys, x) -> f(x) ? (ys..., x) : ys, (), xs...)
 filter(f, t::Base.Any16) = Tuple(filter(f, collect(t)))
 
-# Treat Ref() like a 1-tuple in many contexts:
-map(args...) = Base.map(args...)
-map(f, r::Base.RefValue) = Ref(f(r[]))
-map(f, r::Base.RefValue, t::Tuple) = Ref(f(r[], first(t)))
-map(f, t::Tuple, r::Base.RefValue) = Ref(f(first(t), r[]))
-
-filter(f, r::Base.RefValue) = f(r[]) ? Tuple(r) : ()
-
 # https://github.com/JuliaLang/julia/pull/29679 -> Compat.jl
 if VERSION < v"1.1.0-DEV.472"
     isnothing(::Any) = false

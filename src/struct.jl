@@ -43,13 +43,13 @@ for (bget, rget) in [(:getindex, :range_getindex), (:view, :range_view)]
 
         @inline @propagate_inbounds function Base.$bget(A::RangeArray, I...)
             # @boundscheck println("boundscheck getindex/view general $I")
-            @boundscheck checkbounds(A.data, I...)
+            @boundscheck checkbounds(parent(A), I...)
             data = @inbounds Base.$bget(parent(A), I...)
 
-            @boundscheck map(checkbounds, A.ranges, I)
-            ranges = $rget(A.ranges, I)
+            @boundscheck map(checkbounds, ranges(A), I)
+            new_ranges = $rget(ranges(A), I)
 
-            ranges isa Tuple{} ? data : RangeArray(data, ranges)
+            new_ranges isa Tuple{} ? data : RangeArray(data, new_ranges)
         end
 
         @inline function $rget(ranges, inds)
