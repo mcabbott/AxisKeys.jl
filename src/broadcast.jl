@@ -64,6 +64,8 @@ unify_ranges(left, right, more...) = unify_ranges(unify_ranges(left, right), mor
 who_wins(arr::AbstractVector, ot::Base.OneTo) = arr
 who_wins(ot::Base.OneTo, arr::AbstractVector) = arr
 who_wins(ot::Base.OneTo, ot′::Base.OneTo) = ot # else ambiguous
+who_wins(arr::AbstractRange, ot::Base.OneTo) = arr # also to solve ambiguity
+who_wins(ot::Base.OneTo, arr::AbstractRange) = arr
 # Other ranges must agree, just keep first:
 who_wins(r::AbstractRange, s::AbstractRange) = r == s ? r : error("ranges must agree")
 # Ranges are kept over vectors:

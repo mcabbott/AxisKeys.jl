@@ -18,10 +18,10 @@ end
 function Base.collect(x::Generator{<:Iterators.ProductIterator{<:Tuple{RangeArray,Vararg{Any}}}})
     data = collect(Generator(x.f, Iterators.product(rangeless.(x.iter.iterators)...)))
     all_ranges = tuple_flatten(ranges_or_axes.(x.iter.iterators)...)
-    RangeArray(data, map(copy, x.iter.ranges))
+    RangeArray(data, map(copy, all_ranges))
 end
 
-tuple_flatten(x::Tuple, ys::Tuple...) = (x..., flatten(ys...)...)
+tuple_flatten(x::Tuple, ys::Tuple...) = (x..., tuple_flatten(ys...)...)
 tuple_flatten() = ()
 
 function Base.mapreduce(f, op, A::RangeArray; dims=:) # sum, prod, etc
