@@ -94,6 +94,7 @@ end
         @test ranges(N, :iter) == 10:10:40
         @test names(N) == (:obs, :iter)
         @test axes(N, :obs) == 1:3
+        @test size(N, :obs) == 3
 
         @test_skip propertynames(N) == (:obs, :iter) # commented out, for speed
         @test_skip N.obs == ['a', 'b', 'c']

@@ -1,7 +1,6 @@
 using NamedDims
 
-wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
-    NamedDimsArray(A, (n, names...))
+wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) = NamedDimsArray(A, (n, names...))
 function wrapdims(A::AbstractArray; kw...)
     L = check_names(A, kw.itr)
     R = check_ranges(A, values(kw.data))
@@ -41,6 +40,8 @@ ranges(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {T,N,L} =
 
 Base.axes(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {T,N,L} =
     axes(A, NamedDims.dim(L,s))
+Base.size(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {T,N,L} =
+    size(A, NamedDims.dim(L,s))
 
 hasranges(A::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} = true
 hasranges(A::RangeArray) = true
