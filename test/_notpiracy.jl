@@ -13,6 +13,17 @@ end
     @test 0 == @allocated AxisRanges._Tuple(Ref(3))
 
 end
+@testset "map" begin
+
+    @test AxisRanges.map(sqrt, Ref(4))[] == 2.0
+    @test AxisRanges.map(sqrt, Ref(4)) isa Ref
+
+    @test AxisRanges.map(+, Ref(2), (3,))[] == 5
+    @test AxisRanges.map(+, Ref(2), (3,)) isa Ref
+    @test AxisRanges.map(+, (2,), Ref(3)) isa Ref
+    @test 0 == @allocated AxisRanges.map(+, (2,), Ref(3))
+
+end
 if VERSION >= v"1.2" # <(3) doesn't exist on 1.1, but Base.Fix2 is fine
 @testset "unit ranges" begin
 

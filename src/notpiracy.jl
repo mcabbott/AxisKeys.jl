@@ -12,6 +12,12 @@ if VERSION < v"1.2.0-DEV.272"
     hasproperty(x, s::Symbol) = s in propertynames(x)
 end
 
+# Treat Ref() like a 1-tuple in map:
+map(args...) = Base.map(args...)
+map(f, r::Base.RefValue) = Ref(f(r[]))
+map(f, r::Base.RefValue, t::Tuple) = Ref(f(r[], first(t)))
+map(f, t::Tuple, r::Base.RefValue) = Ref(f(first(t), r[]))
+
 #===== Speeding up with same results =====#
 
 # https://github.com/JuliaLang/julia/pull/33674
