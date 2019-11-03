@@ -1,13 +1,28 @@
 
-function Base.map(f, A::RangeArray)
-    data = map(f, A.data)
-    RangeArray(data, map(copy, A.ranges))#, copy(A.meta))
+function Base.map(f, A::RangeArray, Bs...)
+    data = map(f, parent(A), rangeless.(Bs)...)
+    new_ranges = copy.(unify_ranges(ranges(A), ranges_or_axes.(Bs)...))
+    RangeArray(data, new_ranges)#, copy(A.meta))
 end
 
-function Base.collect(x::Base.Generator{<:RangeArray})
-    data = collect(Base.Generator(x.f, x.iter.data))
+using Base: Generator
+
+function Base.collect(x::Generator{<:RangeArray})
+    data = collect(Generator(x.f, x.iter.data))
     RangeArray(data, map(copy, x.iter.ranges))#, copy(A.meta))
 end
+function Base.collect(x::Generator{<:Iterators.Enumerate{<:RangeArray}})
+    data = collect(Generator(x.f, enumerate(x.iter.itr.data)))
+    RangeArray(data, map(copy, x.iter.itr.ranges))
+end
+function Base.collect(x::Generator{<:Iterators.ProductIterator{<:Tuple{RangeArray,Vararg{Any}}}})
+    data = collect(Generator(x.f, Iterators.product(rangeless.(x.iter.iterators)...)))
+    all_ranges = tuple_flatten(ranges_or_axes.(x.iter.iterators)...)
+    RangeArray(data, map(copy, x.iter.ranges))
+end
+
+tuple_flatten(x::Tuple, ys::Tuple...) = (x..., flatten(ys...)...)
+tuple_flatten() = ()
 
 function Base.mapreduce(f, op, A::RangeArray; dims=:) # sum, prod, etc
     B = parent(A)
@@ -86,6 +101,7 @@ function Base.sortslices(A::RangeArray; dims, kw...)
     dims′ = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
     data = sortslices(parent(A); dims=dims′, kw...)
     # It would be nice to sort the range to match, but there is no sortpermslices.
+    # https://github.com/davidavdav/NamedArrays.jl/issues/79 constructs something
 end
 
 using LinearAlgebra
@@ -105,3 +121,5 @@ for fun in [:copy, :deepcopy, :similar, :zero, :one]
     @eval Base.$fun(A::RangeArray) = RangeArray($fun(A.data), map(copy, ranges(A)))
 end
 Base.similar(A::RangeArray, T::Type) = RangeArray(similar(A.data, T), map(copy, ranges(A)))
+Base.similar(A::RangeArray, T::Type, dims::Int...) = similar(A.data, T, dims...)
+Base.similar(A::RangeArray, dims::Int...) = similar(A.data, dims...)

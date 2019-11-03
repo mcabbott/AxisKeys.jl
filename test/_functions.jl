@@ -35,16 +35,35 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     @test sortslices(M, dims=:c) isa NamedDimsArray
 
 end
-@testset "map etc" begin
+@testset "map & collect" begin
 
-    # map & collect
     mapM =  map(exp, M)
     @test ranges(mapM) == ('a':'c', 2:5) # fails with nda(ra(...)), has lost ranges?
     @test names(mapM) == (:r, :c)
 
+    @test ranges(map(+, M, M, M)) == ('a':'c', 2:5)
+    @test ranges(map(+, M, parent(M))) == ('a':'c', 2:5)
+
+    @test ranges(map(sqrt, V)) == (10:10:100,)
+
+    V2 = wrapdims(rand(1:99, 10), v=2:11) # different range
+    V3 = wrapdims(rand(1:99, 10), w=10:10:100) # different name
+    @test_throws Exception map(+, V, V2)
+    @test_skip map(+, V, V3) # should throw an error
+
     genM =  [exp(x) for x in M]
     @test ranges(genM) == ('a':'c', 2:5) # fails with nda(ra(...))
     @test_broken names(genM) == (:r, :c)
+
+    @test ranges([exp(x) for x in V]) == (10:10:100,)
+
+    gen3 = [x+y for x in M, y in V]
+    @test ranges(gen3) == ('a':'c', 2:5, 10:10:100)
+    @test_broken names(gen3) == (:r, :c, :v)
+
+    gen1 = [x^i for (i,x) in enumerate(V)]
+    @test ranges(gen1) == (10:10:100,)
+    @test_broken names(gen1) == (:v,)
 
 end
 @testset "cat" begin
@@ -65,6 +84,10 @@ end
     # copy, similar, etc
     @test ranges(copy(M)) == ('a':'c', 2:5)
     @test zero(M)('a',2) == 0
-    @test eltype(similar(M, Float64)) == Float64
+
+    @test ranges(similar(M, Int)) == ranges(M)
+    @test AxisRanges.hasranges(similar(M, Int, 3,3)) == false
+    @test names(similar(M, 3,3)) == (:r, :c)
+    @test AxisRanges.hasnames(similar(M, 2,2,2)) == false
 
 end

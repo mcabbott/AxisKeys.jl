@@ -5,7 +5,7 @@ struct RangeArray{T,N,AT,RT} <: AbstractArray{T,N}
     ranges::RT
 end
 
-RangeVector{T,AT,RT} = RangeArray{T,1,AT,RT}
+const RangeVector{T,AT,RT} = RangeArray{T,1,AT,RT}
 
 function RangeArray(data::AbstractArray{T,N}, ranges::Union{Tuple,Base.RefValue} = axes(data)) where {T,N}
     length(ranges) == N || error("wrong number of ranges")
@@ -19,6 +19,8 @@ Base.size(x::RangeArray) = size(x.data)
 Base.axes(x::RangeArray) = axes(x.data)
 
 Base.parent(x::RangeArray) = x.data
+rangeless(x::RangeArray) = x.data
+rangeless(x) = x
 
 ranges(x::RangeArray) = _Tuple(x.ranges)
 ranges(x::RangeArray{T,N}, d::Int) where {T,N} = d<=N ? x.ranges[d] : OneTo(1)
@@ -183,16 +185,17 @@ using OffsetArrays
 
 function check_ranges(A, ranges)
     ndims(A) == length(ranges) || error("wrong number of ranges")
-    checked = map(enumerate(ranges)) do (d,r)
-        r === nothing && return axes(A,d)
-        size(A,d) == length(r) || error("wrong length of ranges")
-        if axes(A,d) != axes(r,1)
-            r = OffsetArray(r, axes(A,d))
+    checked = ntuple(ndims(A)) do d
+        r = ranges[d]
+        if r === nothing
+            axes(A,d)
+        elseif axes(r,1) == axes(A,d)
+            r
+        elseif length(r) == size(A,d)
+            OffsetArray(r, axes(A,d))
+        else
+            error("wrong length of ranges")
         end
-        if eltype(r) == Symbol
-            allunique(r...) || error("ranges of Symbols need to be unique")
-        end
-        r
     end
-    ndims(A) == 1 ? Ref(first(checked)) : Tuple(checked)
+    ndims(A) == 1 ? Ref(first(checked)) : checked
 end

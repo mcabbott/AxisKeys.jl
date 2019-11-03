@@ -49,16 +49,16 @@ Base.BroadcastStyle(a::AbstractArrayStyle{M}, ::RangeStyle{B}) where {B,M} = Ran
 
 function unify_longest(short, long)
     length(short) > length(short) && return unify_longest(long, short)
-    overlap = unify_shortest(short, long)
+    overlap = unify_ranges(short, long)
     extra = ntuple(i -> long[i + length(short)], length(long) - length(short))
     return (overlap..., extra...)
 end
 unify_longest(x) = x
 unify_longest(x,y,zs...) = unify_longest(unify_longest(x,y), zs...)
 
-unify_shortest(left, right) = map(who_wins, left, right)
-unify_shortest(left) = left
-unify_shortest(left, right, more...) = unify_shortest(unify_shortest(left, right), more...)
+unify_ranges(left, right) = map(who_wins, left, right)
+unify_ranges(left) = left
+unify_ranges(left, right, more...) = unify_ranges(unify_ranges(left, right), more...)
 
 # Base.OneTo is always discarded:
 who_wins(arr::AbstractVector, ot::Base.OneTo) = arr

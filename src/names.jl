@@ -28,6 +28,8 @@ hasnames(A) = false
 
 NamedDims.unname(A::RangeArray{T,N,<:NamedDimsArray{L}}) where {T,N,L} =
     RangeArray(unname(A.data), A.ranges)
+rangeless(x::NamedDimsArray{L,T,N,<:RangeArray}) where {T,N,L} =
+    NamedDimsArray(A.data.data, L)
 
 ranges(A::NamedDimsArray{L,T,N,<:RangeArray}) where {T,N,L} = ranges(parent(A))
 ranges(A::NamedDimsArray{L,T,N,<:RangeArray}, d::Int) where {T,N,L} = ranges(parent(A), d)
@@ -43,6 +45,9 @@ Base.axes(A::RangeArray{T,N,<:NamedDimsArray{L}}, s::Symbol) where {T,N,L} =
 hasranges(A::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} = true
 hasranges(A::RangeArray) = true
 hasranges(A) = false
+
+ranges_or_axes(A) = hasranges(A) ? ranges(A) : axes(A)
+ranges_or_axes(A, d) = hasranges(A) ? ranges(A, d) : axes(A, d)
 
 """
     namedranges(A)
