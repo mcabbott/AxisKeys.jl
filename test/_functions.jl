@@ -11,6 +11,8 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     M2 = prod(M, dims=:c)
     @test ranges(M2) == ('a':'c', Base.OneTo(1))
 
+    @test_throws ArgumentError sum(M, dims=:nope)
+
     # dropdims
     @test ranges(dropdims(M1, dims=1)) == (2:5,)
     @test ranges(dropdims(M2, dims=:c)) == ('a':'c',)
@@ -23,8 +25,8 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     @test names(transpose(M2)) == (:c, :r)
     @test ranges(permutedims(M, (2,1))) == (2:5, 'a':'c')
     @test names(M3') == (:_, :r)
-
-    @test_throws ArgumentError sum(M, dims=:nope)
+    @test ranges(transpose(transpose(V))) == ranges(V)
+    @test_skip ranges(permutedims(transpose(V))) == (ranges(V,1), Base.OneTo(1)) # NamedDims PR#77
 
     # sort
     @test sort(V)(20) == V(20)
