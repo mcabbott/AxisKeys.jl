@@ -1,4 +1,4 @@
-using Base: @propagate_inbounds, OneTo
+using Base: @propagate_inbounds, OneTo, RefValue
 
 struct RangeArray{T,N,AT,RT} <: AbstractArray{T,N}
     data::AT
@@ -6,8 +6,10 @@ struct RangeArray{T,N,AT,RT} <: AbstractArray{T,N}
 end
 
 const RangeVector{T,AT,RT} = RangeArray{T,1,AT,RT}
+const RangeMatrix{T,AT,RT} = RangeArray{T,2,AT,RT}
+const RangeVecOrMat{T,AT,RT} = Union{RangeVector{T,AT,RT}, RangeMatrix{T,AT,RT}}
 
-function RangeArray(data::AbstractArray{T,N}, ranges::Union{Tuple,Base.RefValue} = axes(data)) where {T,N}
+function RangeArray(data::AbstractArray{T,N}, ranges::Union{Tuple,RefValue} = axes(data)) where {T,N}
     length(ranges) == N || error("wrong number of ranges")
     all(r -> r isa AbstractVector, ranges) || error("ranges must be AbstractVectors")
     final = (N==1 && ranges isa Tuple) ? Ref(first(ranges)) : ranges

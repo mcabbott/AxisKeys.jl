@@ -1,8 +1,17 @@
 
-function Base.map(f, A::RangeArray, Bs...)
-    data = map(f, parent(A), rangeless.(Bs)...)
-    new_ranges = copy.(unify_ranges(ranges(A), ranges_or_axes.(Bs)...))
-    RangeArray(data, new_ranges)#, copy(A.meta))
+function Base.map(f, A::RangeArray)
+    data = map(f, parent(A))
+    RangeArray(data, map(copy,A.ranges))#, copy(A.meta))
+end
+for fun in [:map, :map!], (T, S) in [ (:RangeArray, :RangeArray),
+        (:RangeArray, :AbstractArray), (:AbstractArray, :RangeArray),
+        (:RangeArray, :NamedDimsArray), (:NamedDimsArray, :RangeArray)] # for ambiguities
+
+    @eval function Base.$fun(f, A::$T, B::$S, Cs::AbstractArray...)
+        data = $fun(f, rangeless(A), rangeless(B), rangeless.(Cs)...)
+        new_ranges = unify_ranges(ranges_or_axes(A), ranges_or_axes(B), ranges_or_axes.(Cs)...)
+        return RangeArray(data, copy.(new_ranges)) # copy sometimes wasteful for map!, but OK.
+    end
 end
 
 using Base: Generator
@@ -59,28 +68,33 @@ function Base.permutedims(A::RangeArray, perm)
     RangeArray(data, new_ranges)#, copy(A.meta))
 end
 
-function Base.vcat(A::RangeArray, Bs::RangeArray...)
-    data = vcat(parent(A), map(parent, Bs)...)
-    new_range_1 = range_vcat(ranges(A,1), ranges.(Bs,1)...)
-    if ndims(A) == 1
-        new_ranges = (new_range_1,)
-    else
-        new_ranges = (new_range_1, who_wins(ranges(A,2), ranges.(Bs,2)...))
-    end
-    RangeArray(data, new_ranges)
-end
+for (T, S) in [(:RangeVecOrMat, :RangeVecOrMat), # RangeArray gives ambiguities
+    (:RangeVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :RangeVecOrMat)]
 
-function Base.hcat(A::RangeArray, Bs::RangeArray...)
-    data = hcat(parent(A), map(parent, Bs)...)
-    new_range_1 = who_wins(ranges(A,1), ranges.(Bs,1)...)
-    if ndims(A) == 1
-        new_ranges = (new_range_1, axes(data,2))
-    else
-        new_ranges = (new_range_1, range_vcat(ranges(A,2), ranges.(Bs,2)...))
+    @eval function Base.vcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
+        data = vcat(rangeless(A), rangeless(B), rangeless.(Cs)...)
+        new_1 = range_vcat(ranges_or_axes(A,1), ranges_or_axes(B,1), ranges_or_axes.(Cs,1)...)
+        if ndims(A) == 1
+            new_ranges = Ref(new_1)
+        else # ndims == 2
+            new_2 = who_wins(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...)
+            new_ranges = (new_1, new_2)
+        end
+        RangeArray(data, new_ranges)
     end
-    RangeArray(data, new_ranges)
-end
 
+    @eval function Base.hcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
+        data = hcat(rangeless(A), rangeless(B), rangeless.(Cs)...)
+        new_1 = who_wins(ranges_or_axes(A,1), ranges_or_axes(B,1), ranges_or_axes.(Cs,1)...)
+        if ndims(A) == 1
+            new_2 = axes(data,2)
+        else # ndims == 2
+            new_2 = range_vcat(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...)
+        end
+        RangeArray(data, (new_1, new_2))
+    end
+
+end
 range_vcat(a::AbstractVector, b::AbstractVector) = vcat(a,b)
 range_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
 range_vcat(a,b,cs...) = range_vcat(range_vcat(a,b),cs...)
@@ -118,8 +132,8 @@ end
 Base.reshape(A::RangeArray, dims::Union{Colon, Int64}...) = reshape(parent(A), dims...)
 
 for fun in [:copy, :deepcopy, :similar, :zero, :one]
-    @eval Base.$fun(A::RangeArray) = RangeArray($fun(A.data), map(copy, ranges(A)))
+    @eval Base.$fun(A::RangeArray) = RangeArray($fun(A.data), map(copy, A.ranges))
 end
-Base.similar(A::RangeArray, T::Type) = RangeArray(similar(A.data, T), map(copy, ranges(A)))
+Base.similar(A::RangeArray, T::Type) = RangeArray(similar(A.data, T), map(copy, A.ranges))
 Base.similar(A::RangeArray, T::Type, dims::Int...) = similar(A.data, T, dims...)
 Base.similar(A::RangeArray, dims::Int...) = similar(A.data, dims...)

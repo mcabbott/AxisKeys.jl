@@ -60,18 +60,26 @@ unify_ranges(left, right) = map(who_wins, left, right)
 unify_ranges(left) = left
 unify_ranges(left, right, more...) = unify_ranges(unify_ranges(left, right), more...)
 
-# Base.OneTo is always discarded:
+"""
+    who_wins(range(A,1), range(B,1))
+    who_wins(r, s, t, ...)
+
+For broadcasting, but also `map` etc, this compares individual ranges & returns the final one.
+In general they must agree `==`, and the simpeler type will be returned
+(e.g. `Vector + UnitRange -> UnitRange`).
+
+However default ranges `Base.OneTo(n)` are regarded as wildcards.
+They need not agree with anyone, and are always discarded in favour of other types.
+"""
+who_wins(x,y,zs...) = who_wins(who_wins(x,y), zs...)
+
+who_wins(r::AbstractVector, s::AbstractVector) = r == s ? r : error("ranges must agree")
+who_wins(vec::AbstractVector, ran::AbstractRange) = vec == ran ? ran : error("ranges must agree")
+who_wins(ran::AbstractRange, vec::AbstractVector) = vec == ran ? ran : error("ranges must agree")
+who_wins(r::AbstractRange, s::AbstractRange) = r == s ? r : error("ranges must agree")
+
 who_wins(arr::AbstractVector, ot::Base.OneTo) = arr
 who_wins(ot::Base.OneTo, arr::AbstractVector) = arr
 who_wins(ot::Base.OneTo, ot′::Base.OneTo) = ot # else ambiguous
 who_wins(arr::AbstractRange, ot::Base.OneTo) = arr # also to solve ambiguity
 who_wins(ot::Base.OneTo, arr::AbstractRange) = arr
-# Other ranges must agree, just keep first:
-who_wins(r::AbstractRange, s::AbstractRange) = r == s ? r : error("ranges must agree")
-# Ranges are kept over vectors:
-who_wins(vec::AbstractVector, ran::AbstractRange) = vec == ran ? ran : error("ranges must agree")
-who_wins(ran::AbstractRange, vec::AbstractVector) = vec == ran ? ran : error("ranges must agree")
-# Otherwise just pick the first:
-who_wins(r, s) = r == s ? r : error("ranges must agree")
-# And, given more than two, work pairwise:
-who_wins(x,y,zs...) = who_wins(who_wins(x,y), zs...)

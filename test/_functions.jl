@@ -53,17 +53,17 @@ end
 
     genM =  [exp(x) for x in M]
     @test ranges(genM) == ('a':'c', 2:5) # fails with nda(ra(...))
-    @test_broken names(genM) == (:r, :c)
+    @test_broken names(genM) == (:r, :c) # works with NamedDims#map
 
     @test ranges([exp(x) for x in V]) == (10:10:100,)
 
-    gen3 = [x+y for x in M, y in V]
+    gen3 = [x+y for x in M, y in V];
     @test ranges(gen3) == ('a':'c', 2:5, 10:10:100)
-    @test_broken names(gen3) == (:r, :c, :v)
+    @test_broken names(gen3) == (:r, :c, :v) # works with NamedDims#map
 
     gen1 = [x^i for (i,x) in enumerate(V)]
     @test ranges(gen1) == (10:10:100,)
-    @test_broken names(gen1) == (:v,)
+    @test_broken names(gen1) == (:v,) # works with NamedDims#map
 
 end
 @testset "cat" begin
@@ -71,12 +71,16 @@ end
     # concatenation
     @test ranges(hcat(M,M)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5]) # fails with nda(ra(...))
     @test ranges(vcat(M,M)) == (['a', 'b', 'c', 'a', 'b', 'c'], 2:5)
+
     V = wrapdims(rand(1:99, 3), r=['a', 'b', 'c'])
     @test ranges(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1])
     @test ranges(hcat(V,V),2) === Base.OneTo(2)
 
+    @test ranges(vcat(V,V),1) == ['a', 'b', 'c', 'a', 'b', 'c']
+    @test ranges(vcat(V', V')) == (1:2, ['a', 'b', 'c'])
+
     @test hcat(M, ones(3)) == hcat(M.data, ones(3))
-    @test_broken ranges(hcat(M, ones(3))) == ('a':1:'c', 2:6)
+    @test ranges(hcat(M, ones(3))) == ('a':1:'c', [2, 3, 4, 5, 1])
 
 end
 @testset "copy etc" begin
