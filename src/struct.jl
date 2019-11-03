@@ -16,6 +16,11 @@ function RangeArray(data::AbstractArray{T,N}, ranges::Union{Tuple,RefValue} = ax
     RangeArray{T, N, typeof(data), typeof(final)}(data, final)
 end
 
+# RangeArray(data::AbstractVector, ref::RefValue{<:AbstractVector}) =
+#     RangeArray{eltype(data), 1, typeof(data), typeof(ref)}(data, ref)
+# RangeArray(data::AbstractVector, arr::AbstractVector) =
+#     RangeArray{eltype(data), 1, typeof(data), typeof(Ref(arr))}(data, Ref(arr))
+
 Base.size(x::RangeArray) = size(x.data)
 
 Base.axes(x::RangeArray) = axes(x.data)
@@ -30,7 +35,7 @@ ranges(x::RangeArray{T,1}, d::Int) where {T} = d==1 ? x.ranges[] : OneTo(1)
 
 Base.IndexStyle(A::RangeArray) = IndexCartesian()
 
-for (bget, rget) in [(:getindex, :range_getindex), (:view, :range_view)]
+for (bget, rget, cpy) in [(:getindex, :range_getindex, :copy), (:view, :range_view, :identity)]
     @eval begin
 
         @inline function Base.$bget(A::RangeArray, I::Integer...)
@@ -39,14 +44,10 @@ for (bget, rget) in [(:getindex, :range_getindex), (:view, :range_view)]
             @inbounds Base.$bget(parent(A), I...)
         end
 
-        @inline function Base.$bget(A::RangeArray, I::CartesianIndex)
+        @inline function Base.$bget(A::RangeArray, I::Union{Colon, CartesianIndex})
             # @boundscheck println("boundscheck getindex/view CartesianIndex $I")
             @boundscheck checkbounds(parent(A), I)
             @inbounds Base.$bget(parent(A), I)
-        end
-
-        @inline function Base.$bget(A::RangeArray, ::Colon)
-            Base.$bget(parent(A), :)
         end
 
         @inline @propagate_inbounds function Base.$bget(A::RangeArray, I...)
@@ -62,7 +63,10 @@ for (bget, rget) in [(:getindex, :range_getindex), (:view, :range_view)]
 
         @inline function $rget(ranges, inds)
             got = map(ranges, inds) do r,i
-                i isa Integer ? nothing : @inbounds Base.$bget(r,i)
+                i isa Integer       && return nothing
+                i isa Colon         && return $cpy(r)        # avoids view([1,2,3], :)
+                r isa AbstractRange && return getindex(r,i)  # don't make views of 1:10
+                return @inbounds $bget(r,i)
             end
             filter(r -> r isa AbstractArray, got)
         end
