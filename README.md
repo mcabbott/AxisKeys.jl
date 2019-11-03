@@ -58,6 +58,10 @@ for example `DataFrame(Tables.rows(C))` has column names `[:obs, :time, :value]`
 One idea is to make selectors could work backwards, allowing `A[Key(key)] = val`.
 Or a macro `@set A(key) = val`. For now, you can write `C("dog") .= 1:10` since it's a view.
 
+* `Index[end]` works, perhaps [EndpointRanges.jl](https://github.com/JuliaArrays/EndpointRanges.jl) is the way to let `Index[end-1]` work.
+
+* You can extract ranges via `C.time == 0:0.5:49.5`, like [this PR](https://github.com/JuliaArrays/AxisArrays.jl/pull/152).
+
 Links to the zoo of similar packages:
 
 * Anciet, pre-1.0: [AxisArrays](https://github.com/JuliaArrays/AxisArrays.jl), 

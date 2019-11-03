@@ -65,8 +65,9 @@ namedaxes(A::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} = NamedTuple{L}(a
 namedaxes(A::RangeArray{T,N,<:NamedDimsArray{L}}) where {L,T,N} = NamedTuple{L}(axes(A))
 namedaxes(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
 
-# A.stuff -- these seem to cost quite a bit of speed
-#=
+# A.stuff -- these cost about 30ns on getindex, sadly?
+# Fix: https://github.com/invenia/NamedDims.jl/pull/78
+
 @inline Base.propertynames(A::NamedDimsArray{L,T,N,<:RangeArray}, private=false) where {L,T,N} =
     private ? (L..., fieldnames(typeof(A))) : L
 @inline Base.propertynames(A::RangeArray{T,N,<:NamedDimsArray{L}}, private=false) where {L,T,N} =
@@ -78,7 +79,6 @@ namedaxes(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
     Base.sym_in(s, L) ? ranges(A, NamedDims.dim(L, s)) : getfield(A, s)
 @inline Base.getproperty(A::NamedDimsArray{L}, s::Symbol) where {L} =
     Base.sym_in(s, L) ? axes(A, NamedDims.dim(L, s)) : getfield(A, s)
-=#
 
 # Keyword indexing of RangeArray:
 

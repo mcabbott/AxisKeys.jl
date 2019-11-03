@@ -96,8 +96,8 @@ end
         @test axes(N, :obs) == 1:3
         @test size(N, :obs) == 3
 
-        @test_skip propertynames(N) == (:obs, :iter) # commented out, for speed
-        @test_skip N.obs == ['a', 'b', 'c']
+        @test propertynames(N) == (:obs, :iter)
+        @test N.obs == ['a', 'b', 'c']
 
         @test N(obs='a', iter=40) == N[obs=1, iter=4]
         @test N(obs='a') == N('a') == N[1,:]

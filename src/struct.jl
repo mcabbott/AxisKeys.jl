@@ -21,17 +21,18 @@ end
 # RangeArray(data::AbstractVector, arr::AbstractVector) =
 #     RangeArray{eltype(data), 1, typeof(data), typeof(Ref(arr))}(data, Ref(arr))
 
-Base.size(x::RangeArray) = size(x.data)
+Base.size(x::RangeArray) = size(parent(x))
 
-Base.axes(x::RangeArray) = axes(x.data)
+Base.axes(x::RangeArray) = axes(parent(x))
 
-Base.parent(x::RangeArray) = x.data
-rangeless(x::RangeArray) = x.data
+Base.parent(x::RangeArray) = getfield(x, :data)
+rangeless(x::RangeArray) = parent(x)
 rangeless(x) = x
 
-ranges(x::RangeArray) = _Tuple(x.ranges)
-ranges(x::RangeArray{T,N}, d::Int) where {T,N} = d<=N ? x.ranges[d] : OneTo(1)
-ranges(x::RangeArray{T,1}, d::Int) where {T} = d==1 ? x.ranges[] : OneTo(1)
+ranges(x::RangeArray) = getfield(x, :ranges)
+ranges(x::RangeVector) = tuple(getindex(getfield(x, :ranges)))
+ranges(x::RangeArray, d::Int) = d<=ndims(x) ? getindex(ranges(x), d) : OneTo(1)
+ranges(x::RangeVector, d::Int) = d==1 ? getindex(getfield(x, :ranges)) : OneTo(1)
 
 Base.IndexStyle(A::RangeArray) = IndexCartesian()
 
@@ -77,7 +78,7 @@ end
 @inline @propagate_inbounds function Base.setindex!(A::RangeArray, val, I...)
     # @boundscheck println("boundscheck setindex! $I")
     @boundscheck checkbounds(A, I...)
-    @inbounds setindex!(A.data, val, I...)
+    @inbounds setindex!(parent(A), val, I...)
     val
 end
 
@@ -90,7 +91,7 @@ except that it searches for the given keys in `ranges(A)`,
 instead of `axes(A)` for indices.
 
 A single key may be used to indicate a slice, provided that its type
-only matches the eltype of one `range(A,d)`.
+only matches the eltype of one `ranges(A,d)`.
 You can also slice explicitly with `A("a", :, :)`, both of these return a `view`.
 
 Also accepts functions like `A(<=(2.0))` and selectors,
