@@ -10,7 +10,7 @@ for fun in [:map, :map!], (T, S) in [ (:RangeArray, :RangeArray),
     @eval function Base.$fun(f, A::$T, B::$S, Cs::AbstractArray...)
         data = $fun(f, rangeless(A), rangeless(B), rangeless.(Cs)...)
         new_ranges = unify_ranges(ranges_or_axes(A), ranges_or_axes(B), ranges_or_axes.(Cs)...)
-        return RangeArray(data, copy.(new_ranges)) # copy sometimes wasteful for map!, but OK.
+        RangeArray(data, map(copy, new_ranges)) # copy sometimes wasteful for map!, but OK.
     end
 end
 
@@ -34,19 +34,11 @@ tuple_flatten(x::Tuple, ys::Tuple...) = (x..., tuple_flatten(ys...)...)
 tuple_flatten() = ()
 
 function Base.mapreduce(f, op, A::RangeArray; dims=:) # sum, prod, etc
-    B = parent(A)
-    dims === Colon() && return mapreduce(f, op, B)
-
+    dims === Colon() && return mapreduce(f, op, parent(A))
     numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
-    C = mapreduce(f, op, B; dims=numerical_dims)
-
-    X = hasnames(A) ? NamedDimsArray(C, names(A)) : C
-    if hasranges(A)
-        new_ranges = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : ranges(A,d), ndims(A))
-        return RangeArray(X, new_ranges)#, copy(A.meta))
-    else
-        return X
-    end
+    data = mapreduce(f, op, parent(A); dims=numerical_dims)
+    new_ranges = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : ranges(A,d), ndims(A))
+    return RangeArray(data, new_ranges)#, copy(A.meta))
 end
 
 function Base.dropdims(A::RangeArray; dims)
@@ -74,24 +66,17 @@ for (T, S) in [(:RangeVecOrMat, :RangeVecOrMat), # RangeArray gives ambiguities
     @eval function Base.vcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
         data = vcat(rangeless(A), rangeless(B), rangeless.(Cs)...)
         new_1 = range_vcat(ranges_or_axes(A,1), ranges_or_axes(B,1), ranges_or_axes.(Cs,1)...)
-        if ndims(A) == 1
-            new_ranges = Ref(new_1)
-        else # ndims == 2
-            new_2 = who_wins(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...)
-            new_ranges = (new_1, new_2)
-        end
-        RangeArray(data, new_ranges)
+        new_ranges = ndims(A) == 1 ? Ref(new_1) :
+            (new_1, who_wins(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...))
+        RangeArray(data, map(copy, new_ranges))
     end
 
     @eval function Base.hcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
         data = hcat(rangeless(A), rangeless(B), rangeless.(Cs)...)
         new_1 = who_wins(ranges_or_axes(A,1), ranges_or_axes(B,1), ranges_or_axes.(Cs,1)...)
-        if ndims(A) == 1
-            new_2 = axes(data,2)
-        else # ndims == 2
-            new_2 = range_vcat(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...)
-        end
-        RangeArray(data, (new_1, new_2))
+        new_2 = ndims(A) == 1 ? axes(data,2) :
+            range_vcat(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...)
+        RangeArray(data, map(copy, (new_1, new_2)))
     end
 
 end
