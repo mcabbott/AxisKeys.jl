@@ -1,3 +1,4 @@
+using Test, AxisRanges
 
 @testset "basics" begin
 
@@ -44,6 +45,7 @@ end
     @test V(==(0.1)) == V[2:2]
     @test V(Nearest(0.12)) == V(0.1) == V[2]
     @test V(Between(0.1, 0.3)) == V[2:4]
+    @test V(Interval(0.1, 0.3)) == V[2:4] # will replace Between
 
     @test V(Index[1]) == V[1]
     @test V(Index[2:3]) == V[2:3]
@@ -58,13 +60,12 @@ end
     R = RangeArray(rand(1:99, 3,4), (['a', 'b', 'c'], 10:10:40))
     @test R(==('a')) == R[1:1, :]
     @test R(Nearest(23)) == R[:, 2]
+    @test R(Nearest(23.5)) == R[:, 2] # promotes to Real & then matches
     @test R(Between(17,23)) == R[:, 2:2]
     @test R(Base.Fix2(<=,23)) == R[:, 1:2]
     @test_skip ranges(R(Base.Fix2(<=,23)), 2) isa AbstractRange
 
     @test_throws BoundsError V(Index[99])
-    @test_throws Exception R(Nearest(23.5)) # ideally ArgumentError
-
 end
 @testset "names" begin
 
