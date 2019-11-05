@@ -34,7 +34,8 @@ ranges(x::RangeVector) = tuple(getindex(getfield(x, :ranges)))
 ranges(x::RangeArray, d::Int) = d<=ndims(x) ? getindex(ranges(x), d) : OneTo(1)
 ranges(x::RangeVector, d::Int) = d==1 ? getindex(getfield(x, :ranges)) : OneTo(1)
 
-Base.IndexStyle(A::RangeArray) = IndexCartesian()
+Base.IndexStyle(A::RangeArray) = IndexStyle(parent(A))
+Base.eachindex(A::RangeArray) = eachindex(parent(A))
 
 for (bget, rget, cpy) in [(:getindex, :range_getindex, :copy), (:view, :range_view, :identity)]
     @eval begin
@@ -108,23 +109,7 @@ see `Nearest` and `Index`.
 
     elseif length(args)==1
         arg = first(args)
-        rtypes = map(eltype, ranges(A))
-
-        ds = findall(T -> arg isa T, rtypes) # First look for direct match
-        if isempty(ds)
-            if arg isa Base.Fix2 || hasproperty(arg, :x) # Next try for a function
-                ds = findall(T -> arg.x isa T, rtypes)
-            elseif arg isa Selector
-                ds = findall(T -> eltype(arg) <: T, rtypes)
-            else
-                ds = findall(T -> arg isa supertype(T), rtypes) # esp. for AbstractString
-            end
-            isempty(ds) && error("can't find which dimension for $args")
-        end
-        length(ds) >= 2 && error(
-            "key $arg is ambiguous, its type matches dimensions $(Tuple(ds))")
-
-        d = first(ds)
+        d = guessdim(arg, map(eltype, ranges(A)))
         i = findindex(arg, ranges(A,d))
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
         # @boundscheck println("boundscheck getkey $args -> $inds")
@@ -149,7 +134,43 @@ end
     setindex!(A, val, inds...)
 end
 
-# https://docs.julialang.org/en/v1/base/arrays/#Base.to_indices
+"""
+    guessdim(key, types)
+
+When you call `A(key)` for `ndims(A) > 1`, this is given `eltype.(ranges(A))`
+and returns which `d` you meant, if unambigous.
+"""
+function guessdim(arg, types, subtypes=())
+    types == subtypes && error("can't find which dimension for $args")
+
+    # First look for direct match
+    ds = findall(T -> arg isa T, types)
+
+    if length(ds) == 1
+        return first(ds)
+    elseif length(ds) >= 2
+        error("key $arg is ambiguous, its type matches dimensions $(Tuple(ds))")
+    end
+
+    # If no direct match, look for a container whose eltype matches:
+    if arg isa Base.Fix2 || hasproperty(arg, :x)
+        ds = findall(T -> arg.x isa T, types)
+    elseif arg isa Selector || arg isa Interval || arg isa AbstractArray
+        ds = findall(T -> eltype(arg) <: T, types)
+    end
+
+    if length(ds) == 1
+        return first(ds)
+    elseif length(ds) >= 2
+        error("key $arg is ambiguous, its eltype matches dimensions $(Tuple(ds))")
+    end
+
+    # Otherwise, widen the range types and try again.
+    # This will recurse until types stop changing.
+    supers = map(T -> supertype(T) == Any ? T : supertype(T), types)
+    return guessdim(arg, supers, types)
+end
+
 """
     findindex(key, range)
 
@@ -168,9 +189,13 @@ end
 
 findindex(a::Colon, r::AbstractArray) = Colon()
 
-findindex(a::AbstractArray, r::AbstractArray) = [findfirst(isequal(x), r) for x in a]
+findindex(a::Union{AbstractArray, Base.Generator}, r::AbstractArray) =
+    reduce(vcat, findindex(x, r) for x in a)
 
 findindex(f::Function, r::AbstractArray) = findall(f, r)
+
+# It's possible this should be a method of to_indices or one of its friends?
+# https://docs.julialang.org/en/v1/base/arrays/#Base.to_indices
 
 """
     wrapdims(A, :i, :j)
