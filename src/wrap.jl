@@ -1,0 +1,65 @@
+
+"""
+    wrapdims(A, :i, :j)
+    wrapdims(A, 1:10, ['a', 'b', 'c'])
+    wrapdims(A, i=1:10, j=['a', 'b', 'c'])
+
+Function for constructing either a `NamedDimsArray`, a `RangeArray`,
+or a nested pair of both.
+Performs some sanity checks which are skipped by `RangeArray` constructor.
+Giving `nothing` as a range will result in `ranges(A,d) == axes(A,d)`.
+
+By default it wraps in this order: `RangeArray{...,NamedDimsArray{...}}`.
+This tests a flag `AxisRanges.OUTER[] == :RangeArray` which you can change.
+"""
+wrapdims(A::AbstractArray, r::Union{AbstractVector,Nothing}, ranges::Union{AbstractVector,Nothing}...) =
+    RangeArray(A, check_ranges(A, (r, ranges...)))
+
+"""
+    wrapdims(T, ranges...)
+    wrapdims(T; name=range, ...)
+
+Given a type `T`, this creates `Array{T}(undef, ...)` before wrapping as instructed.
+"""
+wrapdims(T::Type, r::AbstractVector, ranges::AbstractVector...) =
+    wrapdims(Array{T}(undef, map(length, (r, ranges...))), r, ranges...)
+
+using OffsetArrays
+
+function check_ranges(A, ranges)
+    ndims(A) == length(ranges) || error("wrong number of ranges")
+    checked = ntuple(ndims(A)) do d
+        r = ranges[d]
+        if r === nothing
+            axes(A,d)
+        elseif axes(r,1) == axes(A,d)
+            r
+        elseif length(r) == size(A,d)
+            OffsetArray(r, axes(A,d))
+        else
+            error("wrong length of ranges")
+        end
+    end
+    ndims(A) == 1 ? Ref(first(checked)) : checked
+end
+
+#===== with names =====#
+
+wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) = NamedDimsArray(A, (n, names...))
+
+const OUTER = Ref(:RangeArray)
+
+function wrapdims(A::AbstractArray; kw...)
+    L = check_names(A, kw.itr)
+    R = check_ranges(A, values(kw.data))
+    if OUTER[] == :RangeArray
+        return RangeArray(NamedDimsArray(A, L), R)
+    else
+        return NamedDimsArray(RangeArray(A, R), L)
+    end
+end
+
+function check_names(A, names)
+    ndims(A) == length(names) || error("wrong number of names")
+    names
+end

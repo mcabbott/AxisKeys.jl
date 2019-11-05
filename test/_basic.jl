@@ -37,6 +37,10 @@ using Test, AxisRanges
     @test_throws Exception D("cat", 10) # too few
     @test_throws Exception D("cat", 10, -10) # out of bounds
 
+    E = wrapdims(ComplexF32, [:a, :b], [:c, :d, :e])
+    @test E(:a, :e) isa ComplexF32
+    @test_throws Exception E(:a) # ambiguous
+
 end
 @testset "selectors" begin
 
@@ -66,6 +70,7 @@ end
     @test_skip ranges(R(Base.Fix2(<=,23)), 2) isa AbstractRange
 
     @test_throws BoundsError V(Index[99])
+
 end
 @testset "names" begin
 

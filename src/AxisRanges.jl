@@ -1,15 +1,15 @@
 module AxisRanges
 
 include("struct.jl")
-
-export RangeArray, ranges, wrapdims
+export RangeArray, ranges
 
 include("names.jl")
-
 export NamedDimsArray, namedranges, namedaxes
 
-include("selectors.jl")
+include("wrap.jl")
+export wrapdims
 
+include("selectors.jl")
 export Nearest, Between, Index, Interval
 
 include("tables.jl")

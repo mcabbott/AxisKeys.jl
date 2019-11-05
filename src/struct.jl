@@ -9,7 +9,8 @@ const RangeVector{T,AT,RT} = RangeArray{T,1,AT,RT}
 const RangeMatrix{T,AT,RT} = RangeArray{T,2,AT,RT}
 const RangeVecOrMat{T,AT,RT} = Union{RangeVector{T,AT,RT}, RangeMatrix{T,AT,RT}}
 
-function RangeArray(data::AbstractArray{T,N}, ranges::Union{Tuple,RefValue} = axes(data)) where {T,N}
+function RangeArray(data::AbstractArray{T,N},
+            ranges::Union{Tuple,RefValue} = axes(data)) where {T,N}
     length(ranges) == N || error("wrong number of ranges")
     all(r -> r isa AbstractVector, ranges) || error("ranges must be AbstractVectors")
     final = (N==1 && ranges isa Tuple) ? Ref(first(ranges)) : ranges
@@ -174,12 +175,12 @@ end
 """
     findindex(key, range)
 
-This is usually `findfirst(isequal(key), range)`,
-but understands `findindex(:, range) = range`,
-and `findindex(array, range)`.
+This is usually `findfirst(isequal(key), range)`, and will error if it finds `nothing`.
+But it also understands `findindex(:, range) = (:)`,
+and `findindex(array, range) = vcat((findindex(x, range) for x in array)...)`.
 
 It also understands functions `findindex(<(4), range) = findall(x -> x<4, range)`,
-and selectors like `Nearest(key)` and `Between(lo,hi)`.
+and selectors like `Nearest(key)` and `Interval(lo,hi)`.
 """
 @inline function findindex(a, r::AbstractArray)
     i = findfirst(isequal(a), r)
@@ -190,44 +191,9 @@ end
 findindex(a::Colon, r::AbstractArray) = Colon()
 
 findindex(a::Union{AbstractArray, Base.Generator}, r::AbstractArray) =
-    reduce(vcat, findindex(x, r) for x in a)
+    reduce(vcat, [findindex(x, r) for x in a])
 
 findindex(f::Function, r::AbstractArray) = findall(f, r)
 
 # It's possible this should be a method of to_indices or one of its friends?
 # https://docs.julialang.org/en/v1/base/arrays/#Base.to_indices
-
-"""
-    wrapdims(A, :i, :j)
-    wrapdims(A, 1:10, ['a', 'b', 'c'])
-    wrapdims(A, i=1:10, j=['a', 'b', 'c'])
-
-Function for constructing either a `NamedDimsArray`, a `RangeArray`,
-or a nested pair of both.
-Performs some sanity checks which are skipped by `RangeArray` constructor.
-Giving `nothing` as a range will result in `ranges(A,d) == axes(A,d)`.
-
-By default it wraps in this order: `RangeArray{...,NamedDimsArray{...}}`.
-This tests a flag `AxisRanges.OUTER[] == :RangeArray` which you can change.
-"""
-wrapdims(A::AbstractArray, r::Union{AbstractVector,Nothing}, ranges::Union{AbstractVector,Nothing}...) =
-    RangeArray(A, check_ranges(A, (r, ranges...)))
-
-using OffsetArrays
-
-function check_ranges(A, ranges)
-    ndims(A) == length(ranges) || error("wrong number of ranges")
-    checked = ntuple(ndims(A)) do d
-        r = ranges[d]
-        if r === nothing
-            axes(A,d)
-        elseif axes(r,1) == axes(A,d)
-            r
-        elseif length(r) == size(A,d)
-            OffsetArray(r, axes(A,d))
-        else
-            error("wrong length of ranges")
-        end
-    end
-    ndims(A) == 1 ? Ref(first(checked)) : checked
-end
