@@ -56,9 +56,15 @@ end
 unify_longest(x) = x
 unify_longest(x,y,zs...) = unify_longest(unify_longest(x,y), zs...)
 
-unify_ranges(left, right) = map(who_wins, left, right)
+function unify_ranges(left, right)
+    out = map(who_wins, left, right)
+    out isa Tuple{Vararg{AbstractArray}} || error("ranges must agree")
+    out
+end
 unify_ranges(left) = left
 unify_ranges(left, right, more...) = unify_ranges(unify_ranges(left, right), more...)
+
+unifiable_ranges(left, right) = map(who_wins, left, right) isa Tuple{Vararg{AbstractArray}}
 
 """
     who_wins(range(A,1), range(B,1))
@@ -73,10 +79,10 @@ They need not agree with anyone, and are always discarded in favour of other typ
 """
 who_wins(x,y,zs...) = who_wins(who_wins(x,y), zs...)
 
-who_wins(r::AbstractVector, s::AbstractVector) = r == s ? r : error("ranges must agree")
-who_wins(vec::AbstractVector, ran::AbstractRange) = vec == ran ? ran : error("ranges must agree")
-who_wins(ran::AbstractRange, vec::AbstractVector) = vec == ran ? ran : error("ranges must agree")
-who_wins(r::AbstractRange, s::AbstractRange) = r == s ? r : error("ranges must agree")
+who_wins(r::AbstractVector, s::AbstractVector) = r == s ? r : nothing
+who_wins(vec::AbstractVector, ran::AbstractRange) = vec == ran ? ran : nothing
+who_wins(ran::AbstractRange, vec::AbstractVector) = vec == ran ? ran : nothing
+who_wins(r::AbstractRange, s::AbstractRange) = r == s ? r : nothing
 
 who_wins(arr::AbstractVector, ot::Base.OneTo) = arr
 who_wins(ot::Base.OneTo, arr::AbstractVector) = arr

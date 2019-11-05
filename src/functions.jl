@@ -124,3 +124,10 @@ end
 Base.similar(A::RangeArray, T::Type) = RangeArray(similar(A.data, T), map(copy, A.ranges))
 Base.similar(A::RangeArray, T::Type, dims::Int...) = similar(A.data, T, dims...)
 Base.similar(A::RangeArray, dims::Int...) = similar(A.data, dims...)
+
+for fun in [:(==), :isequal]
+    @eval function Base.$fun(A::RangeArray, B::RangeArray)
+        unifiable_ranges(ranges(A), ranges(B)) || return false
+        return $fun(parent(A), parent(B))
+    end
+end

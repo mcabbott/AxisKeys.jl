@@ -97,3 +97,20 @@ end
     @test AxisRanges.hasnames(similar(M, 2,2,2)) == false
 
 end
+@testset "equality" begin
+
+    data = parent(parent(M))
+    M2 = wrapdims(data, r='a':'c', c=[2,3,4,5]) # same values
+    M3 = wrapdims(data, 'a':'c', 2:5) # no names but same ranges
+    M4 = wrapdims(data, r='a':'c', c=nothing) # missing range
+    @test M == M2 == M3 == M4
+    @test isequal(M, M2) && isequal(M, M3) && isequal(M, M4)
+
+    M5 = wrapdims(data, r='a':'c', c=4:7) # wrong range
+    M6 = wrapdims(data, r='a':'c', nope=2:5) # wrong name
+    M7 = wrapdims(2 .* data, r='a':'c', c=2:5) # wrong data
+    @test M != M5
+    @test_skip M != M6 # pending https://github.com/invenia/NamedDims.jl/pull/79
+    @test M != M7
+
+end
