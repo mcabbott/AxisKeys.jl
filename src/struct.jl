@@ -32,6 +32,7 @@ rangeless(x) = x
 
 ranges(x::RangeArray) = getfield(x, :ranges)
 ranges(x::RangeVector) = tuple(getindex(getfield(x, :ranges)))
+# avoiding Tuple(Ref()) as it's slow, https://github.com/JuliaLang/julia/pull/33674
 ranges(x::RangeArray, d::Int) = d<=ndims(x) ? getindex(ranges(x), d) : OneTo(1)
 ranges(x::RangeVector, d::Int) = d==1 ? getindex(getfield(x, :ranges)) : OneTo(1)
 

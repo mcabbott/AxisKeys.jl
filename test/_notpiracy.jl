@@ -6,13 +6,6 @@
     end
 
 end
-@testset "Tuple" begin
-
-    @test AxisRanges._Tuple((1,2)) === (1,2)
-    @test AxisRanges._Tuple(Ref(3)) === (3,)
-    @test 0 == @allocated AxisRanges._Tuple(Ref(3))
-
-end
 @testset "map" begin
 
     @test AxisRanges.map(sqrt, Ref(4))[] == 2.0

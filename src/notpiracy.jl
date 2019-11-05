@@ -20,17 +20,6 @@ map(f, t::Tuple, r::Base.RefValue) = Ref(f(first(t), r[]))
 
 #===== Speeding up with same results =====#
 
-# https://github.com/JuliaLang/julia/pull/33674
-# Tuple(arg) = Base.Tuple(arg)
-# Tuple(r::Base.RefValue) = tuple(getindex(r))
-# Tuple(t::Tuple) = t # fix an ambiguity
-# That causes a stackoverflow from check_ranges's Tuple(Array{AbstractArray...})
-# which I can't sort out! Out solution is actual piracy:
-# Base.Tuple(r::Base.RefValue) = tuple(r[])
-# The other option is just to call it something else in ranges(A)
-_Tuple(t::Tuple) = t
-_Tuple(r::Base.RefValue) = tuple(getindex(r))
-
 findfirst(args...) = Base.findfirst(args...)
 findall(args...) = Base.findall(args...)
 
@@ -38,6 +27,7 @@ for equal in (isequal, Base.:(==))
     @eval begin
 
 # findfirst returns always Int or Nothing
+# BTW see https://github.com/JuliaLang/julia/pull/30778
 
         findfirst(eq::Base.Fix2{typeof($equal),Int}, r::Base.OneTo{Int}) =
             1 <= eq.x <= r.stop ? eq.x : nothing
