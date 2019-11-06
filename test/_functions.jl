@@ -1,3 +1,4 @@
+using Test, AxisRanges
 
 M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
 V = wrapdims(rand(1:99, 10), v=10:10:100)
@@ -67,6 +68,11 @@ end
     @test ranges(gen1) == (10:10:100,)
     @test_broken names(gen1) == (:v,) # works with NamedDims#map
 
+    @test ranges(filter(isodd, V2),1) isa Vector{Int}
+    @test names(filter(isodd, V2)) == (:v,)
+
+    @test_broken filter(isodd, M) isa Array # works with NamedDims#map
+
 end
 @testset "cat" begin
 
@@ -105,6 +111,7 @@ end
     M4 = wrapdims(data, r='a':'c', c=nothing) # missing range
     @test M == M2 == M3 == M4
     @test isequal(M, M2) && isequal(M, M3) && isequal(M, M4)
+    @test M ≈ M2 ≈ M3 ≈ M4
 
     M5 = wrapdims(data, r='a':'c', c=4:7) # wrong range
     M6 = wrapdims(data, r='a':'c', nope=2:5) # wrong name
@@ -112,5 +119,6 @@ end
     @test M != M5
     @test_skip M != M6 # pending https://github.com/invenia/NamedDims.jl/pull/79
     @test M != M7
+    @test !isapprox(M, M5) && !isapprox(M, M7)
 
 end
