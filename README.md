@@ -29,10 +29,10 @@ Instead of a single value you may also give a function, for instance `A(<(35))`
 looks up `is = findall(t -> t<35, ranges(A,1))` and returns the vector `A[is]`,
 with its range trimmed to match. You may also give one of a few special selectors:
 ```julia
-A(Nearest(12.5))        # the one nearest element
-C(time = Between(1,3))  # matrix with all times in this range
+A(Near(12.5))           # the one nearest element
+C(time=Interval(1,3))   # matrix with all times in 1..3
 C("dog", Index[3])      # mix of range and integer indexing
-C(!=("dog"))            # unambigous as range eltypes are unique
+C(!=("dog"))            # unambigous as only range(C,1) contains strings
 ```
 
 While no special types are provided for these ranges,

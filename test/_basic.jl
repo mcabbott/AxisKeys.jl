@@ -51,9 +51,8 @@ end
     V = wrapdims(rand(Int8, 11), 0:0.1:1)
 
     @test V(==(0.1)) == V[2:2]
-    @test V(Nearest(0.12)) == V(0.1) == V[2]
-    @test V(Between(0.1, 0.3)) == V[2:4]
-    @test V(Interval(0.1, 0.3)) == V[2:4] # will replace Between
+    @test V(Near(0.12)) == V(0.1) == V[2]
+    @test V(Interval(0.1, 0.3)) == V[2:4]
 
     @test V(Index[1]) == V[1]
     @test V(Index[2:3]) == V[2:3]
@@ -62,14 +61,14 @@ end
     V2 = wrapdims(rand(Int8, 5), [1,2,3,2,1])
     @test V2(==(2)) == V2[[2,4]]
     @test V2(==(2.0)) == V2[[2,4]]
-    @test V2(Nearest(2.3)) == V2[2]
-    @test V2(Between(0.5, 1.5)) == V2[[1,5]]
+    @test V2(Near(2.3)) == V2[2]
+    @test V2(Interval(0.5, 1.5)) == V2[[1,5]]
 
     R = RangeArray(rand(1:99, 3,4), (['a', 'b', 'c'], 10:10:40))
     @test R(==('a')) == R[1:1, :]
-    @test R(Nearest(23)) == R[:, 2]
-    @test R(Nearest(23.5)) == R[:, 2] # promotes to Real & then matches
-    @test R(Between(17,23)) == R[:, 2:2]
+    @test R(Near(23)) == R[:, 2]
+    @test R(Near(23.5)) == R[:, 2] # promotes to Real & then matches
+    @test R(Interval(17,23)) == R[:, 2:2]
     @test R(Base.Fix2(<=,23)) == R[:, 1:2]
     @test_skip ranges(R(Base.Fix2(<=,23)), 2) isa AbstractRange
 

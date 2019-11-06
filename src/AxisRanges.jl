@@ -10,7 +10,7 @@ include("wrap.jl")
 export wrapdims
 
 include("selectors.jl")
-export Nearest, Between, Index, Interval
+export Near, Index, Interval
 
 include("tables.jl")
 
