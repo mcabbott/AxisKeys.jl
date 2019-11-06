@@ -29,6 +29,8 @@ See also `Index[i]`.
 """
 abstract type Selector{T} end
 
+Base.eltype(::Type{<:Selector{T}}) where {T} = T
+
 @doc @doc(Selector)
 struct Nearest{T} <: Selector{T}
     val::T

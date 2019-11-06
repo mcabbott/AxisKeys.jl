@@ -111,7 +111,7 @@ see `Nearest` and `Index`.
 
     elseif length(args)==1
         arg = first(args)
-        d = guessdim(arg, map(eltype, ranges(A)))
+        d = guessdim(arg, ranges(A))
         i = findindex(arg, ranges(A,d))
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
         # @boundscheck println("boundscheck getkey $args -> $inds")
@@ -137,40 +137,42 @@ end
 end
 
 """
-    guessdim(key, types)
+    guessdim(key, ranges)
 
-When you call `A(key)` for `ndims(A) > 1`, this is given `eltype.(ranges(A))`
-and returns which `d` you meant, if unambigous.
+When you call `A(key)` for `ndims(A) > 1`, this returns which `d` you meant,
+if unambigous, by comparing types & gradually widening
 """
-function guessdim(arg, types, subtypes=())
-    types == subtypes && error("can't find which dimension for $args")
+@generated guessdim(arg, tup) = _guessdim(arg, map(eltype, Tuple(tup.parameters)))
+
+function _guessdim(argT, types, subtypes=())
+    types == subtypes && error("key of type $arT doesn't match any dimensions")
 
     # First look for direct match
-    ds = findall(T -> arg isa T, types)
+    ds = findall(T -> argT <: T, types)
 
     if length(ds) == 1
         return first(ds)
     elseif length(ds) >= 2
-        error("key $arg is ambiguous, its type matches dimensions $(Tuple(ds))")
+        error("key of type $argT is ambiguous, matches dimensions $(Tuple(ds))")
     end
 
     # If no direct match, look for a container whose eltype matches:
-    if arg isa Base.Fix2 || hasproperty(arg, :x)
-        ds = findall(T -> arg.x isa T, types)
-    elseif arg isa Selector || arg isa Interval || arg isa AbstractArray
-        ds = findall(T -> eltype(arg) <: T, types)
+    if argT <: Selector || argT <: AbstractArray || argT <: Interval
+        ds = findall(T -> eltype(argT) <: T, types)
+    elseif argT <: Base.Fix2 # Base.Fix2{typeof(==),Int64}
+        ds = findall(T -> argT.parameters[2] <: T, types)
     end
 
     if length(ds) == 1
         return first(ds)
     elseif length(ds) >= 2
-        error("key $arg is ambiguous, its eltype matches dimensions $(Tuple(ds))")
+        error("key of type $argT is ambiguous, matches dimensions $(Tuple(ds))")
     end
 
     # Otherwise, widen the range types and try again.
     # This will recurse until types stop changing.
     supers = map(T -> supertype(T) == Any ? T : supertype(T), types)
-    return guessdim(arg, supers, types)
+    return _guessdim(argT, supers, types)
 end
 
 """
