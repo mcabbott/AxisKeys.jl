@@ -6,8 +6,11 @@
 
 Function for constructing either a `NamedDimsArray`, a `RangeArray`,
 or a nested pair of both.
+
 Performs some sanity checks which are skipped by `RangeArray` constructor.
 Giving `nothing` as a range will result in `ranges(A,d) == axes(A,d)`.
+Given an `AbstractRange` of the wrong length, it will adjust the end of the range,
+and give a warning.
 
 By default it wraps in this order: `RangeArray{...,NamedDimsArray{...}}`.
 This tests a flag `AxisRanges.OUTER[] == :RangeArray` which you can change.
@@ -36,12 +39,22 @@ function check_ranges(A, ranges)
             r
         elseif length(r) == size(A,d)
             OffsetArray(r, axes(A,d))
+        elseif r isa AbstractRange
+            l = size(A,d)
+            r′ = extend_range(r, l)
+            @warn "range $r replaced by $r′, to match size(A, $d) == $l" # maxlog=2 _id=hash(r)
+            r′
         else
             error("wrong length of ranges")
         end
     end
     ndims(A) == 1 ? Ref(first(checked)) : checked
 end
+
+extend_range(r::AbstractRange, l::Int) = range(first(r), step=step(r), length=l)
+extend_range(r::StepRange{Char,Int}, l::Int) = StepRange(first(r), step(r), first(r)+l)
+extend_range(r::AbstractUnitRange, l::Int) = range(first(r), length=l)
+extend_range(r::OneTo, l::Int) = OneTo(l)
 
 #===== with names =====#
 

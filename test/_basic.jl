@@ -41,6 +41,10 @@ using Test, AxisRanges
     @test E(:a, :e) isa ComplexF32
     @test_throws Exception E(:a) # ambiguous
 
+    F = wrapdims(rand(5), 'a':'z')
+    @test ranges(F,1) == 'a':'f'
+    @test_throws Exception wrapdims(rand(5), ['a','b','c'])
+
 end
 @testset "selectors" begin
 
