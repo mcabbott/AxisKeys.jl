@@ -9,20 +9,15 @@ using Base.Broadcast:
 struct RangeStyle{S <: BroadcastStyle} <: AbstractArrayStyle{Any} end
 RangeStyle(::S) where {S} = RangeStyle{S}()
 RangeStyle(::S, ::Val{N}) where {S,N} = RangeStyle(S(Val(N)))
-RangeStyle(::Val{N}) where N = RangeStyle{DefaultArrayStyle{N}}()
+RangeStyle(::Val{N}) where {N} = RangeStyle{DefaultArrayStyle{N}}()
 
 function RangeStyle(a::BroadcastStyle, b::BroadcastStyle)
     inner_style = BroadcastStyle(a, b)
-    if inner_style isa Unknown
-        Unknown()
-    else
-        RangeStyle(inner_style)
-    end
+    inner_style isa Unknown ? Unknown() : RangeStyle(inner_style)
 end
 
 Base.BroadcastStyle(::Type{<:RangeArray{T,N,AT}}) where {T,N,AT} =
     RangeStyle{typeof(BroadcastStyle(AT))}()
-
 Base.BroadcastStyle(::RangeStyle{A}, ::RangeStyle{B}) where {A, B} = RangeStyle(A(), B())
 Base.BroadcastStyle(::RangeStyle{A}, b::B) where {A, B} = RangeStyle(A(), b)
 Base.BroadcastStyle(a::A, ::RangeStyle{B}) where {A, B} = RangeStyle(a, B())
@@ -34,25 +29,25 @@ using NamedDims: NamedDimsStyle
 Base.BroadcastStyle(a::NamedDimsStyle, ::RangeStyle{B}) where {B} = RangeStyle(a, B())
 Base.BroadcastStyle(::RangeStyle{A}, b::NamedDimsStyle) where {A} = RangeStyle(A(), b)
 
-function unwrap_broadcasted(bc::Broadcasted{RangeStyle{S}}) where S
+function unwrap_broadcasted(bc::Broadcasted{RangeStyle{S}}) where {S}
     inner_args = map(unwrap_broadcasted, bc.args)
     Broadcasted{S}(bc.f, inner_args)
 end
 unwrap_broadcasted(x) = x
 unwrap_broadcasted(x::RangeArray) = parent(x)
 
-function Broadcast.copy(bc::Broadcasted{RangeStyle{S}}) where S
+function Broadcast.copy(bc::Broadcasted{RangeStyle{S}}) where {S}
     inner_bc = unwrap_broadcasted(bc)
     data = copy(inner_bc)
     R = broadcasted_ranges(bc)
-    RangeArray(data, R)
+    RangeArray(data, map(copy, R))
 end
 
-function Base.copyto!(dest::AbstractArray, bc::Broadcasted{RangeStyle{S}}) where S
+function Base.copyto!(dest::AbstractArray, bc::Broadcasted{RangeStyle{S}}) where {S}
     inner_bc = unwrap_broadcasted(bc)
     data = copyto!(rangeless(dest), inner_bc)
-    new_ranges = unify_ranges(ranges_or_axes(dest), broadcasted_ranges(bc))
-    RangeArray(data, new_ranges)
+    R = unify_ranges(ranges_or_axes(dest), broadcasted_ranges(bc))
+    RangeArray(data, R)
 end
 
 broadcasted_ranges(bc::Broadcasted) = broadcasted_ranges(bc.args...)

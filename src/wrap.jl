@@ -30,7 +30,8 @@ wrapdims(T::Type, r::AbstractVector, ranges::AbstractVector...) =
 using OffsetArrays
 
 function check_ranges(A, ranges)
-    ndims(A) == length(ranges) || error("wrong number of ranges")
+    ndims(A) == length(ranges) || throw(ArgumentError(
+        "wrong number of ranges, got $(length(ranges)) with ndims(A) == $(ndims(A))"))
     checked = ntuple(ndims(A)) do d
         r = ranges[d]
         if r === nothing
@@ -42,10 +43,10 @@ function check_ranges(A, ranges)
         elseif r isa AbstractRange
             l = size(A,d)
             r′ = extend_range(r, l)
-            l > 0 && @warn "range $r replaced by $r′, to match size(A, $d) == $l" # maxlog=2 _id=hash(r)
+            l > 0 && @warn "range $r replaced by $r′, to match size(A, $d) == $l" maxlog=1 _id=hash(r)
             r′
         else
-            error("wrong length of ranges")
+            throw(DimensionMismatch("length of range does not match size of array: size(A, $d) == $(size(A,d)) != length(r) == $(length(r)), for range r = $r"))
         end
     end
     ndims(A) == 1 ? Ref(first(checked)) : checked
@@ -58,7 +59,8 @@ extend_range(r::OneTo, l::Int) = OneTo(l)
 
 #===== With names =====#
 
-wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) = NamedDimsArray(A, (n, names...))
+wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
+    NamedDimsArray(A, check_names(A, (n, names...)))
 
 const OUTER = Ref(:RangeArray)
 
@@ -73,8 +75,7 @@ function wrapdims(A::AbstractArray; kw...)
 end
 
 function check_names(A, names)
-    ndims(A) == length(names) || error("wrong number of names")
+    ndims(A) == length(names) || throw(ArgumentError(
+        "wrong number of names, got $names with ndims(A) == $(ndims(A))"))
     names
 end
-
-
