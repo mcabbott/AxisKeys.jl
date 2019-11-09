@@ -120,16 +120,56 @@ end
 
 end
 @testset "broadcasting" begin
+    using Base: OneTo
+    @testset "ranges" begin
 
-    V = wrapdims(rand(Int8, 11), 0:0.1:1)
-    @test_broken ranges(V .+ 10) == ranges(V)
-    @test_broken ranges(V .+ V') == (ranges(V,1), ranges(V,1))
+        V = wrapdims(rand(Int8, 11), 0:0.1:1)
+        @test ranges(V .+ 10) == ranges(V)
+        @test ranges(V .+ V') == (ranges(V,1), ranges(V,1))
+        @test ranges(V .+ rand(3)') === (ranges(V,1), OneTo(3))
+        @test ranges(V .+ rand(11)) == (ranges(V,1),)
 
-    using AxisRanges: who_wins
-    @test who_wins(1:2, [1,2]) === 1:2
-    @test who_wins(1:2, 1.0:2.0) === 1:2
-    @test who_wins(Base.OneTo(2), [3,4]) == [3,4]
+        M = wrapdims(rand(Int8, 3,11), [:a, :b, :c], 0:0.1:1)
+        @test ranges(M .+ V') == ranges(M)
 
+        W = wrapdims(rand(11), 0.1:0.1:1.1)
+        @test ranges(V .+ W') == (ranges(V,1), ranges(W,1))
+        @test_throws Exception ranges(V .+ W)
+
+    end
+    @testset "with names" begin
+
+        vec_x = wrapdims(ones(2), :x)
+        vec_y = wrapdims(ones(2), y='α':'β')
+        mat_r = wrapdims(ones(2,2), 11:12, 'α':'β')
+        mat_y = wrapdims(ones(2,2), :_, :y)
+
+        @test ranges(vec_x .+ mat_r .+ mat_y) == ranges(mat_r)
+        @test names(vec_x .+ mat_r .+ mat_y) == (:x, :y)
+
+        @test ranges(sqrt.(vec_x .+ vec_y') ./ mat_r) == ranges(mat_r)
+        @test names(sqrt.(vec_x .+ vec_y') ./ mat_r) == (:x, :y)
+
+        yy = vec_y .+ mat_y
+        @test ranges(yy' .+ mat_r) == (11:12, 'α':'β')
+
+        @test_throws Exception vec_x .+ vec_y
+
+    end
+    @testset "unify rules" begin
+
+        using AxisRanges: who_wins
+        @test who_wins(1:2, [1,2]) === 1:2
+        @test who_wins(1:2, 1.0:2.0) === 1:2
+        @test who_wins(OneTo(2), [3,4]) == [3,4]
+        @test who_wins(1:2, [3,4]) === nothing
+
+        using AxisRanges: unify_ranges, unify_longest
+        @test unify_ranges((OneTo(2), 1:2), (3:4, [1,2])) === (3:4, 1:2)
+        @test unify_longest((OneTo(2), 1:2), (3:4, [1,2], [0,1])) == (3:4, 1:2, [0,1])
+        @test_throws Exception unify_ranges((1:2,), ([3,4],))
+
+    end
 end
 @testset "mutation" begin
 

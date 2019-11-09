@@ -2,18 +2,17 @@
 
 [![Build Status](https://travis-ci.org/mcabbott/AxisRanges.jl.svg?branch=master)](https://travis-ci.org/mcabbott/AxisRanges.jl)
 
-This package defines a wrapper which, alongside any array, stores an extra "range" for each dimension.
-This may be useful to store perhaps actual times of measurements, 
-or some strings labeling columns, etc. 
-These will be propagated through many operations on arrays.
+This package defines a thin wrapper which, alongside any array, stores an extra "range" 
+for each dimension. This may be useful to store perhaps actual times of measurements, 
+or some strings labeling columns, etc. These will be propagated through many 
+operations on arrays, including broadcasting, `map` and comprehensions.
 
-They can also be used to look up elements: 
-While indexing `A[i]` expects an integer `i ∈ axes(A,1)` as usual, 
-`A(t)` instead looks up `t ∈ ranges(A,1)`. 
+They can also be used to look up elements: While indexing `A[i]` expects an integer 
+`i ∈ axes(A,1)`  as usual, `A(t)` instead looks up `t ∈ ranges(A,1)`. 
 
-The package aims to work well with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), which attaches names to dimensions. 
-(These names are a tuple of symbols, like those of a `NamedTuple`.)
-There's a convenience function `wrapdims` which constructs any combination:
+The package aims to work well with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), 
+which attaches names to dimensions. (These names are a tuple of symbols, like those of 
+a `NamedTuple`.) There's a convenience function `wrapdims` which constructs any combination:
 ```julia
 A = wrapdims(rand(10), 10:10:100)    # RangeArray
 B = wrapdims(rand(2,3), :row, :col)  # NamedDimsArray
@@ -35,19 +34,17 @@ C("dog", Index[3])      # mix of range and integer indexing
 C(!=("dog"))            # unambigous as only range(C,1) contains strings
 ```
 
-While no special types are provided for these ranges,
-you could use for instance the arrays from [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
-or from [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) as needed.
-When a dimension’s range is a Julia range, then there are some fast overloads
-for things like `findall(<=(42), 10:10:100)`. For vectors, `push!(A, 0.72)` should also
-figure out how to extend the range with more steps.
+No special types are provided for these ranges, those from other packages should work fine.
+(For instance, [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
+or [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) as needed.)
+Only when a dimension’s range is a Julia range does this package do anything special: 
+There are some fast overloads for things like `findall(<=(42), 10:10:100)`, and 
+for vectors, `push!(A, 0.72)` should also figure out how to extend the range with more steps.
 
 <!--
 The larger goal is roughly to divide up the functionality of [AxisArrays.jl](https://github.com/JuliaArrays/AxisArrays.jl)
 among smaller packages.
 -->
-* Broadcasting does not work yet, sadly. But surely can be borrowed from [Tokazama](https://github.com/Tokazama/AbstractIndices.jl)?
-
 * See [test/speed.jl](test/speed.jl) for some numbers / comparisons; 
   keyword indexing is not as fast as one could hope.
 
@@ -60,7 +57,8 @@ Or a macro `@set A(key) = val`. For now, you can write `C("dog") .= 1:10` since 
 
 * `Index[end]` works, perhaps [EndpointRanges.jl](https://github.com/JuliaArrays/EndpointRanges.jl) is the way to let `Index[end-1]` work.
 
-* You can extract ranges via `C.time == 0:0.5:49.5`, like [this PR](https://github.com/JuliaArrays/AxisArrays.jl/pull/152).
+* You can extract ranges via getproperty, to write  `for (i,t) in enumerate(C.time)` etc. 
+  (Stolen from [this PR](https://github.com/JuliaArrays/AxisArrays.jl/pull/152).)
 
 Links to the zoo of similar packages:
 
@@ -76,3 +74,4 @@ Links to the zoo of similar packages:
 
 * Discussion: [AxisArraysFuture](https://github.com/JuliaCollections/AxisArraysFuture/issues/1),
   [AxisArrays#84](https://github.com/JuliaArrays/AxisArrays.jl/issues/84). 
+
