@@ -108,26 +108,34 @@ end
 unify_longest(x::Tuple) = x
 unify_longest(x,y,zs...) = unify_longest(unify_longest(x,y), zs...)
 
-function unify_ranges(left::Tuple, right::Tuple)
-    out = map(who_wins, left, right)
-    out isa Tuple{Vararg{AbstractArray}} || error("ranges must agree")
-    out
-end
+unify_ranges(left::Tuple, right::Tuple) = map(unify_one, left, right)
 unify_ranges(left::Tuple) = left
 unify_ranges(left, right, more...) = unify_ranges(unify_ranges(left, right), more...)
 
 unifiable_ranges(left::Tuple, right::Tuple) = map(who_wins, left, right) isa Tuple{Vararg{AbstractArray}}
 
+function unify_one(x::AbstractArray, y::AbstractArray)
+    # length(x) == length(y) || throw(DimensionMismatch("ranges must have the same length!"))
+    out = who_wins(x,y)
+    out === nothing && throw(ArgumentError("ranges must agree; got $x != $y"))
+    out
+end
+unify_one(x,y,zs...) = unify_one(unify_one(x,y), zs...)
+
 """
     who_wins(range(A,1), range(B,1))
     who_wins(r, s, t, ...)
 
-For broadcasting, but also `map` etc, this compares individual ranges & returns the final one.
+For broadcasting, but also `map` etc, this compares individual ranges
+and returns the one to keep.
 In general they must agree `==`, and the simpler type will be returned
 (e.g. `Vector + UnitRange -> UnitRange`).
 
 However default ranges `Base.OneTo(n)` are regarded as wildcards.
 They need not agree with anyone, and are always discarded in favour of other types.
+
+If the ranges disagree it returns `nothing`.
+Call `unify_one()` to have an error instead.
 """
 who_wins(x,y,zs...) = who_wins(who_wins(x,y), zs...)
 

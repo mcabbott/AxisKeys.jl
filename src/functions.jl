@@ -56,7 +56,7 @@ range_skip(tup::Tuple) = tup
 function Base.permutedims(A::RangeArray, perm)
     numerical_perm = hasnames(A) ? NamedDims.dim(names(A), perm) : perm
     data = permutedims(A.data, numerical_perm)
-    new_ranges = ntuple(d -> copy(ranges(A, findfirst(isequal(d), perm))), ndims(A))
+    new_ranges = ntuple(d -> copy(ranges(A, perm[d])), ndims(A))
     RangeArray(data, new_ranges)#, copy(A.meta))
 end
 
@@ -67,13 +67,13 @@ for (T, S) in [(:RangeVecOrMat, :RangeVecOrMat), # RangeArray gives ambiguities
         data = vcat(rangeless(A), rangeless(B), rangeless.(Cs)...)
         new_1 = range_vcat(ranges_or_axes(A,1), ranges_or_axes(B,1), ranges_or_axes.(Cs,1)...)
         new_ranges = ndims(A) == 1 ? Ref(new_1) :
-            (new_1, who_wins(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...))
+            (new_1, unify_one(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...))
         RangeArray(data, map(copy, new_ranges))
     end
 
     @eval function Base.hcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
         data = hcat(rangeless(A), rangeless(B), rangeless.(Cs)...)
-        new_1 = who_wins(ranges_or_axes(A,1), ranges_or_axes(B,1), ranges_or_axes.(Cs,1)...)
+        new_1 = unify_one(ranges_or_axes(A,1), ranges_or_axes(B,1), ranges_or_axes.(Cs,1)...)
         new_2 = ndims(A) == 1 ? axes(data,2) :
             range_vcat(ranges_or_axes(A,2), ranges_or_axes(B,2), ranges_or_axes.(Cs,2)...)
         RangeArray(data, map(copy, (new_1, new_2)))
