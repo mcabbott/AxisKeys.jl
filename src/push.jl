@@ -33,7 +33,7 @@ end
 
 extend_one!!(r::Base.OneTo) = Base.OneTo(last(r)+1)
 extend_one!!(r::UnitRange{Int}) = UnitRange(r.start, r.stop + 1)
-extend_one!!(r::StepRange{Int,Int}) = StepRange(r.start, r.step, r.stop + r.step)
+extend_one!!(r::StepRange{<:Any,Int}) = StepRange(r.start, r.step, r.stop + r.step)
 extend_one!!(r::Vector{<:Number}) = push!(r, length(r)+1)
 extend_one!!(r::AbstractVector) = vcat(r, length(r)+1)
 
@@ -70,7 +70,7 @@ end
 
 extend_by!!(r::Base.OneTo, n::Int) = Base.OneTo(last(r)+n)
 extend_by!!(r::UnitRange{Int}, n::Int) = UnitRange(r.start, r.stop + n)
-extend_by!!(r::StepRange{Int,Int}, n::Int) = StepRange(r.start, r.step, r.stop + n * r.step)
+extend_by!!(r::StepRange{<:Any,Int}, n::Int) = StepRange(r.start, r.step, r.stop + n * r.step)
 extend_by!!(r::Vector{<:Number}, n::Int) = append!(r, length(r)+1 : length(r)+n+1)
 extend_by!!(r::AbstractVector, n::Int) = vcat(r, length(r)+1 : length(r)+n+1)
 
