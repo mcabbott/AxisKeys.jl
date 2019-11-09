@@ -34,7 +34,6 @@ using NamedDims: NamedDimsStyle
 Base.BroadcastStyle(a::NamedDimsStyle, ::RangeStyle{B}) where {B} = RangeStyle(a, B())
 Base.BroadcastStyle(::RangeStyle{A}, b::NamedDimsStyle) where {A} = RangeStyle(A(), b)
 
-
 function unwrap_broadcasted(bc::Broadcasted{RangeStyle{S}}) where S
     inner_args = map(unwrap_broadcasted, bc.args)
     Broadcasted{S}(bc.f, inner_args)
@@ -42,12 +41,18 @@ end
 unwrap_broadcasted(x) = x
 unwrap_broadcasted(x::RangeArray) = parent(x)
 
-
 function Broadcast.copy(bc::Broadcasted{RangeStyle{S}}) where S
     inner_bc = unwrap_broadcasted(bc)
     data = copy(inner_bc)
     R = broadcasted_ranges(bc)
     RangeArray(data, R)
+end
+
+function Base.copyto!(dest::AbstractArray, bc::Broadcasted{RangeStyle{S}}) where S
+    inner_bc = unwrap_broadcasted(bc)
+    data = copyto!(rangeless(dest), inner_bc)
+    new_ranges = unify_ranges(ranges_or_axes(dest), broadcasted_ranges(bc))
+    RangeArray(data, new_ranges)
 end
 
 broadcasted_ranges(bc::Broadcasted) = broadcasted_ranges(bc.args...)
@@ -59,45 +64,7 @@ end
 broadcasted_ranges(a::AbstractArray) = ranges_or_axes(a)
 broadcasted_ranges(a) = tuple()
 
-
-#=
-
-using AxisRanges
-using AxisRanges: unify_longest, RangeStyle
-
-a0 = wrapdims(zeros(2), 11:12)
-a0 .+ 100
-
-a0 .+ ones(2)
-
-a1 = wrapdims(ones(2), 11:12)
-sin.(a1) .+ a0
-
-a1 .+ a0' .+ 3
-
-a1 .+ (a0' .+ ones(2,2))
-
-b1 = wrapdims(ones(2,2), 11:12, 'α':'β')
-
-b1 .+ a1
-b1 .+ a1'
-
-using NamedDims
-
-a2 = wrapdims(ones(2), a=11:12)
-a2 .+ 1
-a2 .+ b1
-
-a3 = wrapdims(ones(2), :x)
-
-a3 .+ a1 # RangeArray(NamedDimsArray(...))
-
-b3 = wrapdims(ones(2,2), :_, :y)
-
-b1 .+ b3 .+ a3
-
-
-=#
+#===== Unification, also used by map, hcat, etc. =====#
 
 function unify_longest(short::Tuple, long::Tuple)
     length(short) > length(long) && return unify_longest(long, short)

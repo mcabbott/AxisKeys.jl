@@ -156,6 +156,25 @@ end
         @test_throws Exception vec_x .+ vec_y
 
     end
+    @testset "in-place" begin
+
+        v1 = wrapdims(ones(2), ["a", "b"])
+        v2 = wrapdims(ones(2), :μ)
+        v3 = wrapdims(ones(2), [11, 22])
+        z = zeros(2,2)
+
+        @test_skip names(v1 .= v1 .+ v2) == (:μ,) # works with https://github.com/invenia/NamedDims.jl/pull/80
+        @test_skip v1[1] == 2
+
+        @test names(v2 .= v3 .+ 5) == (:μ,)
+        @test v2[1] == 6
+
+        @test ranges(z .= v1 .+ v2') == (["a", "b"], Base.OneTo(2))
+
+        @test_throws Exception v3 .= v1 .+ v2
+        @test_throws Exception zeros(2) .= v1 .+ v3
+
+    end
     @testset "unify rules" begin
 
         using AxisRanges: who_wins
