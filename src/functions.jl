@@ -80,6 +80,24 @@ for (T, S) in [(:RangeVecOrMat, :RangeVecOrMat), # RangeArray gives ambiguities
     end
 
 end
+for (T, S) in [ (:RangeArray, :RangeArray),
+        (:RangeArray, :AbstractArray), (:AbstractArray, :RangeArray),
+        (:RangeArray, :NamedDimsArray), (:NamedDimsArray, :RangeArray) ]
+
+    @eval function Base.cat(A::$T, B::$S, Cs::AbstractArray...; dims)
+        # numerical_dims = hasnames(A) || hasnames(B) ? ... todo!
+        data = cat(rangeless(A), rangeless(B), rangeless.(Cs)...; dims=dims)
+        new_ranges = ntuple(ndims(data)) do d
+            if d in dims
+                range_vcat(ranges_or_axes(A,d), ranges_or_axes(B,d), ranges_or_axes.(Cs,d)...)
+            else
+                unify_one(ranges_or_axes(A,d), ranges_or_axes(B,d), ranges_or_axes.(Cs,d)...)
+            end
+        end
+        RangeArray(data, map(copy, new_ranges))
+    end
+
+end
 range_vcat(a::AbstractVector, b::AbstractVector) = vcat(a,b)
 range_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
 range_vcat(a,b,cs...) = range_vcat(range_vcat(a,b),cs...)

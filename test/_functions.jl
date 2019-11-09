@@ -90,6 +90,12 @@ end
     @test hcat(M, ones(3)) == hcat(M.data, ones(3))
     @test ranges(hcat(M, ones(3))) == ('a':1:'c', [2, 3, 4, 5, 1])
 
+    @test ranges(cat(M,M, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(2))
+    @test ranges(cat(M.data,M,M, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(3))
+    @test ranges(cat(M,M, dims=(1,2))) == (['a','b','c', 'a','b','c'], [2,3,4,5, 2,3,4,5])
+
+    @test_broken ranges(cat(M,M, dims=:r)) # doesn't work in NamedDims either
+
 end
 @testset "copy etc" begin
 
