@@ -11,8 +11,12 @@ const RangeVecOrMat{T,AT,RT} = Union{RangeVector{T,AT,RT}, RangeMatrix{T,AT,RT}}
 
 function RangeArray(data::AbstractArray{T,N},
             ranges::Union{Tuple,RefValue} = axes(data)) where {T,N}
-    length(ranges) == N || error("wrong number of ranges")
-    all(r -> r isa AbstractVector, ranges) || error("ranges must be AbstractVectors")
+
+    length(ranges) == N || throw(ArgumentError(
+        "wrong number of ranges, got $(length(ranges)) with ndims(A) == $N"))
+    all(r -> r isa AbstractVector, ranges) || throw(ArgumentError(
+        "ranges must all be AbstractVectors"))
+
     final = (N==1 && ranges isa Tuple) ? Ref(first(ranges)) : ranges
     RangeArray{T, N, typeof(data), typeof(final)}(data, final)
 end
@@ -21,6 +25,11 @@ end
 #     RangeArray{eltype(data), 1, typeof(data), typeof(ref)}(data, ref)
 # RangeArray(data::AbstractVector, arr::AbstractVector) =
 #     RangeArray{eltype(data), 1, typeof(data), typeof(Ref(arr))}(data, Ref(arr))
+
+function RangeArray(A::RangeArray, r2::Tuple)
+    r3 = unify_ranges(ranges(A), r2)
+    RangeArray(parent(A), r3)
+end
 
 Base.size(x::RangeArray) = size(parent(x))
 
