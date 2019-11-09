@@ -42,7 +42,7 @@ using Test, AxisRanges
     @test_throws Exception E(:a) # ambiguous
 
     F = wrapdims(rand(5), 'a':'z')
-    @test ranges(F,1) == 'a':'f'
+    @test ranges(F,1) == 'a':'e'
     @test_throws Exception wrapdims(rand(5), ['a','b','c'])
 
 end

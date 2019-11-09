@@ -42,7 +42,7 @@ function check_ranges(A, ranges)
         elseif r isa AbstractRange
             l = size(A,d)
             r′ = extend_range(r, l)
-            @warn "range $r replaced by $r′, to match size(A, $d) == $l" # maxlog=2 _id=hash(r)
+            l > 0 && @warn "range $r replaced by $r′, to match size(A, $d) == $l" # maxlog=2 _id=hash(r)
             r′
         else
             error("wrong length of ranges")
@@ -52,11 +52,11 @@ function check_ranges(A, ranges)
 end
 
 extend_range(r::AbstractRange, l::Int) = range(first(r), step=step(r), length=l)
-extend_range(r::StepRange{Char,Int}, l::Int) = StepRange(first(r), step(r), first(r)+l)
+extend_range(r::StepRange{Char,Int}, l::Int) = StepRange(first(r), step(r), first(r)+l-1)
 extend_range(r::AbstractUnitRange, l::Int) = range(first(r), length=l)
 extend_range(r::OneTo, l::Int) = OneTo(l)
 
-#===== with names =====#
+#===== With names =====#
 
 wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) = NamedDimsArray(A, (n, names...))
 
@@ -76,3 +76,5 @@ function check_names(A, names)
     ndims(A) == length(names) || error("wrong number of names")
     names
 end
+
+
