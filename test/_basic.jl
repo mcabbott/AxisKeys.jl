@@ -83,8 +83,8 @@ end
     @test ranges(wrapdims(rand(3), b=1:3)) == (1:3,)
     @test ranges(wrapdims(rand(3), b=1:3), :b) == 1:3
 
-    @test namedranges(wrapdims(rand(3), b=1:3)) === (b = 1:3,)
-    @test namedaxes(wrapdims(rand(3), b=1:3)) === (b = Base.OneTo(3),)
+    # @test namedranges(wrapdims(rand(3), b=1:3)) === (b = 1:3,)
+    # @test namedaxes(wrapdims(rand(3), b=1:3)) === (b = Base.OneTo(3),)
 
     # internal functions of NamedDims
     @test NamedDims.names(rand(2,2)) === (:_, :_)
