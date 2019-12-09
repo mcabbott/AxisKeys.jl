@@ -35,7 +35,8 @@ C(!=("dog"))            # unambigous as only range(C,1) contains strings
 ```
 
 No special types are provided for these ranges, those from other packages should work fine.
-(For instance, [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
+(For instance, [UniqueVectors.jl](https://github.com/garrison/UniqueVectors.jl)
+or [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
 or [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) as needed.)
 Only when a dimension’s range is a Julia range does this package do anything special: 
 There are some fast overloads for things like `findall(<=(42), 10:10:100)`, and 
@@ -74,4 +75,3 @@ Links to the zoo of similar packages:
 
 * Discussion: [AxisArraysFuture](https://github.com/JuliaCollections/AxisArraysFuture/issues/1),
   [AxisArrays#84](https://github.com/JuliaArrays/AxisArrays.jl/issues/84). 
-
