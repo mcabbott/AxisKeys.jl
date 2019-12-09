@@ -56,22 +56,22 @@ end
 
     genM =  [exp(x) for x in M]
     @test ranges(genM) == ('a':'c', 2:5) # fails with nda(ra(...))
-    @test_broken names(genM) == (:r, :c) # works with NamedDims#map
+    @test names(genM) == (:r, :c)
 
     @test ranges([exp(x) for x in V]) == (10:10:100,)
 
     gen3 = [x+y for x in M, y in V];
     @test ranges(gen3) == ('a':'c', 2:5, 10:10:100)
-    @test_broken names(gen3) == (:r, :c, :v) # works with NamedDims#map
+    @test names(gen3) == (:r, :c, :v)
 
     gen1 = [x^i for (i,x) in enumerate(V)]
     @test ranges(gen1) == (10:10:100,)
-    @test_broken names(gen1) == (:v,) # works with NamedDims#map
+    @test names(gen1) == (:v,)
 
     @test ranges(filter(isodd, V2),1) isa Vector{Int}
     @test names(filter(isodd, V2)) == (:v,)
 
-    @test_broken filter(isodd, M) isa Array # works with NamedDims#map
+    @test filter(isodd, M) isa Array
 
 end
 @testset "cat" begin
