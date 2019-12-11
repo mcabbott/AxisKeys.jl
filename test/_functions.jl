@@ -81,7 +81,7 @@ end
     @test ranges(vcat(M,M)) == (['a', 'b', 'c', 'a', 'b', 'c'], 2:5)
 
     V = wrapdims(rand(1:99, 3), r=['a', 'b', 'c'])
-    @test ranges(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1])
+    @test ranges(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1]) # fails with nda(ra(...))
     @test ranges(hcat(V,V),2) === Base.OneTo(2)
 
     @test ranges(vcat(V,V),1) == ['a', 'b', 'c', 'a', 'b', 'c']
@@ -97,13 +97,47 @@ end
     @test_broken ranges(cat(M,M, dims=:r)) # doesn't work in NamedDims either
 
 end
+@testset "matmul" begin
+
+    # two matrices
+    @test ranges(M * M') === ('a':'c', 'a':'c')
+    @test ranges(M * rand(4,5)) === ('a':'c', Base.OneTo(5))
+    @test ranges(rand(2,3) * M) === (Base.OneTo(2), 2:5)
+
+    # two vectors
+    @test (V' * V) isa Int
+    @test (V' * rand(Int, 10)) isa Int
+    @test (rand(Int, 10)' * V) isa Int
+    @test ranges(V * V') === (10:10:100, 10:10:100)
+    @test names(V * V') === (:v, :v)
+    @test ranges(V * rand(1,10)) === (10:10:100, Base.OneTo(10))
+    @test names(V * rand(1,10)) === (:v, :_)
+
+    # matrix * vector
+    @test ranges(M * M('a')) === ('a':'c',)
+    @test names(M * M('a')) === (:r,)
+    @test ranges(M(5)' * M) === (Base.OneTo(1), 2:5)
+    @test names(M(5)' * M) === (:_, :c)
+
+end
+@testset "div" begin # doesn't work for names yet
+
+    A = wrapdims(rand(Int8,3,4), 'a':'c', 10:10:40)
+    C = wrapdims(rand(Int8,3), ['a', 'b', 'c'])
+    D = wrapdims(rand(Int8,4), [10, 20, 30, 40])
+
+    @test ranges(A \ A) == (10:10:40, 10:10:40)
+    @test ranges(A \ C) == (10:10:40,)
+    @test ranges(A' \ D) == ('a':'c',)
+
+end
 @testset "copy etc" begin
 
     # copy, similar, etc
     @test ranges(copy(M)) == ('a':'c', 2:5)
     @test zero(M)('a',2) == 0
 
-    @test ranges(similar(M, Int)) == ranges(M)
+    @test ranges(similar(M, Int)) == ranges(M) # fails with nda(ra(...))
     @test AxisRanges.hasranges(similar(M, Int, 3,3)) == false
     @test names(similar(M, 3,3)) == (:r, :c)
     @test AxisRanges.hasnames(similar(M, 2,2,2)) == false
@@ -122,9 +156,9 @@ end
     M5 = wrapdims(data, r='a':'c', c=4:7) # wrong range
     M6 = wrapdims(data, r='a':'c', nope=2:5) # wrong name
     M7 = wrapdims(2 .* data, r='a':'c', c=2:5) # wrong data
-    @test M != M5
+    @test M != M5 # fails with nda(ra(...))
     @test_skip M != M6 # pending https://github.com/invenia/NamedDims.jl/pull/79
     @test M != M7
-    @test !isapprox(M, M5) && !isapprox(M, M7)
+    @test !isapprox(M, M5) && !isapprox(M, M7) # errors with nda(ra(...))
 
 end

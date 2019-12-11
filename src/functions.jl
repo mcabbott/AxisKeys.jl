@@ -153,3 +153,67 @@ for fun in [:(==), :isequal, :isapprox]
         return $fun(parent(A), parent(B); kw...)
     end
 end
+
+Rlist = [:RangeMatrix, :RangeVector,
+    :(NdaRa{L,T,2} where {L,T}), :(NdaRa{L,T,1} where {L,T}),
+    ]
+Olist = [ :AbstractMatrix, :AbstractVector, :Number,
+    :(Adjoint{<:Any,<:AbstractMatrix}), :(Adjoint{<:Any,<:AbstractVector}),
+    :(Transpose{<:Any,<:AbstractMatrix}), :(Transpose{<:Any,<:AbstractVector}),
+    :(NamedDimsArray{L,T,1} where {L,T}), :(NamedDimsArray{L,T,2} where {L,T}),
+    ]
+for (Ts, Ss) in [(Rlist, Rlist), (Rlist, Olist), (Olist, Rlist)]
+    for T in Ts, S in Ss # some combinations are errors, later, that's ok
+
+        @eval Base.:*(x::$T, y::$S) = matmul(x,y)
+        @eval Base.:\(x::$T, y::$S) = ldiv(x,y)
+        @eval Base.:/(x::$T, y::$S) = rdiv(x,y)
+
+    end
+end
+for (fun, op) in [(:matmul, :*), (:ldiv, :\), (:rdiv, :/)]
+    @eval $fun(x::AbstractVecOrMat, y::Number) = RangeArray($op(rangeless(x), y), ranges(x))
+    @eval $fun(x::Number, y::AbstractVecOrMat) = RangeArray($op(x, rangeless(y)), ranges(y))
+    @eval $fun(x::AbstractVector, y::AbstractVector) = $op(rangeless(x), rangeless(y))
+end
+
+function matmul(x::AbstractMatrix, y::AbstractVecOrMat)
+    data = rangeless(x) * rangeless(y)
+    unify_one(ranges_or_axes(x,2), ranges_or_axes(y,1)) # just a check, discard these
+    if data isa AbstractVecOrMat
+        new_ranges = (ranges_or_axes(x,1), Base.tail(ranges_or_axes(y))...)
+        RangeArray(data, new_ranges)
+    else
+        data # case V' * V
+    end
+end
+function matmul(x::AbstractVector, y::AbstractMatrix)
+    data = rangeless(x) * rangeless(y)
+    new_ranges = (ranges_or_axes(x,1), ranges_or_axes(y,2))
+    RangeArray(data, new_ranges)
+end
+
+# case of two vectors gives a scalar, caught above.
+function ldiv(x::AbstractVecOrMat, y::AbstractVecOrMat)
+    data = rangeless(x) \ rangeless(y)
+    unify_one(ranges_or_axes(x,1), ranges_or_axes(y,1))
+    new_ranges = (Base.tail(ranges_or_axes(x))..., Base.tail(ranges_or_axes(y))...)
+    RangeArray(data, new_ranges)
+end
+function rdiv(x::AbstractVecOrMat, y::AbstractVecOrMat)
+    data = rangeless(x) / rangeless(y)
+    # unify_one(ranges_or_axes(x,2), ranges_or_axes(y,2)) # not right!
+    # new_ranges = (tup_head(ranges_or_axes(x))..., tup_head(ranges_or_axes(y))...)
+    # RangeArray(data, new_ranges)
+    @warn "/ doesn't preserve ranges yet, sorry" maxlog=1
+    data
+end
+
+tup_head(t::Tuple) = reverse(Base.tail(reverse(t)))
+
+for fun in [:inv, :pinv,
+    :det, :logdet, :logabsdet,
+    :eigen, :eigvecs, :eigvals, :svd
+    ]
+    @eval LinearAlgebra.$fun(A::RangeMatrix) = $fun(parent(A))
+end
