@@ -1,4 +1,4 @@
-using Test, AxisRanges
+using Test, AxisRanges, Statistics
 
 M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
 V = wrapdims(rand(1:99, 10), v=10:10:100)
@@ -14,6 +14,9 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
 
     @test_throws ArgumentError sum(M, dims=:nope)
 
+    M4 = mean(M, dims=:c)
+    @test ranges(M4) === ('a':'c', Base.OneTo(1))
+
     # dropdims
     @test ranges(dropdims(M1, dims=1)) == (2:5,)
     @test ranges(dropdims(M2, dims=:c)) == ('a':'c',)
@@ -27,7 +30,7 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     @test ranges(permutedims(M, (2,1))) == (2:5, 'a':'c')
     @test names(M3') == (:_, :r)
     @test ranges(transpose(transpose(V))) == ranges(V)
-    @test_skip ranges(permutedims(transpose(V))) == (ranges(V,1), Base.OneTo(1)) # NamedDims PR#77
+    @test ranges(permutedims(transpose(V))) == (ranges(V,1), Base.OneTo(1))
 
     # sort
     @test sort(V)(20) == V(20)

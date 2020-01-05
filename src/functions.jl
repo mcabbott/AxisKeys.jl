@@ -41,6 +41,18 @@ function Base.mapreduce(f, op, A::RangeArray; dims=:) # sum, prod, etc
     return RangeArray(data, new_ranges)#, copy(A.meta))
 end
 
+using Statistics
+for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be handled better?
+    @eval function Statistics.$fun(f, A::RangeArray; dims=:)
+        dims === Colon() && return $fun(f, parent(A))
+        numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+        data = $fun(f, parent(A); dims=numerical_dims)
+        new_ranges = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : ranges(A,d), ndims(A))
+        return RangeArray(data, new_ranges)#, copy(A.meta))
+    end
+    @eval Statistics.$fun(A::RangeArray; dims=:) = $fun(identity, A; dims=dims)
+end
+
 function Base.dropdims(A::RangeArray; dims)
     numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
     data = dropdims(A.data; dims=dims)

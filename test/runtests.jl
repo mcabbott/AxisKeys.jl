@@ -1,4 +1,5 @@
-using Test, AxisRanges, NamedDims, OffsetArrays, Tables
+using Test, AxisRanges, NamedDims
+using Statistics, OffsetArrays, Tables
 
 # AxisRanges.OUTER[] = :nda # changes behaviour of wrapdims
 
