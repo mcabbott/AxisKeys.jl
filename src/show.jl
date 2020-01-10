@@ -5,7 +5,6 @@ Base.summary(io::IO, A::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} = _sum
 function _summary(io, x)
     print(io, ndims(x), "-dimensional ")
     showtype(io, x)
-    # println(io, hasnames(x) ? " with named range" : " with range", ndims(x)>1 ? "s:" : ":")
     println(io, " with range", ndims(x)>1 ? "s:" : ":")
     for d in 1:ndims(x)
         print(io, d==1 ? "↓" : d==2 ? "→" : "□", "   ")
@@ -109,14 +108,14 @@ struct ShowWith{T,NT} <: AbstractString
 end
 function Base.show(io::IO, x::ShowWith; kw...)
     s0 = sprint(show, x.val; context=io, kw...)
-    s = x.val isa Symbol ? string(s0, ' ') : string(s0, ':')
+    s = string('(', s0, ')')
     if x.hide
         printstyled(io, " "^length(s); x.nt...)
     else
         printstyled(io, s; x.nt...)
     end
 end
-Base.alignment(io::IO, x::ShowWith) =  alignment(io, x.val) .+ (1,0) # extra colon
+Base.alignment(io::IO, x::ShowWith) =  alignment(io, x.val) .+ (2,0) # extra brackets
 Base.length(x::ShowWith) = length(string(x.val))
 Base.print(io::IO, x::ShowWith) = printstyled(io, string(x.val); x.nt...)
 
