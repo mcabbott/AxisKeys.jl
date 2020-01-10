@@ -38,7 +38,7 @@ function Base.mapreduce(f, op, A::RangeArray; dims=:) # sum, prod, etc
     numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
     data = mapreduce(f, op, parent(A); dims=numerical_dims)
     new_ranges = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : ranges(A,d), ndims(A))
-    return RangeArray(data, new_ranges)#, copy(A.meta))
+    return RangeArray(data, map(copy, new_ranges))#, copy(A.meta))
 end
 
 using Statistics
@@ -48,7 +48,7 @@ for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be
         numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
         data = $fun(f, parent(A); dims=numerical_dims)
         new_ranges = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : ranges(A,d), ndims(A))
-        return RangeArray(data, new_ranges)#, copy(A.meta))
+        return RangeArray(data, map(copy, new_ranges))#, copy(A.meta))
     end
     @eval Statistics.$fun(A::RangeArray; dims=:) = $fun(identity, A; dims=dims)
 end
@@ -119,7 +119,7 @@ function Base.sort(A::RangeArray; dims, kw...)
     data = sort(parent(A); dims=dims′, kw...)
     # sorts each (say) col independently, thus range along them loses meaning.
     new_ranges = ntuple(d -> d==dims′ ? OneTo(size(A,d)) : ranges(A,d), ndims(A))
-    RangeArray(data, new_ranges)
+    RangeArray(data, map(copy, new_ranges))
 end
 function Base.sort(A::RangeVector; kw...)
     perm = sortperm(parent(A); kw...)
@@ -194,7 +194,7 @@ function matmul(x::AbstractMatrix, y::AbstractVecOrMat)
     unify_one(ranges_or_axes(x,2), ranges_or_axes(y,1)) # just a check, discard these
     if data isa AbstractVecOrMat
         new_ranges = (ranges_or_axes(x,1), Base.tail(ranges_or_axes(y))...)
-        RangeArray(data, new_ranges)
+        RangeArray(data, map(copy, new_ranges))
     else
         data # case V' * V
     end
@@ -202,7 +202,7 @@ end
 function matmul(x::AbstractVector, y::AbstractMatrix)
     data = rangeless(x) * rangeless(y)
     new_ranges = (ranges_or_axes(x,1), ranges_or_axes(y,2))
-    RangeArray(data, new_ranges)
+    RangeArray(data, map(copy, new_ranges))
 end
 
 # case of two vectors gives a scalar, caught above.
@@ -210,7 +210,7 @@ function ldiv(x::AbstractVecOrMat, y::AbstractVecOrMat)
     data = rangeless(x) \ rangeless(y)
     unify_one(ranges_or_axes(x,1), ranges_or_axes(y,1))
     new_ranges = (Base.tail(ranges_or_axes(x))..., Base.tail(ranges_or_axes(y))...)
-    RangeArray(data, new_ranges)
+    RangeArray(data, map(copy, new_ranges))
 end
 function rdiv(x::AbstractVecOrMat, y::AbstractVecOrMat)
     data = rangeless(x) / rangeless(y)
