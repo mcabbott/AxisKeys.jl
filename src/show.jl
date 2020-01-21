@@ -82,7 +82,7 @@ function range_print_matrix(io::IO, A, reduce_size::Bool=false)
 
     fakearray = hcat(
         ShowWith.(no_offset(ranges(A,1))[ind1]; color=colour(A,1)),
-        view(no_offset(unname(rangeless(A))), ind1, ind2)
+        getindex(no_offset(unname(rangeless(A))), ind1, ind2)
         )
     if ndims(A) == 2
         toprow = vcat(

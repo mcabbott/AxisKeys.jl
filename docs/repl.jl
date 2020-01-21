@@ -93,18 +93,24 @@ And data, 2×1 Array{Float64,2}:
   ("dog")    0.3918636606806696
   ("cat")    1.4542825908906043
 
-julia> F = wrapdims(rand(1:100, 5), letter = 'a':'z'); # ranges are adjusted if possible
-┌ Warning: range 'a':1:'z' replaced by 'a':1:'e', to match size(A, 1) == 5
-└ @ AxisRanges ~/.julia/dev/AxisRanges/src/wrap.jl:46
-
-julia> push!(F, 99) # push! also knows to extend 'a':'e' by one
+julia> F = wrapdims(rand(1:100, 5), 🔤 = 'a':'z') # ranges are adjusted if possible
 1-dimensional RangeArray(NamedDimsArray(...)) with range:
-↓   letter ∈ 6-element StepRange{Char,...}
-And data, 6-element Array{Int64,1}:
+↓   🔤 ∈ 5-element StepRange{Char,...}
+And data, 5-element Array{Int64,1}:
  ('a')  16
  ('b')  87
  ('c')  49
  ('d')  91
  ('e')  44
- ('f')  99
+
+julia> push!(F, 10^6) # push! also knows to extend 'a':'e' by one
+1-dimensional RangeArray(NamedDimsArray(...)) with range:
+↓   🔤 ∈ 6-element StepRange{Char,...}
+And data, 6-element Array{Int64,1}:
+ ('a')       16
+ ('b')       87
+ ('c')       49
+ ('d')       91
+ ('e')       44
+ ('f')  1000000
 
