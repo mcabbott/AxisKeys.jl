@@ -6,24 +6,27 @@ julia> using AxisRanges, Random
 
 julia> Random.seed!(42);
 
-julia> D = wrapdims(rand(Int8,5), alpha='a':'e') # Convenience constructor
+julia> D = wrapdims(rand(Int8,5), iter = 10:10:50) # Convenience constructor
 1-dimensional RangeArray(NamedDimsArray(...)) with range:
-↓   alpha ∈ 5-element StepRange{Char,...}
+↓   iter ∈ 5-element StepRange{Int64,...}
 And data, 5-element Array{Int8,1}:
- ('a')  115
- ('b')   99
- ('c')    0
- ('d')   57
- ('e')   88
+ (10)  115
+ (20)   99
+ (30)    0
+ (40)   57
+ (50)   88
+
+julia> D isa AbstractArray
+true
 
 julia> D[2] # Square brackets index as usual
 99
 
-julia> D('b') # Round brackets lookup by key
+julia> D(20) # Round brackets lookup by key
 99
 
-julia> D.alpha # The range of keys is property D.name
-'a':1:'e'
+julia> D.iter # The range of keys is property D.name
+10:10:50
 
 julia> E = wrapdims(rand(Int8, 2,3), :row, :col) # Pretty printing of NamedDimsArray
 2×3 NamedDimsArray(::Array{Int8,2}, (:row, :col)):
@@ -32,7 +35,7 @@ julia> E = wrapdims(rand(Int8, 2,3), :row, :col) # Pretty printing of NamedDimsA
           3  -27  -112
 
 julia> @view E[col=1] # Fixing one index gives a slice
-2ᵅ-element NamedDimsArray(view(::Array{Int8,2}, :, 1), (:row,)):
+2-element NamedDimsArray(view(::Array{Int8,2}, :, 1), (:row,)):
 ↓ row  -105
           3
 
@@ -48,7 +51,7 @@ And data, 2×10 Array{Float64,2}:
 julia> names(C) # Works like size & axes, i.e. names(C,2) == :time
 (:obs, :time)
 
-julia> ranges(C)
+julia> ranges(C) # Likewise, ranges(C, :time) == 0:0.5:4.5
 (["dog", "cat"], 0.0:0.5:4.5)
 
 julia> C[1,3]
@@ -60,6 +63,12 @@ julia> C("dog", Index[3]) # Selector Index[i] lets you mix lookup and indexing
 julia> C(time=Near(1.1), obs="dog") # Selector Near(val) finds one closest index
 0.3834911947029529
 
+julia> C(!=("cat"), Index[end]) # Functions allowed as selectors, and Index[end] works
+1-dimensional RangeArray(NamedDimsArray(...)) with range:
+↓   obs ∈ 1-element view(::Vector{String},...)
+And data, 1-element view(::Array{Float64,2}, [1], 10) with eltype Float64:
+ ("dog")  0.28198708251379423
+
 julia> C(0.5) # Here 0.5 is unambiguous as types of ranges are distinct
 1-dimensional RangeArray(NamedDimsArray(...)) with range:
 ↓   obs ∈ 2-element Vector{String}
@@ -67,7 +76,7 @@ And data, 2-element view(::Array{Float64,2}, :, 2) with eltype Float64:
  ("dog")  0.602297580266383
  ("cat")  1.3634584219520556
 
-julia> C * C' # Functions like * work through wrappers
+julia> C * C' # Functions like adjoint and * work through wrappers
 2-dimensional RangeArray(NamedDimsArray(...)) with ranges:
 ↓   obs ∈ 2-element Vector{String}
 →   obs ∈ 2-element Vector{String}
@@ -80,7 +89,7 @@ julia> ans("mouse")
 ERROR: key of type String is ambiguous, matches dimensions (1, 2)
 
 julia> C("mouse")
-ERROR: could not find key mouse in range ["dog", "cat"]
+ERROR: could not find key "mouse" in range ["dog", "cat"]
 
 julia> using Statistics
 
