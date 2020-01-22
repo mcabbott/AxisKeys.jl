@@ -68,7 +68,7 @@ Base.getproperty(A::NamedDimsArray{L}, s::Symbol) where {L} =
 
 @inline @propagate_inbounds function Base.getindex(A::RangeArray; kw...)
     hasnames(A) || error("must have names!")
-    inds = NamedDims.order_named_inds(names(A); kw...)
+    inds = NamedDims.order_named_inds(Val(names(A)); kw...)
     getindex(A, inds...)
 end
 

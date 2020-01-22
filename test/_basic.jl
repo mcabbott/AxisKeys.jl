@@ -89,8 +89,8 @@ end
     # internal functions of NamedDims
     @test NamedDims.dimnames(rand(2,2)) === (:_, :_)
     @test NamedDims.dim((:a, :b, :c), :b) == 2
-    @test NamedDims.order_named_inds((:a, :b, :c); a=1, c=2:3) === (1, Colon(), 2:3)
-    @test_skip 0 == @allocated NamedDims.order_named_inds((:a, :b, :c); a=1, c=2:3)
+    @test NamedDims.order_named_inds(Val((:a, :b, :c)); a=1, c=2:3) === (1, Colon(), 2:3)
+    @test 0 == @allocated NamedDims.order_named_inds(Val((:a, :b, :c)); a=1, c=2:3)
 
     # indexing etc, of commutative wrappers
     data = rand(1:99, 3,4)
