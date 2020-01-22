@@ -54,6 +54,9 @@ julia> names(C) # Works like size & axes, i.e. names(C,2) == :time
 julia> ranges(C) # Likewise, ranges(C, :time) == 0:0.5:4.5
 (["dog", "cat"], 0.0:0.5:4.5)
 
+julia> axes(C) # Base.axes is untouched
+(Base.OneTo(2), Base.OneTo(10))
+
 julia> C[1,3]
 0.3834911947029529
 
@@ -91,6 +94,13 @@ ERROR: key of type String is ambiguous, matches dimensions (1, 2)
 julia> C("mouse")
 ERROR: could not find key "mouse" in range ["dog", "cat"]
 
+julia> for (i,t) in enumerate(C.time)
+       t > 3 && println("at time $t, value cat = ", C[2,i])
+       end
+at time 3.5, value cat = 1.244682870516645
+at time 4.0, value cat = 1.763719368415045
+at time 4.5, value cat = 1.1436376769992096
+
 julia> using Statistics
 
 julia> mean(C, dims=:time) # Reduction functions should accept dimension names
@@ -103,6 +113,8 @@ And data, 2×1 Array{Float64,2}:
   ("cat")    1.4542825908906043
 
 julia> F = wrapdims(rand(1:100, 5), 🔤 = 'a':'z') # ranges are adjusted if possible
+┌ Warning: range 'a':1:'z' replaced by 'a':1:'e', to match size(A, 1) == 5
+└ @ AxisRanges ~/.julia/dev/AxisRanges/src/wrap.jl:46
 1-dimensional RangeArray(NamedDimsArray(...)) with range:
 ↓   🔤 ∈ 5-element StepRange{Char,...}
 And data, 5-element Array{Int64,1}:
