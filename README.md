@@ -46,8 +46,8 @@ for vectors, `push!(A, 0.72)` should also figure out how to extend the range wit
 The larger goal is roughly to divide up the functionality of [AxisArrays.jl](https://github.com/JuliaArrays/AxisArrays.jl)
 among smaller packages.
 -->
-* See [test/speed.jl](test/speed.jl) for some numbers / comparisons; 
-  keyword indexing is not as fast as one could hope.
+* See [docs/repl.jl](docs/repl.jl) for some usage examples, showing pretty printing. 
+  And see [docs/speed.jl](docs/speed.jl) for some numbers, and comparisons to other packages.
 
 * It tries to support the [Tables.jl](https://github.com/JuliaData/Tables.jl) interface,
 for example `DataFrame(Tables.rows(C))` has column names `[:obs, :time, :value]`.
@@ -61,7 +61,7 @@ Or a macro `@set A(key) = val`. For now, you can write `C("dog") .= 1:10` since 
 * You can extract ranges via getproperty, to write  `for (i,t) in enumerate(C.time)` etc. 
   (Stolen from [this PR](https://github.com/JuliaArrays/AxisArrays.jl/pull/152).)
 
-Links to the zoo of similar packages:
+Links to the zoo of similar packages (also see [docs/speed.jl](docs/speed.jl)):
 
 * Anciet, pre-1.0: [AxisArrays](https://github.com/JuliaArrays/AxisArrays.jl), 
   [NamedArrays](https://github.com/davidavdav/NamedArrays.jl).
@@ -75,3 +75,4 @@ Links to the zoo of similar packages:
 
 * Discussion: [AxisArraysFuture](https://github.com/JuliaCollections/AxisArraysFuture/issues/1),
   [AxisArrays#84](https://github.com/JuliaArrays/AxisArrays.jl/issues/84). 
+
