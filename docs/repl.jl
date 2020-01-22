@@ -135,3 +135,20 @@ And data, 6-element Array{Int64,1}:
  ('e')       44
  ('f')  1000000
 
+julia> G = wrapdims(rand(Int8, 3,100,2), row = 'α':'ω', col=nothing, page=[:one, :two]) # Ranges printed with colours based on eltype:
+3-dimensional RangeArray(NamedDimsArray(...)) with ranges:
+↓   row ∈ 3-element StepRange{Char,...}
+→   col ∈ 100-element OneTo{Int}
+□   page ∈ 2-element Vector{Symbol}
+And data, 3×100×2 Array{Int8,3}:
+[:, :, 1] ~ (:, :, :one):
+         (1)  (2)  (3)   (4)   (5)  (6)  …  (95)  (96)  (97)  (98)  (99)  (100)
+  ('α')   17  -10  -40   -89   -51  -89      -43    61   -49  -109  -116    -79
+  ('β')   50   26   84    80   -67  -73     -106  -117    86    40    19      7
+  ('γ')    6   25  -96  -103  -102  -76      -85   -92   -30   118    -1    122
+
+[:, :, 2] ~ (:, :, :two):
+         (1)  (2)  (3)  (4)  (5)  (6)    (95)  (96)  (97)  (98)  (99)  (100)
+  ('α')    9  -97  -75  -63   97   93       87    26   -81    33  -110      9
+  ('β')   68   87   43   24   33   60       39    29  -101   -25    17    126
+  ('γ')  122   -4   45  -67  -57   57       84    75   114   101   -57    125
