@@ -24,27 +24,28 @@ Everything should work for either a `RangeArray{...,NamedDimsArray}` or the reve
 
 The ranges themselves may be any `AbstractVector`s, and `A(20.0)` simply looks up 
 `i = findfirst(isequal(20.0), ranges(A,1))` before returning `A[i]`.
-Instead of a single value you may also give a function, for instance `A(<(35))`
-looks up `is = findall(t -> t<35, ranges(A,1))` and returns the vector `A[is]`,
+No special types are provided for these ranges, but those from say
+[UniqueVectors.jl](https://github.com/garrison/UniqueVectors.jl)
+or [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
+or [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) should work fine.
+To apply such a type to all ranges, you may write:
+```julia
+D = wrapdims(rand(1000), UniqueVector, rand(Int, 1000))
+```
+Then `D(n)` here will use the fast lookup from UniqueVectors.jl (about 60x faster).
+
+Instead of looking up a single value, you may also give a function. For instance `A(<(35))`
+looks up `is = findall(t -> t<35, ranges(A,1))` and returns the vector `view(A, is)`,
 with its range trimmed to match. You may also give one of a few special selectors:
 ```julia
 A(Near(12.5))           # the one nearest element
 C(time=Interval(1,3))   # matrix with all times in 1..3
-C("dog", Index[3])      # mix of range and integer indexing
+C("dog", Index[3])      # mix of range and integer indexing, allows Index[end]
 C(!=("dog"))            # unambigous as only range(C,1) contains strings
 ```
-
-No special types are provided for these ranges, those from other packages should work fine.
-For instance, [UniqueVectors.jl](https://github.com/garrison/UniqueVectors.jl)
-or [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
-or [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) as needed.
-For example, `D(n)` here will use the fast lookup from UniqueVectors.jl: 
-```julia
-D = wrapdims(rand(100), UniqueVector, rand(Int, 100))
-```
-Only when a dimension’s range is a Julia range does this package do anything special: 
-There are some fast overloads for things like `findall(<=(42), 10:10:100)`, and 
-for vectors, `push!(A, 0.72)` should also figure out how to extend the range with more steps.
+When a dimension’s range is a Julia `AbstractRange`, then this package provides some faster 
+overloads for things like `findall(<=(42), 10:10:100)`. 
+And for vectors, `push!(A, 0.72)` should also figure out how to extend the range with more steps.
 
 <!--
 The larger goal is roughly to divide up the functionality of [AxisArrays.jl](https://github.com/JuliaArrays/AxisArrays.jl)
@@ -54,11 +55,11 @@ among smaller packages.
   And see [docs/speed.jl](docs/speed.jl) for some numbers, and comparisons to other packages.
 
 * It tries to support the [Tables.jl](https://github.com/JuliaData/Tables.jl) interface,
-for example `DataFrame(Tables.rows(C))` has column names `[:obs, :time, :value]`.
+  for example `DataFrame(Tables.rows(C))` has column names `[:obs, :time, :value]`.
 
 * There’s no very obvious notation for `setkey!(A, value, key)`.
-One idea is to make selectors could work backwards, allowing `A[Key(key)] = val`.
-Or a macro `@set A(key) = val`. For now, you can write `C("dog") .= 1:10` since it's a view.
+  One idea is to make selectors could work backwards, allowing `A[Key(key)] = val`.
+  For now, you can write `C("dog") .= 1:10` since it's a view.
 
 * `Index[end]` works, perhaps [EndpointRanges.jl](https://github.com/JuliaArrays/EndpointRanges.jl) is the way to let `Index[end-1]` work.
 
@@ -79,4 +80,5 @@ Links to the zoo of similar packages (also see [docs/speed.jl](docs/speed.jl)):
 
 * Discussion: [AxisArraysFuture](https://github.com/JuliaCollections/AxisArraysFuture/issues/1),
   [AxisArrays#84](https://github.com/JuliaArrays/AxisArrays.jl/issues/84). 
+
 
