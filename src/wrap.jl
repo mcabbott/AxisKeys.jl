@@ -19,10 +19,21 @@ wrapdims(A::AbstractArray, r::Union{AbstractVector,Nothing}, ranges::Union{Abstr
     RangeArray(A, check_ranges(A, (r, ranges...)))
 
 """
+    wrapdims(A, T, ranges...)
+    wrapdims(A, T; name=range...)
+
+This applies type `T` to all of the ranges,
+for example to wrap them as `UniqueVector`s or `AcceleratedArray`s (using those packages)
+for fast lookup.
+"""
+wrapdims(A::AbstractArray, T::Type, r::Union{AbstractVector,Nothing}, ranges::Union{AbstractVector,Nothing}...) =
+    RangeArray(A, map(T, check_ranges(A, (r, ranges...))))
+
+"""
     wrapdims(T, ranges...)
     wrapdims(T; name=range, ...)
 
-Given a type `T`, this creates `Array{T}(undef, ...)` before wrapping as instructed.
+Given a datatype `T`, this creates `Array{T}(undef, ...)` before wrapping as instructed.
 """
 wrapdims(T::Type, r::AbstractVector, ranges::AbstractVector...) =
     wrapdims(Array{T}(undef, map(length, (r, ranges...))), r, ranges...)
@@ -64,9 +75,9 @@ wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
 
 const OUTER = Ref(:RangeArray)
 
-function wrapdims(A::AbstractArray; kw...)
+function wrapdims(A::AbstractArray, T::Union{Type,Function}=identity; kw...)
     L = check_names(A, kw.itr)
-    R = check_ranges(A, values(kw.data))
+    R = map(T, check_ranges(A, values(kw.data)))
     if OUTER[] == :RangeArray
         return RangeArray(NamedDimsArray(A, L), R)
     else

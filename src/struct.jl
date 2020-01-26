@@ -21,10 +21,8 @@ function RangeArray(data::AbstractArray{T,N},
     RangeArray{T, N, typeof(data), typeof(final)}(data, final)
 end
 
-# RangeArray(data::AbstractVector, ref::RefValue{<:AbstractVector}) =
-#     RangeArray{eltype(data), 1, typeof(data), typeof(ref)}(data, ref)
-# RangeArray(data::AbstractVector, arr::AbstractVector) =
-#     RangeArray{eltype(data), 1, typeof(data), typeof(Ref(arr))}(data, Ref(arr))
+RangeArray(data::AbstractVector, arr::AbstractVector) =
+    RangeArray{eltype(data), 1, typeof(data), typeof(Ref(arr))}(data, Ref(arr))
 
 function RangeArray(A::RangeArray, r2::Tuple)
     r3 = unify_ranges(ranges(A), r2)
@@ -154,7 +152,7 @@ if unambigous, by comparing types & gradually widening
 @generated guessdim(arg, tup) = _guessdim(arg, map(eltype, Tuple(tup.parameters)))
 
 function _guessdim(argT, types, subtypes=())
-    types == subtypes && error("key of type $arT doesn't match any dimensions")
+    types == subtypes && error("key of type $argT doesn't match any dimensions")
 
     # First look for direct match
     ds = findall(T -> argT <: T, types)
@@ -196,7 +194,7 @@ and selectors like `Nearest(key)` and `Interval(lo,hi)`.
 """
 @inline function findindex(a, r::AbstractArray)
     i = findfirst(isequal(a), r)
-    i === nothing && error("could not find key $a in range $r")
+    i === nothing && error("could not find key $(repr(a)) in range $r")
     i
 end
 
