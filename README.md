@@ -10,7 +10,7 @@ operations on arrays, including broadcasting, `map` and comprehensions.
 They can also be used to look up elements: While indexing `A[i]` expects an integer 
 `i ∈ axes(A,1)`  as usual, `A(t)` instead looks up `t ∈ ranges(A,1)`. 
 
-The package aims to work well with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), 
+The package works closely with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), 
 which attaches names to dimensions. (These names are a tuple of symbols, like those of 
 a `NamedTuple`.) There's a convenience function `wrapdims` which constructs any combination:
 ```julia
@@ -20,7 +20,7 @@ C = wrapdims(rand(2,10), obs=["dog", "cat"], time=range(0, step=0.5, length=10))
 ```
 With both, we can write `C[time=1, obs=2]` to index by number, 
 and `C(time=3.5)` to lookup this key in the range. 
-This should work for either a `RangeArray{...,NamedDimsArray}` or the reverse.
+Everything should work for either a `RangeArray{...,NamedDimsArray}` or the reverse.
 
 The ranges themselves may be any `AbstractVector`s, and `A(20.0)` simply looks up 
 `i = findfirst(isequal(20.0), ranges(A,1))` before returning `A[i]`.
@@ -35,9 +35,13 @@ C(!=("dog"))            # unambigous as only range(C,1) contains strings
 ```
 
 No special types are provided for these ranges, those from other packages should work fine.
-(For instance, [UniqueVectors.jl](https://github.com/garrison/UniqueVectors.jl)
+For instance, [UniqueVectors.jl](https://github.com/garrison/UniqueVectors.jl)
 or [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
-or [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) as needed.)
+or [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) as needed.
+For example, `D(n)` here will use the fast lookup from UniqueVectors.jl: 
+```julia
+D = wrapdims(rand(100), UniqueVector, rand(Int, 100))
+```
 Only when a dimension’s range is a Julia range does this package do anything special: 
 There are some fast overloads for things like `findall(<=(42), 10:10:100)`, and 
 for vectors, `push!(A, 0.72)` should also figure out how to extend the range with more steps.

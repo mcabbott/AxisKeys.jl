@@ -112,6 +112,26 @@ And data, 2×1 Array{Float64,2}:
   ("dog")    0.3918636606806696
   ("cat")    1.4542825908906043
 
+julia> map(sqrt, D) .* sqrt.(D) # map, broadcasting, and generators should work
+1-dimensional RangeArray(NamedDimsArray(...)) with range:
+↓   iter ∈ 5-element StepRange{Int64,...}
+And data, 5-element Array{Float64,1}:
+ (10)  114.99999999999999
+ (20)   99.0
+ (30)    0.0
+ (40)   57.0
+ (50)   88.0
+
+julia> vcat(D', zero(D'), similar(D'))
+2-dimensional RangeArray(NamedDimsArray(...)) with ranges:
+↓   _ ∈ 3-element OneTo{Int}
+→   iter ∈ 5-element StepRange{Int64,...}
+And data, 3×5 Array{Int8,2}:
+      (10)  (20)  (30)  (40)  (50)
+ (1)   115    99     0    57    88
+ (2)     0     0     0     0     0
+ (3)    48   -44   -18     8     1
+
 julia> F = wrapdims(rand(1:100, 5), 🔤 = 'a':'z') # ranges are adjusted if possible
 ┌ Warning: range 'a':1:'z' replaced by 'a':1:'e', to match size(A, 1) == 5
 └ @ AxisRanges ~/.julia/dev/AxisRanges/src/wrap.jl:46
@@ -135,20 +155,30 @@ And data, 6-element Array{Int64,1}:
  ('e')       44
  ('f')  1000000
 
-julia> G = wrapdims(rand(Int8, 3,100,2), row = 'α':'ω', col=nothing, page=[:one, :two]) # Ranges printed with colours based on eltype:
-3-dimensional RangeArray(NamedDimsArray(...)) with ranges:
-↓   row ∈ 3-element StepRange{Char,...}
-→   col ∈ 100-element OneTo{Int}
-□   page ∈ 2-element Vector{Symbol}
-And data, 3×100×2 Array{Int8,3}:
-[:, :, 1] ~ (:, :, :one):
-         (1)  (2)  (3)   (4)   (5)  (6)  …  (95)  (96)  (97)  (98)  (99)  (100)
-  ('α')   17  -10  -40   -89   -51  -89      -43    61   -49  -109  -116    -79
-  ('β')   50   26   84    80   -67  -73     -106  -117    86    40    19      7
-  ('γ')    6   25  -96  -103  -102  -76      -85   -92   -30   118    -1    122
+julia> using UniqueVectors # https://github.com/garrison/UniqueVectors.jl
 
-[:, :, 2] ~ (:, :, :two):
-         (1)  (2)  (3)  (4)  (5)  (6)    (95)  (96)  (97)  (98)  (99)  (100)
-  ('α')    9  -97  -75  -63   97   93       87    26   -81    33  -110      9
-  ('β')   68   87   43   24   33   60       39    29  -101   -25    17    126
-  ('γ')  122   -4   45  -67  -57   57       84    75   114   101   -57    125
+julia> u = unique(rand(Int8, 100));
+
+julia> H = wrapdims(rand(3,length(u),2), UniqueVector; # apply this type to all ranges
+           row=[:a, :b, :c], col=u, page=["one", "two"])
+3-dimensional RangeArray(NamedDimsArray(...)) with ranges:
+↓   row ∈ 3-element UniqueVector{Symbol}
+→   col ∈ 81-element UniqueVector{Int8}
+□   page ∈ 2-element UniqueVector{String}
+And data, 3×81×2 Array{Float64,3}:
+[:, :, 1] ~ (:, :, "one"):
+        (-25)         (-96)         (0)         …  (69)          (-14)
+  (:a)      0.293286      0.97221     0.857084        0.894496       0.994897
+  (:b)      0.966373      0.112904    0.98633         0.0459311      0.393979
+  (:c)      0.410052      0.69666     0.800045        0.524544       0.195882
+
+[:, :, 2] ~ (:, :, "two"):
+        (-25)         (-96)          (0)          …  (69)          (-14)
+  (:a)      0.486264      0.111887     0.632189         0.0597532      0.493346
+  (:b)      0.123933      0.988803     0.243089         0.701553       0.11737
+  (:c)      0.850917      0.0495313    0.0470764        0.322251       0.642556
+
+# Ranges are printed with colours based on eltype, btw!
+
+julia> H(:a, -14, "one") # uses UniqueVector's fast lookup
+0.9948971186701887
