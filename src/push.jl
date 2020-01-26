@@ -82,37 +82,19 @@ extend_by!!(r::AbstractVector, n::Int) = vcat(r, length(r)+1 : length(r)+n+1)
 append!!(r::Vector, s::AbstractVector) = append!(r,s)
 append!!(r::AbstractVector, s::AbstractVector) = (extend_by!!(r, length(s)); vcat(r,s))
 
-#=
-This doesn't extend A's range, hence leaves incoherent state...
-A = wrapdims(rand(3), 'a':'c'); push!(A, 'd' => 4)
-Should it call extend_by!!(old_range) perhaps?
-=#
 """
-    A′ = push!(A::RangeArray; key = val)
-    A′ = push!(A::RangeArray, key => val)
+    push!(A::RangeArray; key = val)
+    push!(A::RangeArray, key => val)
 
-This pushes `val` into `A.data`, and pushes or appends `key` to `ranges(A,1)`.
-This may leave `A` in an incoherent state, but the returned `A′` is sure to be safe.
+This pushes `val` into `A.data`, and pushes `key` to `ranges(A,1)`.
+Both of these must be legal operations, e.g. `A = wrapdims([1], ["a"]); push!(A, b=2)`.
 """
 Base.push!(A::RangeArray; kw...) = push!(A, map(Pair, keys(kw), values(kw.data))...)
 
-function Base.push!(A::RangeArray, p::Pair...)
-    data = push!(parent(A), map(last, p)...)
-    old_range = ranges(A,1)
-    new_range = push_or_cat!!(old_range, map(first, p)...)
-    if new_range === old_range  # then it was mutated, best case
-        return A
-    elseif typeof(new_range) <: typeof(old_range) # will fit into same container
-        setindex!(A.ranges, new_range)
-        return A
-    end
-    # We can't fix A, but try to at least keep it coherent?
-    if length(new_range) != length(old_range)
-        dummy = extend_by!!(old_range, length(new_range) - length(old_range))
-        typeof(dummy) <: typeof(old_range) && setindex!(A.ranges, dummy)
-    end
-    RangeArray(data, (new_range,)) # ... and return the correct thing
+function Base.push!(A::RangeArray, pairs::Pair...)
+    ranges(A,1) isa AbstractRange && error("can't use push!(A, key => val) when range(A,1) isa AbstractRange")
+    T = eltype(ranges(A,1))
+    push!(ranges(A,1),  map(p -> T(first(p)), pairs)...)
+    push!(parent(A), map(last, pairs)...)
+    A
 end
-
-push_or_cat!!(A::AbstractRange, vals...) = vcat(A, vals...)
-push_or_cat!!(A::AbstractVector, vals...) = push!(A, vals...)

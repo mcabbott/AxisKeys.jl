@@ -13,6 +13,9 @@ function _summary(io, x)
         printstyled(io, length(ranges(x,d)), "-element ", shorttype(ranges(x,d)), "\n", color=c)
     end
     print(io, "And data, ", summary(rangeless(unname(x))))
+    if ndims(x)==1 && length(ranges_or_axes(x, 1)) != length(x)
+        throw(ArgumentError("length of range, $(length(ranges_or_axes(x, 1))), must match length of vector, $(length(x))! "))
+    end
 end
 
 shorttype(r::Vector{T}) where {T} = "Vector{$T}"

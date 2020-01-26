@@ -204,4 +204,9 @@ end
 
     @test ranges(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40] # fails with nda(ra(...))
 
+    W = wrapdims([1,2,3], ["a", "b", "c"])
+    push!(W, d=4)
+    push!(W, "e" => 5)
+    @test ranges(W,1) == ["a", "b", "c", "d", "e"]
+
 end
