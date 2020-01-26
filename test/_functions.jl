@@ -160,7 +160,7 @@ end
     M6 = wrapdims(data, r='a':'c', nope=2:5) # wrong name
     M7 = wrapdims(2 .* data, r='a':'c', c=2:5) # wrong data
     @test M != M5 # fails with nda(ra(...))
-    @test_skip M != M6 # pending https://github.com/invenia/NamedDims.jl/pull/79
+    @test M != M6
     @test M != M7
     @test !isapprox(M, M5) && !isapprox(M, M7) # errors with nda(ra(...))
 

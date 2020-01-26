@@ -70,7 +70,7 @@ end
     @test R(Near(23.5)) == R[:, 2] # promotes to Real & then matches
     @test R(Interval(17,23)) == R[:, 2:2]
     @test R(Base.Fix2(<=,23)) == R[:, 1:2]
-    @test_skip ranges(R(Base.Fix2(<=,23)), 2) isa AbstractRange
+    @test ranges(R(Base.Fix2(<=,23)), 2) isa AbstractRange
 
     @test_throws BoundsError V(Index[99])
 
@@ -163,8 +163,8 @@ end
         v3 = wrapdims(ones(2), [11, 22])
         z = zeros(2,2)
 
-        @test_skip names(v1 .= v1 .+ v2) == (:μ,) # works with https://github.com/invenia/NamedDims.jl/pull/80
-        @test_skip v1[1] == 2
+        @test names(v1 .= v1 .+ v2) == (:μ,)
+        @test v1[1] == 2
 
         @test names(v2 .= v3 .+ 5) == (:μ,)
         @test v2[1] == 6
