@@ -68,17 +68,19 @@ among smaller packages.
 
 Links to the zoo of similar packages (also see [docs/speed.jl](docs/speed.jl)):
 
-* Anciet, pre-1.0: [AxisArrays](https://github.com/JuliaArrays/AxisArrays.jl), 
-  [NamedArrays](https://github.com/davidavdav/NamedArrays.jl).
-  Also perhaps [AxisArrayPlots](https://github.com/jw3126/AxisArrayPlots.jl),
-  [LabelledArrays](https://github.com/JuliaDiffEq/LabelledArrays.jl).
+* Anciet, pre-1.0: [AxisArrays](https://github.com/JuliaArrays/AxisArrays.jl) (name + range as an `Axis` object, indexing vs. lookup according to type), 
+  [NamedArrays](https://github.com/davidavdav/NamedArrays.jl) (also prints nicely, not type-stable?).
+  Also perhaps [AxisArrayPlots](https://github.com/jw3126/AxisArrayPlots.jl) (recipes),
+  [LabelledArrays](https://github.com/JuliaDiffEq/LabelledArrays.jl) (names for elements, not dimensions).
 
-* New, or in progress: [NamedDims](https://github.com/invenia/NamedDims.jl), 
-  [DimensionalData](https://github.com/rafaqz/DimensionalData.jl),
-  [AbstractIndices](https://github.com/Tokazama/AbstractIndices.jl),
-  [IndexedDims](https://github.com/invenia/IndexedDims.jl).
+* New, or in progress: [NamedDims](https://github.com/invenia/NamedDims.jl) (just names, used above), 
+  [DimensionalData](https://github.com/rafaqz/DimensionalData.jl) (most similar to AxisArrays),
+  [IndexedDims](https://github.com/invenia/IndexedDims.jl) (likewise adds ranges onto names from `NamedDims`),
+  [NamedPlus](https://github.com/mcabbott/NamedPlus.jl) (adds many features for `NamedDims` names),
+  [Dictionaries](https://github.com/andyferris/Dictionaries.jl) (fast lookup only, no indexing, not `<: AbstractArray`).
 
 * Discussion: [AxisArraysFuture](https://github.com/JuliaCollections/AxisArraysFuture/issues/1),
-  [AxisArrays#84](https://github.com/JuliaArrays/AxisArrays.jl/issues/84). 
+  [AxisArrays#84](https://github.com/JuliaArrays/AxisArrays.jl/issues/84).
+
 
 
