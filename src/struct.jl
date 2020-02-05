@@ -104,6 +104,10 @@ A single key may be used to indicate a slice, provided that its type
 only matches the eltype of one `ranges(A,d)`.
 You can also slice explicitly with `A("a", :, :)`, both of these return a `view`.
 
+An extra trailing colon (when all other indices are fixed) will return
+a zero-dimensional `view`. This allows setting one value by
+writing `A("a", 2.0, :γ, :) .= 100`.
+
 Also accepts functions like `A(<=(2.0))` and selectors,
 see `Nearest` and `Index`.
 """
@@ -112,16 +116,24 @@ see `Nearest` and `Index`.
 @inline function getkey(A, args...)
     if length(args) == ndims(A)
         inds = map(findindex, args, ranges(A))
-        # @boundscheck println("boundscheck getkey $args -> $inds")
         @boundscheck checkbounds(A, inds...)
         return @inbounds get_or_view(A, inds...)
+
+    elseif length(args) > ndims(A) && all(args[ndims(A)+1:end] .== (:)) # trailing colons
+        args_nd = args[1:ndims(A)]
+        inds = map(findindex, args_nd, ranges(A))
+        @boundscheck checkbounds(A, inds...)
+        if inds isa NTuple{<:Any, Int}
+            return @inbounds view(rangeless(A), inds...) # zero-dim view of underlying
+        else
+            return @inbounds get_or_view(A, inds...)
+        end
 
     elseif length(args)==1
         arg = first(args)
         d = guessdim(arg, ranges(A))
         i = findindex(arg, ranges(A,d))
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
-        # @boundscheck println("boundscheck getkey $args -> $inds")
         @boundscheck checkbounds(A, inds...)
         return @inbounds view(A, inds...)
 

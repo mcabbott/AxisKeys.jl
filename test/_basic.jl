@@ -15,6 +15,10 @@ using Test, AxisRanges
     @test AxisRanges.setkey!(R, 123, 'a', 10) == 123
     @test R[1,1] == 123
 
+    @test R('a', 10, :) isa SubArray{Int,0}
+    R('a', 10, :) .= 321
+    @test R[1,1] == 321
+
     @test R[:] == vec(R.data)
     @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1]
     @test ranges(R[:, [0.9,0.1,0.9,0.1] .> 0.5],2) == [10,30]
