@@ -103,7 +103,7 @@ while `A.ranges isa Tuple` for matrices & higher. But `ranges(A)` always returns
 ### Absent
 
 * There is no automatic alignment of dimensions by name. 
-  Thus `A .+ A(z='γ')` is fine as both names and ranges line up, 
+  Thus `A .+ A[iter=3]` is fine as both names and ranges line up, 
   but `A .+ B` is an error, as `B`'s first name is `:time` not `:channel`.
   (See [NamedPlus](https://github.com/mcabbott/NamedPlus.jl)`.@named` for something like this.)
 
