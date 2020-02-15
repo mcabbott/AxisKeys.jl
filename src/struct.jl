@@ -10,7 +10,7 @@ const RangeMatrix{T,AT,RT} = RangeArray{T,2,AT,RT}
 const RangeVecOrMat{T,AT,RT} = Union{RangeVector{T,AT,RT}, RangeMatrix{T,AT,RT}}
 
 function RangeArray(data::AbstractArray{T,N},
-            ranges::Union{Tuple,RefValue} = axes(data)) where {T,N}
+            ranges::Union{Tuple,RefValue}) where {T,N}
 
     length(ranges) == N || throw(ArgumentError(
         "wrong number of ranges, got $(length(ranges)) with ndims(A) == $N"))

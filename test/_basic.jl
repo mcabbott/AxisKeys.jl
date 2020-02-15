@@ -202,7 +202,7 @@ end
     @test pop!(V) == 13
     @test ranges(V) == (10:10:40,)
 
-    V2 = RangeArray(rand(3))
+    V2 = RangeArray(rand(3), Base.OneTo(3))
     @test ranges(push!(V2, 0)) === (Base.OneTo(4),)
     @test ranges(append!(V2, [7,7])) === (Base.OneTo(6),)
 
