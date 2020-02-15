@@ -4,13 +4,15 @@
     wrapdims(A, 1:10, ['a', 'b', 'c'])
     wrapdims(A, i=1:10, j=['a', 'b', 'c'])
 
-Function for constructing either a `NamedDimsArray`, a `RangeArray`,
+Convenience function for constructing either a `NamedDimsArray`, a `RangeArray`,
 or a nested pair of both.
 
-Performs some sanity checks which are skipped by `RangeArray` constructor.
-Giving `nothing` as a range will result in `ranges(A,d) == axes(A,d)`.
-Given an `AbstractRange` of the wrong length, it will adjust the end of the range,
-and give a warning.
+Performs some sanity checks which are skipped by `RangeArray` constructor:
+* Giving `nothing` as a range will result in `ranges(A,d) == axes(A,d)`.
+* Given an `AbstractRange` of the wrong length, it will adjust the end of the range,
+  and give a warning.
+* Given `A::OffsetArray` and ranges which are not, it will wrap the ranges so that
+  `axes.(ranges(A_wrapped)) == axes(A)`.
 
 By default it wraps in this order: `RangeArray{...,NamedDimsArray{...}}`.
 This tests a flag `AxisRanges.OUTER[] == :RangeArray` which you can change.
@@ -76,8 +78,8 @@ wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
 const OUTER = Ref(:RangeArray)
 
 function wrapdims(A::AbstractArray, T::Union{Type,Function}=identity; kw...)
-    L = check_names(A, kw.itr)
-    R = map(T, check_ranges(A, values(kw.data)))
+    L = check_names(A, keys(kw))
+    R = map(T, check_ranges(A, values(values(kw))))
     if OUTER[] == :RangeArray
         return RangeArray(NamedDimsArray(A, L), R)
     else
@@ -89,4 +91,31 @@ function check_names(A, names)
     ndims(A) == length(names) || throw(ArgumentError(
         "wrong number of names, got $names with ndims(A) == $(ndims(A))"))
     names
+end
+
+_construc_doc = """
+    RangeArray(A; i=2:3, j=["a", "b"])
+    NamedDimsArray(A; i=2:3, j=["a", "b"])
+
+These constructors make `RangeArray(NamedDimsArray(A, names), ranges)`
+or `NamedDimsArray(RangeArray(A, ranges), names)`, which should be equivalent.
+
+These perform less sanity checking than `wrapdims(A; kw...)`.
+"""
+@doc _construc_doc
+function RangeArray(A::AbstractArray; kw...)
+    L = keys(kw)
+    length(L) == ndims(A) || throw(ArgumentError("number of names must match number of dimensions"))
+    R = values(values(kw))
+    axes.(R, 1) == axes(A) || throw(ArgumentError("axes of ranges must match axes of array"))
+    RangeArray(NamedDimsArray(A, L), R)
+end
+
+@doc _construc_doc
+function NamedDims.NamedDimsArray(A::AbstractArray; kw...)
+    L = keys(kw)
+    length(L) == ndims(A) || throw(ArgumentError("number of names must match number of dimensions"))
+    R = values(values(kw))
+    axes.(R, 1) == axes(A) || throw(ArgumentError("axes of ranges must match axes of array"))
+    NamedDimsArray(RangeArray(A, R), L)
 end
