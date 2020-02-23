@@ -71,6 +71,11 @@ Base.getproperty(A::NamedDimsArray{L}, s::Symbol) where {L} =
     inds = NamedDims.order_named_inds(Val(names(A)); kw...)
     getindex(A, inds...)
 end
+@inline @propagate_inbounds function Base.view(A::RangeArray; kw...)
+    hasnames(A) || error("must have names!")
+    inds = NamedDims.order_named_inds(Val(names(A)); kw...)
+    view(A, inds...)
+end
 
 # Any NamedDimsArray + RangeArray combination is callable:
 

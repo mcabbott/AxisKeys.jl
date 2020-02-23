@@ -113,7 +113,8 @@ end
         @test N.obs == ['a', 'b', 'c']
 
         @test N(obs='a', iter=40) == N[obs=1, iter=4]
-        @test N(obs='a') == N('a') == N[1,:]
+        @test N(obs='a') == N('a') == N[1,:] == N[obs=1]
+        @test N(obs='a') == N('a') == view(N, 1,:) == view(N, obs=1)
 
         @test names(N(obs='a')) == (:iter,)
         @test ranges(N(obs='b')) == (10:10:40,)
