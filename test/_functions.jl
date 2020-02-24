@@ -33,6 +33,12 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     @test ranges(transpose(transpose(V))) == ranges(V)
     @test ranges(permutedims(transpose(V))) == (ranges(V,1), Base.OneTo(1))
 
+    V2 = wrapdims(rand(3), along=[:a, :b, :c])
+    ranges(permutedims(V2), 2)[1] = :nope
+    @test ranges(V2,1) == [:a, :b, :c]
+    ranges(V2', 2)[1] = :zed
+    @test ranges(V2,1) == [:zed, :b, :c]
+
     # sort
     @test sort(V)(20) == V(20)
 

@@ -158,7 +158,7 @@ for (mod, fun, lazy) in [(Base, :permutedims, false),
         new_ranges = ndims(A)==1 ? (Base.OneTo(1), ranges(A,1)) :
             ndims(data)==1 ? (ranges(A,2),) :
             reverse(ranges(A))
-        RangeArray(data, $(lazy ? :(map(copy, new_ranges)) : :new_ranges))#, $(lazy ? :(A.meta) : :(copy(A.meta))))
+        RangeArray(data, $(lazy ? :new_ranges : :(map(copy, new_ranges))))#, $(lazy ? :(A.meta) : :(copy(A.meta))))
     end
 end
 
