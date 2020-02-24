@@ -4,6 +4,9 @@ using NamedDims
 
 NdaRa{L,T,N} = NamedDimsArray{L,T,N,<:RangeArray}
 RaNda{L,T,N} = RangeArray{T,N,<:NamedDimsArray{L}}
+# NdaRaV{L,T,N} = NamedDimsArray{L,T,N,<:RangeVector}
+# NdaRaM{L,T,N} = NamedDimsArray{L,T,N,<:RangeMatrix}
+NdaRaVoM{L,T,N} = NamedDimsArray{L,T,N,<:RangeVecOrMat}
 
 # Just make names get the names, and behave like size(A,d), axes(A,d) etc.
 

@@ -1,6 +1,7 @@
 using Test, AxisRanges, Statistics
 
-M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
+M = RangeArray(rand(Int8, 3,4), r='a':'c', c=2:5)
+MN = NamedDimsArray(M.data.data, r='a':'c', c=2:5)
 V = wrapdims(rand(1:99, 10), v=10:10:100)
 
 @testset "dims" begin
@@ -80,8 +81,10 @@ end
 @testset "cat" begin
 
     # concatenation
-    @test ranges(hcat(M,M)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5]) # fails with nda(ra(...))
+    @test ranges(hcat(M,M)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5])
     @test ranges(vcat(M,M)) == (['a', 'b', 'c', 'a', 'b', 'c'], 2:5)
+    @test ranges(hcat(MN,MN)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5])
+    @test ranges(hcat(M,MN)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5])
 
     V = wrapdims(rand(1:99, 3), r=['a', 'b', 'c'])
     @test ranges(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1]) # fails with nda(ra(...))
@@ -97,6 +100,9 @@ end
     @test ranges(cat(M.data,M,M, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(3))
     @test ranges(cat(M,M, dims=(1,2))) == (['a','b','c', 'a','b','c'], [2,3,4,5, 2,3,4,5])
 
+    @test ranges(cat(MN,MN, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(2))
+    @test ranges(cat(M,MN, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(2))
+
     @test_broken ranges(cat(M,M, dims=:r)) # doesn't work in NamedDims either
 
 end
@@ -106,6 +112,8 @@ end
     @test ranges(M * M') === ('a':'c', 'a':'c')
     @test ranges(M * rand(4,5)) === ('a':'c', Base.OneTo(5))
     @test ranges(rand(2,3) * M) === (Base.OneTo(2), 2:5)
+    @test ranges(MN * MN') === ('a':'c', 'a':'c')
+    @test ranges(M * MN') === ('a':'c', 'a':'c')
 
     # two vectors
     @test (V' * V) isa Int
@@ -138,12 +146,18 @@ end
 
     # copy, similar, etc
     @test ranges(copy(M)) == ('a':'c', 2:5)
+    @test ranges(copy(MN)) == ('a':'c', 2:5)
     @test zero(M)('a',2) == 0
+    @test zero(MN)('a',2) == 0
 
-    @test ranges(similar(M, Int)) == ranges(M) # fails with nda(ra(...))
+    @test ranges(similar(M, Int)) == ranges(M)
+    @test ranges(similar(MN, Int)) == ranges(M)
     @test AxisRanges.hasranges(similar(M, Int, 3,3)) == false
+    @test AxisRanges.hasranges(similar(MN, Int, 3,3)) == false
     @test names(similar(M, 3,3)) == (:r, :c)
+    @test names(similar(MN, 3,3)) == (:r, :c)
     @test AxisRanges.hasnames(similar(M, 2,2,2)) == false
+    @test AxisRanges.hasnames(similar(MN, 2,2,2)) == false
 
 end
 @testset "equality" begin
@@ -163,5 +177,7 @@ end
     @test M != M6
     @test M != M7
     @test !isapprox(M, M5) && !isapprox(M, M7) # errors with nda(ra(...))
+
+    @test M == MN
 
 end

@@ -80,7 +80,10 @@ function Base.permutedims(A::RangeArray, perm)
 end
 
 for (T, S) in [(:RangeVecOrMat, :RangeVecOrMat), # RangeArray gives ambiguities
-    (:RangeVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :RangeVecOrMat)]
+    (:RangeVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :RangeVecOrMat),
+    (:NdaRaVoM, :NdaRaVoM), # These are needed because hcat(NamedDimsArray...) relies on similar()
+    (:NdaRaVoM, :RangeVecOrMat), (:RangeVecOrMat, :NdaRaVoM),
+    (:NdaRaVoM, :AbstractVecOrMat), (:AbstractVecOrMat, :NdaRaVoM) ]
 
     @eval function Base.vcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
         data = vcat(rangeless(A), rangeless(B), rangeless.(Cs)...)
@@ -101,7 +104,10 @@ for (T, S) in [(:RangeVecOrMat, :RangeVecOrMat), # RangeArray gives ambiguities
 end
 for (T, S) in [ (:RangeArray, :RangeArray),
         (:RangeArray, :AbstractArray), (:AbstractArray, :RangeArray),
-        (:RangeArray, :NamedDimsArray), (:NamedDimsArray, :RangeArray) ]
+        (:RangeArray, :NamedDimsArray), (:NamedDimsArray, :RangeArray),
+        (:NdaRa, :NdaRa),
+        (:NdaRa, :RangeArray), (:RangeArray, :NdaRa),
+        (:NdaRa, :AbstractArray), (:AbstractArray, :NdaRa) ]
 
     @eval function Base.cat(A::$T, B::$S, Cs::AbstractArray...; dims)
         # numerical_dims = hasnames(A) || hasnames(B) ? ... todo!
@@ -156,20 +162,28 @@ for (mod, fun, lazy) in [(Base, :permutedims, false),
     end
 end
 
-Base.reshape(A::RangeArray, dims::Union{Colon, Int64}...) = reshape(parent(A), dims...)
+# Base.reshape(A::RangeArray, dims::Union{Colon, Int64}...) = reshape(parent(A), dims...)
+Base.reshape(A::RangeArray, dims::Tuple{Vararg{Union{Colon, Int64}}}) = reshape(parent(A), dims...)
 
 for fun in [:copy, :deepcopy, :similar, :zero, :one]
-    @eval Base.$fun(A::RangeArray) = RangeArray($fun(A.data), map(copy, A.ranges))
+    @eval Base.$fun(A::RangeArray) = RangeArray($fun(parent(A)), map(copy, ranges(A)))
+    @eval Base.$fun(A::NdaRa) = NamedDimsArray(RangeArray(
+        $fun(parent(parent(A))),
+        map(copy, ranges(A))), names(A))
 end
 Base.similar(A::RangeArray, T::Type) = RangeArray(similar(A.data, T), map(copy, A.ranges))
+Base.similar(A::NdaRa, T::Type) = NamedDimsArray(RangeArray(
+    similar(A.data.data, T), map(copy, ranges(A))), names(A))
 Base.similar(A::RangeArray, T::Type, dims::Int...) = similar(A.data, T, dims...)
 Base.similar(A::RangeArray, dims::Int...) = similar(A.data, dims...)
 
 for fun in [:(==), :isequal, :isapprox]
-    @eval function Base.$fun(A::RangeArray, B::RangeArray; kw...)
-        # Ideally you would pass isapprox(, atol) into unifiable_ranges?
-        unifiable_ranges(ranges(A), ranges(B)) || return false
-        return $fun(parent(A), parent(B); kw...)
+    for (T, S) in [ (:RangeArray, :RangeArray), (:RangeArray, :NdaRa), (:NdaRa, :RangeArray) ]
+        @eval function Base.$fun(A::$T, B::$S; kw...)
+            # Ideally you would pass isapprox(, atol) into unifiable_ranges?
+            unifiable_ranges(ranges(A), ranges(B)) || return false
+            return $fun(rangeless(A), rangeless(B); kw...)
+        end
     end
 end
 
