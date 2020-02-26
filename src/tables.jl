@@ -9,10 +9,10 @@ Tables.istable(::Type{<:RangeArray}) = true
 
 Tables.rowaccess(::Type{<:RangeArray}) = true
 
-function Tables.rows(A::RangeArray)
+function Tables.rows(A::Union{RangeArray, NdaRa})
     L = hasnames(A) ? (names(A)..., :value) :  # should gensym() if :value in names(A)
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
-    R = ranges(A)
+    R = ranges_or_axes(A)
     nt(inds) = NamedTuple{L}((map(getindex, R, inds)..., A[inds...]))
     # (nt(inds) for inds in Iterators.product(axes(A)...)) # should flatten?
     (nt(inds) for inds in Vectorator(Iterators.product(axes(A)...)))
@@ -34,10 +34,10 @@ Tables.Schema(nn) # define a struct? Now below...
 Tables.columnaccess(::Type{<:RangeArray{T,N,AT}}) where {T,N,AT} =
     IndexStyle(AT) === IndexLinear()
 
-function Tables.columns(A::RangeArray)
+function Tables.columns(A::Union{RangeArray, NdaRa})
     L = hasnames(A) ? (names(A)..., :value) :
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
-    R = ranges(A)
+    R = ranges_or_axes(A)
     G = ntuple(ndims(A)) do d
         vec([rs[d] for rs in Iterators.product(R...)])
         # _vec(rs[d] for rs in Iterators.product(R...))

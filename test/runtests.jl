@@ -35,9 +35,9 @@ end
     N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
 
     @test keys(first(Tables.rows(R))) == (:dim_1, :dim_2, :value)
-    @test keys(first(Tables.rows(N))) == (:a, :b, :value) # fails with nda(ra(...))
+    @test keys(first(Tables.rows(N))) == (:a, :b, :value)
 
-    @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12] # fails with nda(ra(...))
+    @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
 
 end
 @testset "stack" begin
