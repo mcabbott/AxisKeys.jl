@@ -47,6 +47,12 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
 
     @test sortslices(M, dims=:c) isa NamedDimsArray
 
+    # reshape
+    @test reshape(M, 4,3) isa Array
+    @test reshape(M, 2,:) isa Array
+    @test reshape(M, (4,3)) isa Array
+    @test reshape(M, (2,:)) isa Array
+
 end
 @testset "map & collect" begin
 

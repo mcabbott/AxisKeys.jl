@@ -162,8 +162,8 @@ for (mod, fun, lazy) in [(Base, :permutedims, false),
     end
 end
 
-# Base.reshape(A::RangeArray, dims::Union{Colon, Int64}...) = reshape(parent(A), dims...)
-Base.reshape(A::RangeArray, dims::Tuple{Vararg{Union{Colon, Int64}}}) = reshape(parent(A), dims...)
+Base.reshape(A::RangeArray, dims::Tuple{Vararg{Int}}) = reshape(parent(A), dims...) # for ambiguities
+Base.reshape(A::RangeArray, dims::Tuple{Vararg{Union{Colon, Int}}}) = reshape(parent(A), dims...)
 
 for fun in [:copy, :deepcopy, :similar, :zero, :one]
     @eval Base.$fun(A::RangeArray) = RangeArray($fun(parent(A)), map(copy, ranges(A)))
