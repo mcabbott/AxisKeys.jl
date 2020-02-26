@@ -45,7 +45,7 @@ end
     rin = [wrapdims(1:3, a='a':'c') for i=1:4]
 
     @test ranges(stack(rin), :a) == 'a':'c'
-    @test ranges(stack(rin...), :a) == 'a':'c' # tuple
+    @test ranges(stack(:b, rin...), :a) == 'a':'c' # tuple
     @test ranges(stack(z for z in rin), :a) == 'a':'c' # generator
 
     rout = wrapdims([[1,2], [3,4]], b=10:11)
@@ -54,5 +54,10 @@ end
     rboth = wrapdims(rin, b=10:13)
     @test ranges(stack(rboth), :a) == 'a':'c'
     @test ranges(stack(rboth), :b) == 10:13
+
+    nts = [(i=i, j="j", k=33) for i=1:3]
+    @test ranges(stack(nts), 1) == [:i, :j, :k]
+    @test ranges(stack(:z, nts...), 1) == [:i, :j, :k]
+    @test ranges(stack(n for n in nts), 1) == [:i, :j, :k]
 
 end
