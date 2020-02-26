@@ -1,5 +1,5 @@
 using Test, AxisRanges, NamedDims
-using Statistics, OffsetArrays, Tables, UniqueVectors
+using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
 
 # AxisRanges.OUTER[] = :nda # changes behaviour of wrapdims
 
@@ -38,5 +38,21 @@ end
     @test keys(first(Tables.rows(N))) == (:a, :b, :value) # fails with nda(ra(...))
 
     @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12] # fails with nda(ra(...))
+
+end
+@testset "stack" begin
+
+    rin = [wrapdims(1:3, a='a':'c') for i=1:4]
+
+    @test ranges(stack(rin), :a) == 'a':'c'
+    @test ranges(stack(rin...), :a) == 'a':'c' # tuple
+    @test ranges(stack(z for z in rin), :a) == 'a':'c' # generator
+
+    rout = wrapdims([[1,2], [3,4]], b=10:11)
+    @test ranges(stack(rout), :b) == 10:11
+
+    rboth = wrapdims(rin, b=10:13)
+    @test ranges(stack(rboth), :a) == 'a':'c'
+    @test ranges(stack(rboth), :b) == 10:13
 
 end

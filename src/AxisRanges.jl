@@ -12,8 +12,6 @@ export wrapdims
 include("selectors.jl")
 export Near, Index, Interval
 
-include("tables.jl")
-
 include("functions.jl")
 
 include("push.jl")
@@ -23,5 +21,9 @@ include("broadcast.jl")
 include("show.jl")
 
 include("notpiracy.jl")
+
+include("tables.jl") # Tables.jl
+
+include("stack.jl") # LazyStack.jl
 
 end
