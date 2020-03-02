@@ -141,6 +141,21 @@ ai_collect(A) = [@inbounds(A[vals...]) for vals in Iterators.ProductIterator(map
 @btime ai_collect($bigai);         #  24.656 μs (8 allocations: 80.05 KiB) -- compare to indexing
 
 
+using AxisIndices                       #===== AxisIndices =====#
+# https://github.com/Tokazama/AxisIndices.jl
+
+ai4 = AxisIndicesArray(rand(3,4), (11:13, 21:24))
+ai5 = AxisIndicesArray(rand(3,4), (collect(11:13), collect(21:24)))
+
+axes(ai4, 1) # an Axis type
+collect(axes(ai4, 1)) == 1:3
+
+@btime $ai4[3,4] # 1.696 ns
+@btime $ai4[==(13),==(24)] #  7.257 ns -- fast lookup
+@btime $ai5[==(13),==(24)] # 20.676 ns -- search
+
+ai4[:, x -> x<23] # arb functions
+
 using IndexedDims                       #===== IndexedDims =====#
 # https://github.com/invenia/IndexedDims.jl
 
