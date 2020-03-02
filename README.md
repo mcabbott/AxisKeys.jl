@@ -36,6 +36,7 @@ This is written with round brackets:
 |--------------------|---------------------|---------------------|
 | by position        | `A[1,2,:]`          | `A(:left, 15.5, :)` |
 | by name            | `A[iter=1]`         | `A(iter=31)`        |
+| by type            |                     | `B = A(:left)`      |
 | `d` is a dimension | `index ∈ axes(A,d)` | `key ∈ ranges(A,d)` |   
 
 When using dimension names, fixing only some of them will return a slice, 
@@ -51,7 +52,7 @@ There are also a numer of special selectors, which work like this:
 | all in a range  | `B[2:5, :]`      | `B(Interval(14,25), :)` | matrix  |
 | all matching    | `B[3:end, 3:3]`  | `B(>(17), ==(33))`      | matrix  |
 | mixture         | `A[1, 2, end]`   | `A(:left, Index[2], Index[end])` | scalar |
-| non-scalar      | `B[iter=[1,3]]`  | `B(iter=[31, 33])`      | matrix  |
+| non-scalar      | `B[iter=[1, 3]]` | `B(iter=[31, 33])`      | matrix  |
 
 Here `Interval(13,18)` can also be written `13..18`, it's from [IntervalSets.jl](https://github.com/JuliaMath/IntervalSets.jl). 
 Any functions can be used to select keys, including lambdas: `B(time = t -> 0<t<17)`. 
@@ -124,6 +125,9 @@ Many functions should work, for example:
 
 To allow for this limited mutability, `V.ranges isa Ref` for vectors, 
 while `A.ranges isa Tuple` for matrices & higher. But `ranges(A)` always returns a tuple.
+
+* [LazyStack](https://github.com/mcabbott/LazyStack.jl)`.stack` is now hooked up.
+  Stacks of named tuples like `stack((a=i, b=i^2) for i=1:3)` create axis keys.
 
 ### Absent
 
@@ -252,7 +256,7 @@ This package isn't registered yet, partly because what to call things is unclear
    Perhaps `scales(A,1)`? A scale of keys? `domains(A,1)`? 
 
 6. The package could be  `AxisScales` (hard to say) or `LabelledDims` (how many `l`s again?)
-   or `ScaledDims` or what?
+   or `AxiKeys` (short!) or `ScaledDims` or what?
 
 7. The constructor function is `wrapdims` because it doesn't only make `RangeArray`s,
    but perhaps should match the package name better.
