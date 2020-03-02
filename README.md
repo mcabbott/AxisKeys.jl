@@ -70,6 +70,31 @@ as a trailing colon makes a zero-dimensional view.
 allowing mixed indexing `B[1, Key('β')] == B(Index[1], 'β')` 
 and `setkey!` via `B[Key(13.0), Key('α')] = 0`. But they don't right now.)
 
+### Construction
+
+```julia
+RangeArray(rand(Int8, 2,10), ([:a, :b], 10:10:100))
+```
+
+A nested pair with names can be constructed with keywords, 
+and (apart from a few bugs) this should work the same in either order:
+
+```julia
+RangeArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100)     # RangeArray(NamedDimsArray(...))
+NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(RangeArray(...))
+```
+
+The function `wrapdims` does a bit more checking and fixing. 
+It will adjust the length of ranges if it can, and their indexing if needed to match the array:
+
+```julia
+wrapdims(rand(Int8, 10), alpha='a':'z') 
+# Warning: range 'a':1:'z' replaced by 'a':1:'j', to match size(A, 1) == 10
+
+wrapdims(OffsetArray(rand(Int8, 10),-1), iter=10:10:100)
+ranges(ans,1) # 10:10:100 with indices 0:9
+```
+
 ### Functions
 
 As usual `axes(A)` returns (a tuple of vectors of) indices, and `ranges(A)` returns keys.
