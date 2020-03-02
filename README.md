@@ -32,12 +32,11 @@ But in addition, it is possible to pick out elements based on the new ranges,
 which for clarity we will call "lookup" based on a "key". 
 This is written with round brackets:
 
-|                    | Indexing            | Lookup              |
+| Dimension `d` | Indexing: `i ∈ axes(A,d)` | Lookup: `key ∈ ranges(A,d)` |
 |--------------------|---------------------|---------------------|
 | by position        | `A[1,2,:]`          | `A(:left, 15.5, :)` |
 | by name            | `A[iter=1]`         | `A(iter=31)`        |
-| by type            |                     | `B = A(:left)`      |
-| `d` is a dimension | `index ∈ axes(A,d)` | `key ∈ ranges(A,d)` |   
+| by type            |  --                 | `B = A(:left)`      |
 
 When using dimension names, fixing only some of them will return a slice, 
 such as `B = A[channel=1]`.
@@ -48,7 +47,7 @@ There are also a numer of special selectors, which work like this:
 
 |                 | Indexing         | Lookup                  |         |
 |-----------------|------------------|-------------------------|---------|
-| one nearest     | `B[time=3]`      | `B(time=Near(17.0))`    | vector  |
+| one nearest     | `B[time = 3]`    | `B(time = Near(17.0))`  | vector  |
 | all in a range  | `B[2:5, :]`      | `B(Interval(14,25), :)` | matrix  |
 | all matching    | `B[3:end, 3:3]`  | `B(>(17), ==(33))`      | matrix  |
 | mixture         | `A[1, 2, end]`   | `A(:left, Index[2], Index[end])` | scalar |
