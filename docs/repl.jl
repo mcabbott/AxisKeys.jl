@@ -1,13 +1,13 @@
 julia> #===== Examples of how to use the AxisArrays package. =====#
 
-(v1.3) pkg> add https://github.com/mcabbott/AxisRanges.jl # Not a registered package
+(v1.3) pkg> add https://github.com/mcabbott/AxisKeys.jl # Not a registered package
 
-julia> using AxisRanges, Random
+julia> using AxisKeys, Random
 
 julia> Random.seed!(42);
 
 julia> D = wrapdims(rand(Int8,5), iter = 10:10:50) # Convenience constructor
-1-dimensional RangeArray(NamedDimsArray(...)) with range:
+1-dimensional KeyedArray(NamedDimsArray(...)) with range:
 ↓   iter ∈ 5-element StepRange{Int64,...}
 And data, 5-element Array{Int8,1}:
  (10)  115
@@ -40,7 +40,7 @@ julia> @view E[col=1] # Fixing one index gives a slice
           3
 
 julia> C = wrapdims(rand(2,10) .+ (0:1), obs=["dog", "cat"], time=range(0, step=0.5, length=10))
-2-dimensional RangeArray(NamedDimsArray(...)) with ranges:
+2-dimensional KeyedArray(NamedDimsArray(...)) with ranges:
 ↓   obs ∈ 2-element Vector{String}
 →   time ∈ 10-element StepRangeLen{Float64,...}
 And data, 2×10 Array{Float64,2}:
@@ -51,7 +51,7 @@ And data, 2×10 Array{Float64,2}:
 julia> names(C) # Works like size & axes, i.e. names(C,2) == :time
 (:obs, :time)
 
-julia> ranges(C) # Likewise, ranges(C, :time) == 0:0.5:4.5
+julia> axiskeys(C) # Likewise, axiskeys(C, :time) == 0:0.5:4.5
 (["dog", "cat"], 0.0:0.5:4.5)
 
 julia> axes(C) # Base.axes is untouched
@@ -67,20 +67,20 @@ julia> C(time=Near(1.1), obs="dog") # Selector Near(val) finds one closest index
 0.3834911947029529
 
 julia> C(!=("cat"), Index[end]) # Functions allowed as selectors, and Index[end] works
-1-dimensional RangeArray(NamedDimsArray(...)) with range:
+1-dimensional KeyedArray(NamedDimsArray(...)) with range:
 ↓   obs ∈ 1-element view(::Vector{String},...)
 And data, 1-element view(::Array{Float64,2}, [1], 10) with eltype Float64:
  ("dog")  0.28198708251379423
 
 julia> C(0.5) # Here 0.5 is unambiguous as types of ranges are distinct
-1-dimensional RangeArray(NamedDimsArray(...)) with range:
+1-dimensional KeyedArray(NamedDimsArray(...)) with range:
 ↓   obs ∈ 2-element Vector{String}
 And data, 2-element view(::Array{Float64,2}, :, 2) with eltype Float64:
  ("dog")  0.602297580266383
  ("cat")  1.3634584219520556
 
 julia> C * C' # Functions like adjoint and * work through wrappers
-2-dimensional RangeArray(NamedDimsArray(...)) with ranges:
+2-dimensional KeyedArray(NamedDimsArray(...)) with ranges:
 ↓   obs ∈ 2-element Vector{String}
 →   obs ∈ 2-element Vector{String}
 And data, 2×2 Array{Float64,2}:
@@ -104,7 +104,7 @@ at time 4.5, value cat = 1.1436376769992096
 julia> using Statistics
 
 julia> mean(C, dims=:time) # Reduction functions should accept dimension names
-2-dimensional RangeArray(NamedDimsArray(...)) with ranges:
+2-dimensional KeyedArray(NamedDimsArray(...)) with ranges:
 ↓   obs ∈ 2-element Vector{String}
 →   time ∈ 1-element OneTo{Int}
 And data, 2×1 Array{Float64,2}:
@@ -113,7 +113,7 @@ And data, 2×1 Array{Float64,2}:
   ("cat")    1.4542825908906043
 
 julia> map(sqrt, D) .* sqrt.(D) # map, broadcasting, and generators should work
-1-dimensional RangeArray(NamedDimsArray(...)) with range:
+1-dimensional KeyedArray(NamedDimsArray(...)) with range:
 ↓   iter ∈ 5-element StepRange{Int64,...}
 And data, 5-element Array{Float64,1}:
  (10)  114.99999999999999
@@ -123,7 +123,7 @@ And data, 5-element Array{Float64,1}:
  (50)   88.0
 
 julia> vcat(D', zero(D'), similar(D'))
-2-dimensional RangeArray(NamedDimsArray(...)) with ranges:
+2-dimensional KeyedArray(NamedDimsArray(...)) with ranges:
 ↓   _ ∈ 3-element OneTo{Int}
 →   iter ∈ 5-element StepRange{Int64,...}
 And data, 3×5 Array{Int8,2}:
@@ -134,8 +134,8 @@ And data, 3×5 Array{Int8,2}:
 
 julia> F = wrapdims(rand(1:100, 5), 🔤 = 'a':'z') # ranges are adjusted if possible
 ┌ Warning: range 'a':1:'z' replaced by 'a':1:'e', to match size(A, 1) == 5
-└ @ AxisRanges ~/.julia/dev/AxisRanges/src/wrap.jl:46
-1-dimensional RangeArray(NamedDimsArray(...)) with range:
+└ @ AxisKeys ~/.julia/dev/AxisKeys/src/wrap.jl:46
+1-dimensional KeyedArray(NamedDimsArray(...)) with range:
 ↓   🔤 ∈ 5-element StepRange{Char,...}
 And data, 5-element Array{Int64,1}:
  ('a')  16
@@ -145,7 +145,7 @@ And data, 5-element Array{Int64,1}:
  ('e')  44
 
 julia> push!(F, 10^6) # push! also knows to extend 'a':'e' by one
-1-dimensional RangeArray(NamedDimsArray(...)) with range:
+1-dimensional KeyedArray(NamedDimsArray(...)) with range:
 ↓   🔤 ∈ 6-element StepRange{Char,...}
 And data, 6-element Array{Int64,1}:
  ('a')       16
@@ -161,7 +161,7 @@ julia> u = unique(rand(Int8, 100));
 
 julia> H = wrapdims(rand(3,length(u),2), UniqueVector; # apply this type to all ranges
            row=[:a, :b, :c], col=u, page=["one", "two"])
-3-dimensional RangeArray(NamedDimsArray(...)) with ranges:
+3-dimensional KeyedArray(NamedDimsArray(...)) with ranges:
 ↓   row ∈ 3-element UniqueVector{Symbol}
 →   col ∈ 81-element UniqueVector{Int8}
 □   page ∈ 2-element UniqueVector{String}

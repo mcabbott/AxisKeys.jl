@@ -1,7 +1,7 @@
-using Test, AxisRanges, NamedDims
+using Test, AxisKeys, NamedDims
 using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
 
-# AxisRanges.OUTER[] = :nda # changes behaviour of wrapdims
+# AxisKeys.OUTER[] = :nda # changes behaviour of wrapdims
 
 include("_basic.jl")
 
@@ -13,19 +13,19 @@ include("_notpiracy.jl")
 
     o = OffsetArray(rand(1:99, 5), -2:2)
     w = wrapdims(o, i='a':'e')
-    @test ranges(w,1) isa OffsetArray
+    @test axiskeys(w,1) isa OffsetArray
     @test w[i=-2] == w('a')
 
 end
 @testset "unique" begin
 
     u = wrapdims(rand(Int8,5,1), UniqueVector, [:a, :b, :c, :d, :e], nothing)
-    @test ranges(u,1) isa UniqueVector
+    @test axiskeys(u,1) isa UniqueVector
     @test u(:b) == u[2,:]
 
     n = wrapdims(rand(2,100), UniqueVector, x=nothing, y=rand(Int,100))
-    @test ranges(n,1) isa UniqueVector
-    k = ranges(n, :y)[7]
+    @test axiskeys(n,1) isa UniqueVector
+    k = axiskeys(n, :y)[7]
     @test n(y=k) == n[:,7]
 
 end
@@ -44,20 +44,20 @@ end
 
     rin = [wrapdims(1:3, a='a':'c') for i=1:4]
 
-    @test ranges(stack(rin), :a) == 'a':'c'
-    @test ranges(stack(:b, rin...), :a) == 'a':'c' # tuple
-    @test ranges(stack(z for z in rin), :a) == 'a':'c' # generator
+    @test axiskeys(stack(rin), :a) == 'a':'c'
+    @test axiskeys(stack(:b, rin...), :a) == 'a':'c' # tuple
+    @test axiskeys(stack(z for z in rin), :a) == 'a':'c' # generator
 
     rout = wrapdims([[1,2], [3,4]], b=10:11)
-    @test ranges(stack(rout), :b) == 10:11
+    @test axiskeys(stack(rout), :b) == 10:11
 
     rboth = wrapdims(rin, b=10:13)
-    @test ranges(stack(rboth), :a) == 'a':'c'
-    @test ranges(stack(rboth), :b) == 10:13
+    @test axiskeys(stack(rboth), :a) == 'a':'c'
+    @test axiskeys(stack(rboth), :b) == 10:13
 
     nts = [(i=i, j="j", k=33) for i=1:3]
-    @test ranges(stack(nts), 1) == [:i, :j, :k]
-    @test ranges(stack(:z, nts...), 1) == [:i, :j, :k]
-    @test ranges(stack(n for n in nts), 1) == [:i, :j, :k]
+    @test axiskeys(stack(nts), 1) == [:i, :j, :k]
+    @test axiskeys(stack(:z, nts...), 1) == [:i, :j, :k]
+    @test axiskeys(stack(n for n in nts), 1) == [:i, :j, :k]
 
 end

@@ -1,9 +1,10 @@
 #=
-This file has some quick speed checks of AxisRanges functionality,
+This file has some quick speed checks of AxisKeys functionality,
 and of other packages of similar or overlapping concerns.
+Plus generally a place to collect their various syntax, for comparison.
 =#
 
-using AxisRanges, BenchmarkTools # Julia 1.3 + macbook escape
+using AxisKeys, BenchmarkTools # Julia 1.3 + macbook escape
 
 #==============================#
 #===== getkey vs getindex =====#
@@ -23,7 +24,7 @@ bothmat2 = wrapdims(mat.data, x=collect(11:13), y=collect(21:24))
 @btime $bothmat2(13, 24)    # 16.719 ns
 
 ind_collect(A) = [@inbounds(A[ijk...]) for ijk in Iterators.ProductIterator(axes(A))]
-key_collect(A) = [@inbounds(A(vals...)) for vals in Iterators.ProductIterator(ranges(A))]
+key_collect(A) = [@inbounds(A(vals...)) for vals in Iterators.ProductIterator(axiskeys(A))]
 
 bigmat = wrapdims(rand(100,100), 1:100, 1:100);
 bigmat2 = wrapdims(rand(100,100), collect(1:100), collect(1:100));
@@ -147,14 +148,21 @@ using AxisIndices                       #===== AxisIndices =====#
 ai4 = AxisIndicesArray(rand(3,4), (11:13, 21:24))
 ai5 = AxisIndicesArray(rand(3,4), (collect(11:13), collect(21:24)))
 
-axes(ai4, 1) # an Axis type
-collect(axes(ai4, 1)) == 1:3
+ax41 = axes(ai4, 1) # an Axis type
+collect(ax41) == 1:3 == ax41._values
+ax41._keys
+zeros(ax41) isa OffsetArray # like zeros(1:3), unlike zeros(Base.OneTo(3))
 
 @btime $ai4[3,4] # 1.696 ns
 @btime $ai4[==(13),==(24)] #  7.257 ns -- fast lookup
 @btime $ai5[==(13),==(24)] # 20.676 ns -- search
 
-ai4[:, x -> x<23] # arb functions
+ai4[:, x -> x<23] # arbitrary functions allowed
+
+ai4' .+ rand(4) # ok
+ai4 .+ ai5 # error
+ai4 .+ AxisIndicesArray(rand(3,4), (13:15, 21:24)) # has 13:15
+
 
 using IndexedDims                       #===== IndexedDims =====#
 # https://github.com/invenia/IndexedDims.jl
@@ -175,7 +183,7 @@ idx_collect(A) = [@inbounds(A[vals...]) for vals in Iterators.ProductIterator(A.
 #===== fast range lookup =====#
 #=============================#
 
-const A = AxisRanges
+const A = AxisKeys
 const B = Base
 using Base: OneTo
 

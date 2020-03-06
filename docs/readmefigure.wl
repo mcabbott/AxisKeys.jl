@@ -53,7 +53,7 @@ Lighting->{
 },
 
 Epilog->{
-Inset["RangeArray{T,3,...}",{0.3,1},{0,Top}],
+Inset["KeyedArray{T,3,...}",{0.3,1},{0,Top}],
 (*Inset[Framed["Array{T,3}",Background\[Rule]Opacity[0.5,White]],{0.4,0.4},{0,0}],*)
 Inset["NamedDimsArray{L,T,3,...}",{0.7,Bottom},{0,Bottom}]
 }

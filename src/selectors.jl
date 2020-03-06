@@ -9,7 +9,7 @@ findindex(s::Interval, r::AbstractVector) = findall(i -> i in s, r)
     Near(val)
     Interval(lo, hi)
 
-These selectors modify lookup using `ranges(A)`:
+These selectors modify lookup using `axiskeys(A)`:
 `B(time = Near(3))` matches one entry with minimum `abs2(t-3)` of named dimension `:time`.
 `C("cat", Interval(10,20))` matches all entries with `10 <= iter <= 20`).
 
@@ -20,11 +20,11 @@ as well as `mid ± δ`.
     <(val)
 
 Any functions can be used similarly, like C(!=("dog"), <=(33)).
-They ultimately call `findall(==(val), range(A,d))`.
+They ultimately call `findall(==(val), axiskeys(A,d))`.
 
 Functions of type `Base.Fix2`, and `Selector`s, also allow a dimension
 to be chosen by type: `A(<=(3.1))` will work provided that only one of
-`map(eltype, ranges(A))` matches `typeof(3.1)`.
+`map(eltype, axiskeys(A))` matches `typeof(3.1)`.
 
 See also `Index[i]`.
 """

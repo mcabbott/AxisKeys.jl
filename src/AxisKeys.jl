@@ -1,7 +1,7 @@
-module AxisRanges
+module AxisKeys
 
 include("struct.jl")
-export RangeArray, ranges
+export KeyedArray, axiskeys
 
 include("names.jl")
 export NamedDimsArray, dimnames

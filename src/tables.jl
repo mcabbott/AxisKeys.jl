@@ -5,14 +5,14 @@ https://github.com/JuliaData/Tables.jl
 
 using Tables
 
-Tables.istable(::Type{<:RangeArray}) = true
+Tables.istable(::Type{<:KeyedArray}) = true
 
-Tables.rowaccess(::Type{<:RangeArray}) = true
+Tables.rowaccess(::Type{<:KeyedArray}) = true
 
-function Tables.rows(A::Union{RangeArray, NdaRa})
+function Tables.rows(A::Union{KeyedArray, NdaKa})
     L = hasnames(A) ? (dimnames(A)..., :value) :  # should gensym() if :value in dimnames(A)
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
-    R = ranges_or_axes(A)
+    R = keys_or_axes(A)
     nt(inds) = NamedTuple{L}((map(getindex, R, inds)..., A[inds...]))
     # (nt(inds) for inds in Iterators.product(axes(A)...)) # should flatten?
     (nt(inds) for inds in Vectorator(Iterators.product(axes(A)...)))
@@ -31,13 +31,13 @@ Tables.Schema(nn) # define a struct? Now below...
 # it uses Vectorator mostly to give Tables.Schema something to find.
 =#
 
-Tables.columnaccess(::Type{<:RangeArray{T,N,AT}}) where {T,N,AT} =
+Tables.columnaccess(::Type{<:KeyedArray{T,N,AT}}) where {T,N,AT} =
     IndexStyle(AT) === IndexLinear()
 
-function Tables.columns(A::Union{RangeArray, NdaRa})
+function Tables.columns(A::Union{KeyedArray, NdaKa})
     L = hasnames(A) ? (dimnames(A)..., :value) :
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
-    R = ranges_or_axes(A)
+    R = keys_or_axes(A)
     G = ntuple(ndims(A)) do d
         vec([rs[d] for rs in Iterators.product(R...)])
         # _vec(rs[d] for rs in Iterators.product(R...))
@@ -107,7 +107,7 @@ end
 # end
 
 
-# Tables.materializer(A::RangeArray) = wrapdims
+# Tables.materializer(A::KeyedArray) = wrapdims
 
 # function wrapdims(tab)
 #     sch = Tables.Schema(tab)

@@ -1,8 +1,8 @@
-# AxisRanges.jl
+# AxisKeys.jl
 
-[![Build Status](https://travis-ci.org/mcabbott/AxisRanges.jl.svg?branch=master)](https://travis-ci.org/mcabbott/AxisRanges.jl)
+[![Build Status](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.org/mcabbott/AxisKeys.jl)
 
-This package defines a thin wrapper which, alongside any array, stores an extra "range" 
+This package defines a thin wrapper which, alongside any array, stores a vector of "keys" 
 for each dimension. This may be useful to store perhaps actual times of measurements, 
 or some strings labeling columns, etc. These will be propagated through many 
 operations on arrays, including broadcasting, `map`, comprehensions, `sum` etc.
@@ -15,7 +15,7 @@ The function `wrapdims` constructs a nested pair of these wrappers,
 for example: 
 
 ```julia
-using AxisRanges
+using AxisKeys
 data = rand(Int8, 2,10,3) .|> abs;
 A = wrapdims(data; channel=[:left, :right], time=range(13, step=2.5, length=10), iter=31:33)
 ```
@@ -28,11 +28,10 @@ A = wrapdims(data; channel=[:left, :right], time=range(13, step=2.5, length=10),
 
 Indexing still works directly on the underlying array, 
 and keyword indexing works exactly as for a `NamedDimsArray`.
-But in addition, it is possible to pick out elements based on the new ranges,
-which for clarity we will call "lookup" based on a "key". 
-This is written with round brackets:
+But in addition, it is possible to pick out elements based on the keys,
+which for clarity we will call lookup. This is written with round brackets:
 
-| Dimension `d` | Indexing: `i ∈ axes(A,d)` | Lookup: `key ∈ ranges(A,d)` |
+| Dimension `d` | Indexing: `i ∈ axes(A,d)` | Lookup: `key ∈ axiskeys(A,d)` |
 |--------------------|---------------------|---------------------|
 | by position        | `A[1,2,:]`          | `A(:left, 15.5, :)` |
 | by name            | `A[iter=1]`         | `A(iter=31)`        |
@@ -73,33 +72,34 @@ and `setkey!` via `B[Key(13.0), Key('α')] = 0`. But they don't right now.)
 ### Construction
 
 ```julia
-RangeArray(rand(Int8, 2,10), ([:a, :b], 10:10:100))
+KeyedArray(rand(Int8, 2,10), ([:a, :b], 10:10:100))
 ```
 
 A nested pair with names can be constructed with keywords, 
 and (apart from a few bugs) this should work the same in either order:
 
 ```julia
-RangeArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100)     # RangeArray(NamedDimsArray(...))
-NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(RangeArray(...))
+KeyedArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100)     # KeyedArray(NamedDimsArray(...))
+NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(KeyedArray(...))
 ```
 
 The function `wrapdims` does a bit more checking and fixing. 
-It will adjust the length of ranges if it can, and their indexing if needed to match the array:
+It will adjust the length of key vectors if it can, and their indexing if needed to match the array:
 
 ```julia
 wrapdims(rand(Int8, 10), alpha='a':'z') 
 # Warning: range 'a':1:'z' replaced by 'a':1:'j', to match size(A, 1) == 10
 
 wrapdims(OffsetArray(rand(Int8, 10),-1), iter=10:10:100)
-ranges(ans,1) # 10:10:100 with indices 0:9
+axiskeys(ans,1) # 10:10:100 with indices 0:9
 ```
 
 ### Functions
 
-As usual `axes(A)` returns (a tuple of vectors of) indices, and `ranges(A)` returns keys.
-If the array has names, then `dimnames(A)` returns them, and functions like `axes(A, name)` 
-give just one.
+As usual `axes(A)` returns (a tuple of vectors of) indices, 
+and `axiskeys(A)` returns (a tuple of vectors of) keys.
+If the array has names, then `dimnames(A)` returns them, 
+and functions like `axes(A, name)` give just one.
 
 Many functions should work, for example:
 
@@ -116,14 +116,14 @@ Many functions should work, for example:
 
 * Some linear algebra functions like `*` and `\` will work. 
 
-* Getproperty returns the range, to allow things like
+* Getproperty returns the key vector, to allow things like
   `for (i,t) in enumerate(A.time); fun(A[i], t); ...`.
 
-* Vectors support `push!(V, val)`, which will try to extend the range. 
-  There is also a method `push!(V, key => val)` which pushes the key into the range. 
+* Vectors support `push!(V, val)`, which will try to extend the key vector. 
+  There is also a method `push!(V, key => val)` which pushes in a new key. 
 
-To allow for this limited mutability, `V.ranges isa Ref` for vectors, 
-while `A.ranges isa Tuple` for matrices & higher. But `ranges(A)` always returns a tuple.
+To allow for this limited mutability, `V.keys isa Ref` for vectors, 
+while `A.keys isa Tuple` for matrices & higher. But `axiskeys(A)` always returns a tuple.
 
 * [LazyStack](https://github.com/mcabbott/LazyStack.jl)`.stack` is now hooked up.
   Stacks of named tuples like `stack((a=i, b=i^2) for i=1:3)` create axis keys.
@@ -131,34 +131,34 @@ while `A.ranges isa Tuple` for matrices & higher. But `ranges(A)` always returns
 ### Absent
 
 * There is no automatic alignment of dimensions by name. 
-  Thus `A .+ A[iter=3]` is fine as both names and ranges line up, 
+  Thus `A .+ A[iter=3]` is fine as both names and keys line up, 
   but `A .+ B` is an error, as `B`'s first name is `:time` not `:channel`.
   (See [NamedPlus](https://github.com/mcabbott/NamedPlus.jl)`.@named` for something like this.)
 
 As for [NamedDims.jl](https://github.com/invenia/NamedDims.jl), the guiding idea 
 is that every operation which could be done on ordinary arrays 
-should still produce the same data, but propagate the extra information (names/ranges), 
+should still produce the same data, but propagate the extra information (names/keys), 
 and error if it conflicts. 
 
 Both packages allow for wildcards, which never conflict. 
-In NamedDims.jl this is the name `:_`, here it is a range `Base.OneTo(n)`, 
+In NamedDims.jl this is the name `:_`, here it is a `Base.OneTo(n)`, 
 like the `axes` of an `Array`. These can be constructed as 
 `M = wrapdims(rand(2,2); _=[:a, :b], cols=nothing)`, 
 and for instance `M .+ M'` is not an error. 
 
-* There are no special types provided for ranges, they can be any `AbstractVector`s.
-  Lookup happens by calling `i = findfirst(isequal(20.0), ranges(A,2))`, 
-  or `is = findall(<(18), ranges(A,2))`.
+* There are no special types provided for key vectors, they can be any `AbstractVector`s.
+  Lookup happens by calling `i = findfirst(isequal(20.0), axiskeys(A,2))`, 
+  or `is = findall(<(18), axiskeys(A,2))`.
 
 If you need lookup to be very fast, then you will want to use a package like 
 [UniqueVectors.jl](https://github.com/garrison/UniqueVectors.jl)
 or [AcceleratedArrays.jl](https://github.com/andyferris/AcceleratedArrays.jl) 
 or [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl).
-To apply such a type to all ranges, you may write 
+To apply such a type to all dimensions, you may write 
 `D = wrapdims(rand(1000), UniqueVector, rand(Int, 1000))`.
 Then `D(n)` here will use the fast lookup from UniqueVectors.jl (about 60x faster).
 
-When a dimension’s range is a Julia `AbstractRange`, then this package provides some faster 
+When a key vector is a Julia `AbstractRange`, then this package provides some faster 
 overloads for things like `findall(<=(42), 10:10:100)`. 
 
 * There is also no automatic alignment by keys, like time. 
@@ -171,7 +171,7 @@ This is more or less an attempt to replace [AxisArrays](https://github.com/Julia
 with several smaller packages. The complaints are:
 (1) It's confusing  to guess whether to perform indexing or lookup 
   based on whether it is given an integer (index) or not (key). 
-(2) Each "range" was its own type `Axis{:name}` which allowed zero-overhead lookup
+(2) Each "axis" was its own type `Axis{:name}` which allowed zero-overhead lookup
   before Julia 1.0. But this is now possible with a simpler design. 
   (They were called axes before `Base.axes()` was added, hence (3) the confusing terminology.)
 (4) Broadcasting is not supported, as this changed dramatically in Julia 1.0.
@@ -180,10 +180,10 @@ with several smaller packages. The complaints are:
 
 Other older packages (pre-Julia-1.0):
 
-* [NamedArrays](https://github.com/davidavdav/NamedArrays.jl) also provides names & ranges, 
-ranges are always OrderedDict. Named lookup looks like `NA[:x => 13.0]` 
+* [NamedArrays](https://github.com/davidavdav/NamedArrays.jl) also provides names & keys, 
+which are always `OrderedDict`s. Named lookup looks like `NA[:x => 13.0]` 
 instead of `A(x=13.0)` here; this is not very fast. 
-Dimension names & ranges can be set after creation. Has nice pretty-printing routines. 
+Dimension names & keys can be set after creation. Has nice pretty-printing routines. 
 
 * [LabelledArrays](https://github.com/JuliaDiffEq/LabelledArrays.jl) adds names for individual elements, more like a NamedTuple. 
 Only for small sizes: the storage inside is a Tuple, not an Array.
@@ -193,14 +193,14 @@ Only for small sizes: the storage inside is a Tuple, not an Array.
 * [OffsetArrays](https://github.com/JuliaArrays/OffsetArrays.jl) actually changes the indices
 of an Array, allowing any continuous integer range, like `0:9` or `-10:10`.
 This package is happy to wrap such arrays, 
-and if needed will adjust indices of the given ranges:
+and if needed will adjust indices of the given key vectors:
 `O = wrapdims(OffsetArray(["left", "mid", "right"], -1:1), 'A':'C')`, 
 then `O[-1:0]` works.
 
 Other new packages (post-1.0):
 
 * [DimensionalData](https://github.com/rafaqz/DimensionalData.jl) is another replacement 
-for AxisArrays. It again uses types like `Dim{:name}` to store both name & range, 
+for AxisArrays. It again uses types like `Dim{:name}` to store both name & keys, 
 plus some special ones like `X, Y` of the same abstract type. 
 Named lookup then looks like `DA[X <| At(13.0)]`, roughly like `A(x=13.0)` here.
 
@@ -208,9 +208,9 @@ Named lookup then looks like `DA[X <| At(13.0)]`, roughly like `A(x=13.0)` here.
 Function `align` permutes dimensions automatically, 
 and macro `@named` can introduce this into broadcasting expressions. 
 
-* [IndexedDims](https://github.com/invenia/IndexedDims.jl) like this package adds ranges 
+* [IndexedDims](https://github.com/invenia/IndexedDims.jl) like this package adds keys 
 on top of the names from NamedDims.
-These ranges must always be [AcceleratedArrays](https://github.com/andyferris/AcceleratedArrays.jl). 
+These key vectors must always be [AcceleratedArrays](https://github.com/andyferris/AcceleratedArrays.jl). 
 Like AxisArrays, it tries to guess whether to do indexing or lookup based on type. 
 
 * [Dictionaries](https://github.com/andyferris/Dictionaries.jl) does very fast lookup only
@@ -235,53 +235,3 @@ In 🐍-land:
   Writes indexing "by position" as `df.iat[1, 1]` for scalars or `df.iloc[1:3, :]` allowing slices,
   and lookup "by label" as `df.at[dates[0], 'A']` for scalars or `df.loc['20130102':'20130104', ['A', 'B']]` for slices, "both endpoints are *included*" in this.
 
-<!--
-### Words
-
-This package isn't registered yet, partly because what to call things is unclear. 
-
-1. Julia has adopted `index::Int ∈ axes(A,1)`. So I think these other structures need other names. 
-
-2. From NamedDims.jl, each `name::Symbol` belongs to a dimension, `d ∈ 1:ndims(A)`. 
-
-3. LabelledArrays.jl attaches a `label::Symbol` to every element of the array, 
-  so that perhaps `A.label == A[2,2]`. 
-
-4. For now I use `key` for the thing you lookup, but it could also be `label`? 
-   I think a `value` is what `A[1,2]` returns. 
-
-5. For now I use `ranges(A,1)` for the vector of possible keys. 
-   But these do not have to be like `Base.range`'s `AbstractRange`s.
-   Perhaps `scales(A,1)`? A scale of keys? `domains(A,1)`? 
-
-6. The package could be  `AxisScales` (hard to say) or `LabelledDims` (how many `l`s again?)
-   or `AxiKeys` (short!) or `ScaledDims` or what?
-
-7. The constructor function is `wrapdims` because it doesn't only make `RangeArray`s,
-   but perhaps should match the package name better.
-
-
-### About
-
-Michael Abbott, 2019. 
--->
-
-<!--
-Terminology
-
-
-Julia         | axes | index |  <i></i>  | <i></i> | <i></i> | <i></i>
---------------|------|-------|-----------|-------|-------|------
-this package  | axes | index | names     | range | key   | meta
-NamedDims     | axes | index | dimnames  |  -    | -     | -
-AxisArrays    |      |       | axisnames | axis  | value | -
-LabelledArrays| axes | ?     | ?         | ?     | name  | -
---------------|------|-------|-----------|-------|-------|------
-Python        |  _   |   _    |  _       | _     |  _    | 
---------------|------|---------------|---------|-------|-------------------|------
-xarrays       |  ?   | integer label | dims    | coords | coordinate label | attrs 
-pytorch       |   ?  |  ?             | names   |  -    |     -            | - 
-
-
-
--->
