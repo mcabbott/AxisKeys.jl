@@ -10,10 +10,8 @@ NdaRaVoM{L,T,N} = NamedDimsArray{L,T,N,<:RangeVecOrMat}
 
 # Just make names get the names, and behave like size(A,d), axes(A,d) etc.
 
-Base.names(A::RaNda{L}) where {L} = L
-Base.names(A::RaNda{L,T,N}, d::Int) where {L,T,N} = d <= N ? L[d] : :_
-Base.names(A::NamedDimsArray{L}) where {L} = L # 🏴‍☠️
-Base.names(A::NamedDimsArray{L,T,N}, d::Int) where {L,T,N} = d <= N ? L[d] : :_ # 🏴‍☠️
+NamedDims.dimnames(A::RaNda{L}) where {L} = L
+NamedDims.dimnames(A::RaNda{L,T,N}, d::Int) where {L,T,N} = d <= N ? L[d] : :_
 
 Base.axes(A::RaNda{L}, s::Symbol) where {L} = axes(A, NamedDims.dim(L,s))
 Base.size(A::RaNda{L,T,N}, s::Symbol) where {T,N,L} = size(A, NamedDims.dim(L,s))
@@ -71,12 +69,12 @@ Base.getproperty(A::NamedDimsArray{L}, s::Symbol) where {L} =
 
 @inline @propagate_inbounds function Base.getindex(A::RangeArray; kw...)
     hasnames(A) || error("must have names!")
-    inds = NamedDims.order_named_inds(Val(names(A)); kw...)
+    inds = NamedDims.order_named_inds(Val(dimnames(A)); kw...)
     getindex(A, inds...)
 end
 @inline @propagate_inbounds function Base.view(A::RangeArray; kw...)
     hasnames(A) || error("must have names!")
-    inds = NamedDims.order_named_inds(Val(names(A)); kw...)
+    inds = NamedDims.order_named_inds(Val(dimnames(A)); kw...)
     view(A, inds...)
 end
 
@@ -88,7 +86,7 @@ end
 @inline @propagate_inbounds (A::NdaRa)(;kw...) = getkey(A; kw...)
 
 @inline @propagate_inbounds function getkey(A; kw...)
-    list = names(A)
+    list = dimnames(A)
     issubset(kw.itr, list) || error("some keywords not in list of names!")
     args = map(s -> Base.sym_in(s, kw.itr) ? getfield(kw.data, s) : Colon(), list)
     A(args...)
@@ -101,7 +99,7 @@ end
     namedranges(A)
     namedaxes(A)
 
-Combines `names(A)` and either `ranges(A)` or `axes(A)` into a `NamedTuple`.
+Combines `dimnames(A)` and either `ranges(A)` or `axes(A)` into a `NamedTuple`.
 """
 namedranges(A::NdaRa{L}) where {L} = NamedTuple{L}(ranges(A))
 namedranges(A::RaNda{L}) where {L} = NamedTuple{L}(ranges(A))

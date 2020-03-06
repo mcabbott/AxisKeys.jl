@@ -4,7 +4,7 @@ include("struct.jl")
 export RangeArray, ranges
 
 include("names.jl")
-export NamedDimsArray, namedranges, namedaxes
+export NamedDimsArray, dimnames
 
 include("wrap.jl")
 export wrapdims

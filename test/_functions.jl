@@ -23,13 +23,13 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     @test ranges(dropdims(M2, dims=:c)) == ('a':'c',)
 
     M3 = dropdims(M2, dims=:c)
-    @test names(M3) == (:r,)
+    @test dimnames(M3) == (:r,)
 
     # permutedims
     @test size(permutedims(M)) == (4,3)
-    @test names(transpose(M2)) == (:c, :r)
+    @test dimnames(transpose(M2)) == (:c, :r)
     @test ranges(permutedims(M, (2,1))) == (2:5, 'a':'c')
-    @test names(M3') == (:_, :r)
+    @test dimnames(M3') == (:_, :r)
     @test ranges(transpose(transpose(V))) == ranges(V)
     @test ranges(permutedims(transpose(V))) == (ranges(V,1), Base.OneTo(1))
 
@@ -58,7 +58,7 @@ end
 
     mapM =  map(exp, M)
     @test ranges(mapM) == ('a':'c', 2:5) # fails with nda(ra(...)), has lost ranges?
-    @test names(mapM) == (:r, :c)
+    @test dimnames(mapM) == (:r, :c)
 
     @test ranges(map(+, M, M, M)) == ('a':'c', 2:5)
     @test ranges(map(+, M, parent(M))) == ('a':'c', 2:5)
@@ -72,20 +72,20 @@ end
 
     genM =  [exp(x) for x in M]
     @test ranges(genM) == ('a':'c', 2:5) # fails with nda(ra(...))
-    @test names(genM) == (:r, :c)
+    @test dimnames(genM) == (:r, :c)
 
     @test ranges([exp(x) for x in V]) == (10:10:100,)
 
     gen3 = [x+y for x in M, y in V];
     @test ranges(gen3) == ('a':'c', 2:5, 10:10:100)
-    @test names(gen3) == (:r, :c, :v)
+    @test dimnames(gen3) == (:r, :c, :v)
 
     gen1 = [x^i for (i,x) in enumerate(V)]
     @test ranges(gen1) == (10:10:100,)
-    @test names(gen1) == (:v,)
+    @test dimnames(gen1) == (:v,)
 
     @test ranges(filter(isodd, V2),1) isa Vector{Int}
-    @test names(filter(isodd, V2)) == (:v,)
+    @test dimnames(filter(isodd, V2)) == (:v,)
 
     @test filter(isodd, M) isa Array
 
@@ -132,15 +132,15 @@ end
     @test (V' * rand(Int, 10)) isa Int
     @test (rand(Int, 10)' * V) isa Int
     @test ranges(V * V') === (10:10:100, 10:10:100)
-    @test names(V * V') === (:v, :v)
+    @test dimnames(V * V') === (:v, :v)
     @test ranges(V * rand(1,10)) === (10:10:100, Base.OneTo(10))
-    @test names(V * rand(1,10)) === (:v, :_)
+    @test dimnames(V * rand(1,10)) === (:v, :_)
 
     # matrix * vector
     @test ranges(M * M('a')) === ('a':'c',)
-    @test names(M * M('a')) === (:r,)
+    @test dimnames(M * M('a')) === (:r,)
     @test ranges(M(5)' * M) === (Base.OneTo(1), 2:5)
-    @test names(M(5)' * M) === (:_, :c)
+    @test dimnames(M(5)' * M) === (:_, :c)
 
 end
 @testset "div" begin # doesn't work for names yet
@@ -166,8 +166,8 @@ end
     @test ranges(similar(MN, Int)) == ranges(M)
     @test AxisRanges.hasranges(similar(M, Int, 3,3)) == false
     @test AxisRanges.hasranges(similar(MN, Int, 3,3)) == false
-    @test names(similar(M, 3,3)) == (:r, :c)
-    @test names(similar(MN, 3,3)) == (:r, :c)
+    @test dimnames(similar(M, 3,3)) == (:r, :c)
+    @test dimnames(similar(MN, 3,3)) == (:r, :c)
     @test AxisRanges.hasnames(similar(M, 2,2,2)) == false
     @test AxisRanges.hasnames(similar(MN, 2,2,2)) == false
 

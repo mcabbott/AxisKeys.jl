@@ -35,7 +35,7 @@ tuple_flatten() = ()
 
 function Base.mapreduce(f, op, A::RangeArray; dims=:) # sum, prod, etc
     dims === Colon() && return mapreduce(f, op, parent(A))
-    numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+    numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
     data = mapreduce(f, op, parent(A); dims=numerical_dims)
     new_ranges = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : ranges(A,d), ndims(A))
     return RangeArray(data, map(copy, new_ranges))#, copy(A.meta))
@@ -45,7 +45,7 @@ using Statistics
 for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be handled better?
     @eval function Statistics.$fun(A::RangeArray; dims=:)
         dims === Colon() && return $fun(parent(A))
-        numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+        numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
         data = $fun(parent(A); dims=numerical_dims)
         new_ranges = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : ranges(A,d), ndims(A))
         return RangeArray(data, map(copy, new_ranges))#, copy(A.meta))
@@ -53,7 +53,7 @@ for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be
     VERSION >= v"1.3" &&
     @eval function Statistics.$fun(f, A::RangeArray; dims=:)
         dims === Colon() && return $fun(f, parent(A))
-        numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+        numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
         data = $fun(f, parent(A); dims=numerical_dims)
         new_ranges = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : ranges(A,d), ndims(A))
         return RangeArray(data, map(copy, new_ranges))#, copy(A.meta))
@@ -61,7 +61,7 @@ for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be
 end
 
 function Base.dropdims(A::RangeArray; dims)
-    numerical_dims = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+    numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
     data = dropdims(A.data; dims=dims)
     ranges = range_skip(A.ranges, numerical_dims...)
     RangeArray(data, ranges)#, A.meta)
@@ -73,7 +73,7 @@ range_skip(tup::Tuple, d, dims...) = range_skip(
 range_skip(tup::Tuple) = tup
 
 function Base.permutedims(A::RangeArray, perm)
-    numerical_perm = hasnames(A) ? NamedDims.dim(names(A), perm) : perm
+    numerical_perm = hasnames(A) ? NamedDims.dim(dimnames(A), perm) : perm
     data = permutedims(A.data, numerical_perm)
     new_ranges = ntuple(d -> copy(ranges(A, perm[d])), ndims(A))
     RangeArray(data, new_ranges)#, copy(A.meta))
@@ -128,7 +128,7 @@ range_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
 range_vcat(a,b,cs...) = range_vcat(range_vcat(a,b),cs...)
 
 function Base.sort(A::RangeArray; dims, kw...)
-    dims′ = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+    dims′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
     data = sort(parent(A); dims=dims′, kw...)
     # sorts each (say) col independently, thus range along them loses meaning.
     new_ranges = ntuple(d -> d==dims′ ? OneTo(size(A,d)) : ranges(A,d), ndims(A))
@@ -140,7 +140,7 @@ function Base.sort(A::RangeVector; kw...)
 end
 
 function Base.sortslices(A::RangeArray; dims, kw...)
-    dims′ = hasnames(A) ? NamedDims.dim(names(A), dims) : dims
+    dims′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
     data = sortslices(parent(A); dims=dims′, kw...)
     # It would be nice to sort the range to match, but there is no sortpermslices.
     # https://github.com/davidavdav/NamedArrays.jl/issues/79 constructs something
@@ -169,11 +169,11 @@ for fun in [:copy, :deepcopy, :similar, :zero, :one]
     @eval Base.$fun(A::RangeArray) = RangeArray($fun(parent(A)), map(copy, ranges(A)))
     @eval Base.$fun(A::NdaRa) = NamedDimsArray(RangeArray(
         $fun(parent(parent(A))),
-        map(copy, ranges(A))), names(A))
+        map(copy, ranges(A))), dimnames(A))
 end
 Base.similar(A::RangeArray, T::Type) = RangeArray(similar(A.data, T), map(copy, A.ranges))
 Base.similar(A::NdaRa, T::Type) = NamedDimsArray(RangeArray(
-    similar(A.data.data, T), map(copy, ranges(A))), names(A))
+    similar(A.data.data, T), map(copy, ranges(A))), dimnames(A))
 Base.similar(A::RangeArray, T::Type, dims::Int...) = similar(A.data, T, dims...)
 Base.similar(A::RangeArray, dims::Int...) = similar(A.data, dims...)
 

@@ -54,6 +54,6 @@ function LazyStack.getnames(xs::RangeArray{<:AbstractArray,N,OT}) where {N,OT}
     (dimnames(eltype(xs))..., dimnames(OT)...)
 end
 function LazyStack.getnames(xs::AbstractArray{<:RangeArray{T,N,IT}}) where {T,N,IT}
-    out_names = hasnames(xs) ? names(xs) : NamedDims.dimnames(xs)
+    out_names = hasnames(xs) ? dimnames(xs) : NamedDims.dimnames(xs)
     (NamedDims.dimnames(IT)..., out_names...)
 end

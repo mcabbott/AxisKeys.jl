@@ -82,8 +82,8 @@ end
 @testset "names" begin
 
     # constructor
-    @test names(wrapdims(rand(3), :a)) == (:a,)
-    @test names(wrapdims(rand(3), b=1:3), 1) == :b
+    @test dimnames(wrapdims(rand(3), :a)) == (:a,)
+    @test dimnames(wrapdims(rand(3), b=1:3), 1) == :b
     @test ranges(wrapdims(rand(3), b=1:3)) == (1:3,)
     @test ranges(wrapdims(rand(3), b=1:3), :b) == 1:3
 
@@ -99,13 +99,13 @@ end
     # indexing etc, of commutative wrappers
     data = rand(1:99, 3,4)
     N1 = wrapdims(data, obs = ['a', 'b', 'c'], iter = 10:10:40)
-    N2 = NamedDimsArray(RangeArray(data, ranges(N1)), names(N1))
-    N3 = RangeArray(NamedDimsArray(data, names(N1)), ranges(N1))
+    N2 = NamedDimsArray(RangeArray(data, ranges(N1)), dimnames(N1))
+    N3 = RangeArray(NamedDimsArray(data, dimnames(N1)), ranges(N1))
 
     @testset "with $(typeof(N).name) outside" for N in [N2, N3]
         @test ranges(N) == (['a', 'b', 'c'], 10:10:40)
         @test ranges(N, :iter) == 10:10:40
-        @test names(N) == (:obs, :iter)
+        @test dimnames(N) == (:obs, :iter)
         @test axes(N, :obs) == 1:3
         @test size(N, :obs) == 3
 
@@ -116,7 +116,7 @@ end
         @test N(obs='a') == N('a') == N[1,:] == N[obs=1]
         @test N(obs='a') == N('a') == view(N, 1,:) == view(N, obs=1)
 
-        @test names(N(obs='a')) == (:iter,)
+        @test dimnames(N(obs='a')) == (:iter,)
         @test ranges(N(obs='b')) == (10:10:40,)
 
         @test_throws Exception N(obs=55)  # ideally ArgumentError
@@ -150,10 +150,10 @@ end
         mat_y = wrapdims(ones(2,2), :_, :y)
 
         @test ranges(vec_x .+ mat_r .+ mat_y) == ranges(mat_r)
-        @test names(vec_x .+ mat_r .+ mat_y) == (:x, :y)
+        @test dimnames(vec_x .+ mat_r .+ mat_y) == (:x, :y)
 
         @test ranges(sqrt.(vec_x .+ vec_y') ./ mat_r) == ranges(mat_r)
-        @test names(sqrt.(vec_x .+ vec_y') ./ mat_r) == (:x, :y)
+        @test dimnames(sqrt.(vec_x .+ vec_y') ./ mat_r) == (:x, :y)
 
         yy = vec_y .+ mat_y
         @test ranges(yy' .+ mat_r) == (11:12, 'α':'β')
@@ -168,10 +168,10 @@ end
         v3 = wrapdims(ones(2), [11, 22])
         z = zeros(2,2)
 
-        @test names(v1 .= v1 .+ v2) == (:μ,)
+        @test dimnames(v1 .= v1 .+ v2) == (:μ,)
         @test v1[1] == 2
 
-        @test names(v2 .= v3 .+ 5) == (:μ,)
+        @test dimnames(v2 .= v3 .+ 5) == (:μ,)
         @test v2[1] == 6
 
         @test ranges(z .= v1 .+ v2') == (["a", "b"], Base.OneTo(2))

@@ -98,7 +98,7 @@ ranges(ans,1) # 10:10:100 with indices 0:9
 ### Functions
 
 As usual `axes(A)` returns (a tuple of vectors of) indices, and `ranges(A)` returns keys.
-If the array has names, then `names(A)` returns them, and functions like `axes(A, name)` 
+If the array has names, then `dimnames(A)` returns them, and functions like `axes(A, name)` 
 give just one.
 
 Many functions should work, for example:

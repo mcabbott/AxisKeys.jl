@@ -9,7 +9,7 @@ function _summary(io, x)
     for d in 1:ndims(x)
         print(io, d==1 ? "↓" : d==2 ? "→" : "□", "   ")
         c = colour(x, d)
-        hasnames(x) && printstyled(io, names(x,d), " ∈ ", color=c)
+        hasnames(x) && printstyled(io, dimnames(x,d), " ∈ ", color=c)
         printstyled(io, length(ranges(x,d)), "-element ", shorttype(ranges(x,d)), "\n", color=c)
     end
     print(io, "And data, ", summary(rangeless(unname(x))))
@@ -173,7 +173,7 @@ function limited_show_nd(io::IO, a::AbstractArray, print_matrix::Function, label
             printstyled(io, "[:, :", color=c3)
             for i = 1:nd
                 if hasnames(a) && !hasranges(a)
-                    name = names(a, i+2)
+                    name = dimnames(a, i+2)
                     printstyled(io, ", $name=$(idxs[i])", color=c3)
                 else
                     printstyled(io, ", $(idxs[i])", color=c3)
@@ -186,7 +186,7 @@ function limited_show_nd(io::IO, a::AbstractArray, print_matrix::Function, label
                 for i = 1:nd
                     key = sprint(show, ranges(a, i+2)[idxs[i]], context=io)
                     # if hasnames(a)
-                    #     name = names(a, i+2)
+                    #     name = dimnames(a, i+2)
                     #     printstyled(io, ", $name = $key", color=c3)
                     # else
                         printstyled(io, ", $key", color=c3)
@@ -208,13 +208,13 @@ end
 function Base.summary(io::IO, A::NamedDimsArray)
     print(io, Base.dims2string(size(A)), " NamedDimsArray(")
     Base.showarg(io, parent(A), false)
-    print(io, ", ", names(A), ")")
+    print(io, ", ", dimnames(A), ")")
 end
 
 function Base.print_matrix(io::IO, A::NamedDimsArray)
-    s1 = string("↓ ", names(A,1)) * "  "
+    s1 = string("↓ ", dimnames(A,1)) * "  "
     if ndims(A)==2
-        s2 = string(" "^length(s1), "→ ", names(A,2), "\n")
+        s2 = string(" "^length(s1), "→ ", dimnames(A,2), "\n")
         printstyled(io, s2, color=:magenta)
     end
     ioc = IOContext(io, :displaysize => displaysize(io) .- (2, 0))
@@ -225,12 +225,12 @@ end
 # A hack to avoid big messy function?
 
 function Base.print_array(io::IO, A::NamedDimsArray{L,T,3}) where {L,T}
-    s3 = string("[", names(A,3), " ⤋ ]")
+    s3 = string("[", dimnames(A,3), " ⤋ ]")
     printstyled(io, s3, color=:magenta)
     Base.show_nd(io, A, Base.print_matrix, true)
 end
 function Base.print_array(io::IO, A::NamedDimsArray{L,T,4}) where {L,T}
-    s3 = string("[", names(A,3),", ", names(A,4), " ⤋ ]")
+    s3 = string("[", dimnames(A,3),", ", dimnames(A,4), " ⤋ ]")
     printstyled(io, s3, color=:magenta)
     Base.show_nd(io, A, Base.print_matrix, true)
 end
