@@ -63,6 +63,8 @@ for (bget, rget, cpy) in [(:getindex, :keys_getindex, :copy), (:view, :keys_view
 
         @inline @propagate_inbounds function Base.$bget(A::KeyedArray, I...)
             # @boundscheck println("boundscheck getindex/view general $I")
+            I = selector_indices(A, I)
+
             @boundscheck checkbounds(parent(A), I...)
             data = @inbounds Base.$bget(parent(A), I...)
 
