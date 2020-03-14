@@ -1,3 +1,5 @@
+<img src="docs/readmefigure.png" alt="block picture" width="450" align="right">
+
 # AxisKeys.jl
 
 [![Build Status](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.org/mcabbott/AxisKeys.jl)
@@ -20,9 +22,9 @@ data = rand(Int8, 2,10,3) .|> abs;
 A = wrapdims(data; channel=[:left, :right], time=range(13, step=2.5, length=10), iter=31:33)
 ```
 
-<center>
-<img src="docs/readmeterminal.png" alt="??" width="600" align="center"></img>
-</center>
+<p align="center">
+<img src="docs/readmeterminal.png" alt="terminal pretty printing" width="550" align="center">
+</p>
 
 ### Selections
 
