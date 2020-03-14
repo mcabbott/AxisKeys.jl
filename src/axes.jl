@@ -37,6 +37,8 @@ end
 
 KeyedUnion{T} = Union{KeyedArray{T}, KeyedUnitRange{T}}
 
+using NamedDims
+
 Base.summary(io::IO, x::KeyedUnion) = _summary(io, x)
 Base.summary(io::IO, A::NamedDimsArray{L,T,N,<:KeyedUnion}) where {L,T,N} = _summary(io, A)
 showtype(io::IO, ::KeyedUnitRange) = print(io, "KeyedUnitRange(...)")
