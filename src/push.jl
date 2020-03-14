@@ -1,37 +1,37 @@
 #=
-These functions are the reason RangeArray's ranges are Ref not Tuple when ndims==1.
-They should always change A.ranges[] to have the right length,
+These functions are the reason KeyedArray's keys are Ref not Tuple when ndims==1.
+They should always change A.keys[] to have the right length,
 but if the type doesn't fit, then return something not === to original
 =#
 
 """
-    push!(A::RangeArray, val)
+    push!(A::KeyedArray, val)
 
-This adds `val` to the end of `A.data`, and attempts to extend `ranges(A,1)` by one.
+This adds `val` to the end of `pareent(A)`, and attempts to extend `axiskeys(A,1)` by one.
 """
-function Base.push!(A::RangeArray, val)
+function Base.push!(A::KeyedArray, val)
     data = push!(parent(A), val)
-    old_range = ranges(A,1)
-    new_range = extend_one!!(old_range)
-    if new_range === old_range  # then it was mutated, best case
+    old_keys = axiskeys(A,1)
+    new_keys = extend_one!!(old_keys)
+    if new_keys === old_keys  # then it was mutated, best case
         return A
-    elseif typeof(new_range) <: typeof(old_range)  # will fit into same container
-        setindex!(A.ranges, new_range)
+    elseif typeof(new_keys) <: typeof(old_keys)  # will fit into same container
+        setindex!(A.keys, new_keys)
         return A
     else  # we can't fix A, but can return correct thing
-        return RangeArray(data, (new_range,))
+        return KeyedArray(data, (new_keys,))
     end
 end
 
-function Base.pop!(A::RangeArray)
+function Base.pop!(A::KeyedArray)
     val = pop!(parent(A))
-    old_range = ranges(A,1)
-    new_range = shorten_one!!(old_range)
-    if new_range === old_range
-    elseif typeof(new_range) <: typeof(old_range)
-        setindex!(A.ranges, new_range)
+    old_keys = axiskeys(A,1)
+    new_keys = shorten_one!!(old_keys)
+    if new_keys === old_keys
+    elseif typeof(new_keys) <: typeof(old_keys)
+        setindex!(A.keys, new_keys)
     else
-        error("failed to shorten range of array")
+        error("failed to shorten keys of array")
     end
     val
 end
@@ -46,30 +46,30 @@ shorten_one!!(r::Base.OneTo) = Base.OneTo(last(r)-1)
 shorten_one!!(r::Vector) = pop!(r)
 shorten_one!!(r::AbstractVector) = r[1:end-1]
 
-function Base.append!(A::RangeArray, B)
+function Base.append!(A::KeyedArray, B)
     data = append!(parent(A), B)
-    old_range = ranges(A,1)
-    new_range = extend_by!!(old_range, length(B))
-    if new_range === old_range
+    old_keys = axiskeys(A,1)
+    new_keys = extend_by!!(old_keys, length(B))
+    if new_keys === old_keys
         return A
-    elseif typeof(new_range) <: typeof(old_range)
-        setindex!(A.ranges, new_range)
+    elseif typeof(new_keys) <: typeof(old_keys)
+        setindex!(A.keys, new_keys)
         return A
     else
-        return RangeArray(data, (new_range,))
+        return KeyedArray(data, (new_keys,))
     end
 end
-function Base.append!(A::RangeArray, B::RangeArray)
+function Base.append!(A::KeyedArray, B::KeyedArray)
     data = append!(parent(A), parent(B))
-    old_range = ranges(A,1)
-    new_range = append!!(old_range, ranges(B,1))
-    if new_range === old_range
+    old_keys = axiskeys(A,1)
+    new_keys = append!!(old_keys, axiskeys(B,1))
+    if new_keys === old_keys
         return A
-    elseif typeof(new_range) <: typeof(old_range)
-        setindex!(A.ranges, new_range)
+    elseif typeof(new_keys) <: typeof(old_keys)
+        setindex!(A.keys, new_keys)
         return A
     else
-        return RangeArray(data, (new_range,))
+        return KeyedArray(data, (new_keys,))
     end
 end
 
@@ -83,18 +83,18 @@ append!!(r::Vector, s::AbstractVector) = append!(r,s)
 append!!(r::AbstractVector, s::AbstractVector) = (extend_by!!(r, length(s)); vcat(r,s))
 
 """
-    push!(A::RangeArray; key = val)
-    push!(A::RangeArray, key => val)
+    push!(A::KeyedArray; key = val)
+    push!(A::KeyedArray, key => val)
 
-This pushes `val` into `A.data`, and pushes `key` to `ranges(A,1)`.
+This pushes `val` into `A.data`, and pushes `key` to `axiskeys(A,1)`.
 Both of these must be legal operations, e.g. `A = wrapdims([1], ["a"]); push!(A, b=2)`.
 """
-Base.push!(A::RangeArray; kw...) = push!(A, map(Pair, keys(kw), values(kw.data))...)
+Base.push!(A::KeyedArray; kw...) = push!(A, map(Pair, keys(kw), values(kw.data))...)
 
-function Base.push!(A::RangeArray, pairs::Pair...)
-    ranges(A,1) isa AbstractRange && error("can't use push!(A, key => val) when range(A,1) isa AbstractRange")
-    T = eltype(ranges(A,1))
-    push!(ranges(A,1),  map(p -> T(first(p)), pairs)...)
+function Base.push!(A::KeyedArray, pairs::Pair...)
+    axiskeys(A,1) isa AbstractRange && error("can't use push!(A, key => val) when axiskeys(A,1) isa AbstractRange")
+    T = eltype(axiskeys(A,1))
+    push!(axiskeys(A,1),  map(p -> T(first(p)), pairs)...)
     push!(parent(A), map(last, pairs)...)
     A
 end

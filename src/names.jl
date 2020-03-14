@@ -1,51 +1,49 @@
 using NamedDims
 
-# Abbreviations for things which have both names & ranges:
+# Abbreviations for things which have both names & keys:
 
-NdaRa{L,T,N} = NamedDimsArray{L,T,N,<:RangeArray}
-RaNda{L,T,N} = RangeArray{T,N,<:NamedDimsArray{L}}
-# NdaRaV{L,T,N} = NamedDimsArray{L,T,N,<:RangeVector}
-# NdaRaM{L,T,N} = NamedDimsArray{L,T,N,<:RangeMatrix}
-NdaRaVoM{L,T,N} = NamedDimsArray{L,T,N,<:RangeVecOrMat}
+NdaKa{L,T,N} = NamedDimsArray{L,T,N,<:KeyedArray}
+KaNda{L,T,N} = KeyedArray{T,N,<:NamedDimsArray{L}}
+NdaKaVoM{L,T,N} = NamedDimsArray{L,T,N,<:KeyedVecOrMat}
 
-# Just make names get the names, and behave like size(A,d), axes(A,d) etc.
+# NamedDims now uses dimnames, which behaves like size(A,d), axes(A,d) etc.
 
-NamedDims.dimnames(A::RaNda{L}) where {L} = L
-NamedDims.dimnames(A::RaNda{L,T,N}, d::Int) where {L,T,N} = d <= N ? L[d] : :_
+NamedDims.dimnames(A::KaNda{L}) where {L} = L
+NamedDims.dimnames(A::KaNda{L,T,N}, d::Int) where {L,T,N} = d <= N ? L[d] : :_
 
-Base.axes(A::RaNda{L}, s::Symbol) where {L} = axes(A, NamedDims.dim(L,s))
-Base.size(A::RaNda{L,T,N}, s::Symbol) where {T,N,L} = size(A, NamedDims.dim(L,s))
+Base.axes(A::KaNda{L}, s::Symbol) where {L} = axes(A, NamedDims.dim(L,s))
+Base.size(A::KaNda{L,T,N}, s::Symbol) where {T,N,L} = size(A, NamedDims.dim(L,s))
 
 # Extra complication to make wrappers commutative:
 
-hasnames(A::RaNda) = true
+hasnames(A::KaNda) = true
 hasnames(A::NamedDimsArray) = true
 hasnames(A) = false
 
-NamedDims.unname(A::RaNda) = RangeArray(unname(A.data), A.ranges)
-rangeless(A::NdaRa{L}) where {L} = NamedDimsArray(A.data.data, L)
+NamedDims.unname(A::KaNda) = KeyedArray(unname(A.data), axiskeys(A))
+keyless(A::NdaKa{L}) where {L} = NamedDimsArray(A.data.data, L)
 
-ranges(A::NdaRa) = ranges(parent(A))
-ranges(A::NdaRa, d::Int) = ranges(parent(A), d)
+axiskeys(A::NdaKa) = axiskeys(parent(A))
+axiskeys(A::NdaKa, d::Int) = axiskeys(parent(A), d)
 
-ranges(A::NdaRa{L}, s::Symbol) where {L} = ranges(parent(A), NamedDims.dim(L,s))
-ranges(A::RaNda{L}, s::Symbol) where {L} = ranges(A, NamedDims.dim(L,s))
+axiskeys(A::NdaKa{L}, s::Symbol) where {L} = axiskeys(parent(A), NamedDims.dim(L,s))
+axiskeys(A::KaNda{L}, s::Symbol) where {L} = axiskeys(A, NamedDims.dim(L,s))
 
-hasranges(A::NdaRa) = true
-hasranges(A::RangeArray) = true
-hasranges(A) = false
+haskeys(A::NdaKa) = true
+haskeys(A::KeyedArray) = true
+haskeys(A) = false
 
-ranges_or_axes(A) = hasranges(A) ? ranges(A) : axes(A)
-ranges_or_axes(A, d) = hasranges(A) ? ranges(A, d) : axes(A, d)
+keys_or_axes(A) = haskeys(A) ? axiskeys(A) : axes(A)
+keys_or_axes(A, d) = haskeys(A) ? axiskeys(A, d) : axes(A, d)
 
 # Re-constructors:
 
-function RangeArray(A::NdaRa, r2::Tuple)
-    r3 = unify_ranges(ranges(parent(A)), r2)
-    RangeArray(rangeless(A), r3)
+function KeyedArray(A::NdaKa, r2::Tuple)
+    r3 = unify_keys(axiskeys(parent(A)), r2)
+    KeyedArray(keyless(A), r3)
 end
 
-function NamedDims.NamedDimsArray(A::RaNda{L}, L2::Tuple) where {L}
+function NamedDims.NamedDimsArray(A::KaNda{L}, L2::Tuple) where {L}
     L3 = NamedDims.unify_names(L, L2)
     NamedDimsArray(NamedDims.unname(A), L3)
 end
@@ -53,37 +51,37 @@ end
 # getproperty: it's useful to say for `(i,t) in enumerate(A.time)` etc.
 # This will make saying ".data" slow (by 30ns), fixed in NamedDims.jl#78
 
-Base.propertynames(A::NdaRa{L}, private=false) where {L} =
+Base.propertynames(A::NdaKa{L}, private=false) where {L} =
     private ? (L..., fieldnames(typeof(A))...) : L
-Base.propertynames(A::RaNda{L}, private=false) where {L} =
+Base.propertynames(A::KaNda{L}, private=false) where {L} =
     private ? (L..., fieldnames(typeof(A))...) : L
 
-Base.getproperty(A::NdaRa{L}, s::Symbol) where {L} =
-    Base.sym_in(s, L) ? ranges(A, NamedDims.dim(L, s)) : getfield(A, s)
-Base.getproperty(A::RaNda{L}, s::Symbol) where {L} =
-    Base.sym_in(s, L) ? ranges(A, NamedDims.dim(L, s)) : getfield(A, s)
+Base.getproperty(A::NdaKa{L}, s::Symbol) where {L} =
+    Base.sym_in(s, L) ? axiskeys(A, NamedDims.dim(L, s)) : getfield(A, s)
+Base.getproperty(A::KaNda{L}, s::Symbol) where {L} =
+    Base.sym_in(s, L) ? axiskeys(A, NamedDims.dim(L, s)) : getfield(A, s)
 Base.getproperty(A::NamedDimsArray{L}, s::Symbol) where {L} =
     Base.sym_in(s, L) ? axes(A, NamedDims.dim(L, s)) : getfield(A, s) # 🏴‍☠️?
 
-# Keyword indexing of RangeArray:
+# Keyword indexing of KeyedArray:
 
-@inline @propagate_inbounds function Base.getindex(A::RangeArray; kw...)
+@inline @propagate_inbounds function Base.getindex(A::KeyedArray; kw...)
     hasnames(A) || error("must have names!")
     inds = NamedDims.order_named_inds(Val(dimnames(A)); kw...)
     getindex(A, inds...)
 end
-@inline @propagate_inbounds function Base.view(A::RangeArray; kw...)
+@inline @propagate_inbounds function Base.view(A::KeyedArray; kw...)
     hasnames(A) || error("must have names!")
     inds = NamedDims.order_named_inds(Val(dimnames(A)); kw...)
     view(A, inds...)
 end
 
-# Any NamedDimsArray + RangeArray combination is callable:
+# Any NamedDimsArray + KeyedArray combination is callable:
 
-@inline @propagate_inbounds (A::NdaRa)(args...) = getkey(A, args...)
+@inline @propagate_inbounds (A::NdaKa)(args...) = getkey(A, args...)
 
-@inline @propagate_inbounds (A::RaNda)(;kw...) = getkey(A; kw...)
-@inline @propagate_inbounds (A::NdaRa)(;kw...) = getkey(A; kw...)
+@inline @propagate_inbounds (A::KaNda)(;kw...) = getkey(A; kw...)
+@inline @propagate_inbounds (A::NdaKa)(;kw...) = getkey(A; kw...)
 
 @inline @propagate_inbounds function getkey(A; kw...)
     list = dimnames(A)
@@ -96,18 +94,18 @@ end
 # NamedTuple-makers.
 
 """
-    namedranges(A)
+    namedaxiskeys(A)
     namedaxes(A)
 
-Combines `dimnames(A)` and either `ranges(A)` or `axes(A)` into a `NamedTuple`.
+Combines `dimnames(A)` and either `axiskeys(A)` or `axes(A)` into a `NamedTuple`.
 """
-namedranges(A::NdaRa{L}) where {L} = NamedTuple{L}(ranges(A))
-namedranges(A::RaNda{L}) where {L} = NamedTuple{L}(ranges(A))
-namedranges(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
+namedaxiskeys(A::NdaKa{L}) where {L} = NamedTuple{L}(axiskeys(A))
+namedaxiskeys(A::KaNda{L}) where {L} = NamedTuple{L}(axiskeys(A))
+namedaxiskeys(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
 
 @doc @doc(namedranges)
-namedaxes(A::NdaRa{L}) where {L} = NamedTuple{L}(axes(A))
-namedaxes(A::RaNda{L}) where {L} = NamedTuple{L}(axes(A))
+namedaxes(A::NdaKa{L}) where {L} = NamedTuple{L}(axes(A))
+namedaxes(A::KaNda{L}) where {L} = NamedTuple{L}(axes(A))
 namedaxes(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
 
 =#
@@ -118,8 +116,8 @@ using LazyStack
 function LazyStack.maybe_add_names(A, a::NamedTuple)
     range_first = ntuple(d -> d==1 ? collect(keys(a)) : axes(A,d), ndims(A))
     name_first = ntuple(d -> d==1 ? :names : :_, ndims(A))
-    rs = unify_ranges(ranges_or_axes(A), range_first)
-    RangeArray(NamedDimsArray(rangeless(A), name_first), rs)
+    rs = unify_keys(keys_or_axes(A), range_first)
+    KeyedArray(NamedDimsArray(keyless(A), name_first), rs)
 end
 
 stack((a=1,b=2,c=3), (a=2,b=3,c=4))

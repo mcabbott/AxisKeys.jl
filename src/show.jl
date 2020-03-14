@@ -1,20 +1,20 @@
 
-Base.summary(io::IO, x::RangeArray) = _summary(io, x)
-Base.summary(io::IO, A::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} = _summary(io, A)
+Base.summary(io::IO, x::KeyedArray) = _summary(io, x)
+Base.summary(io::IO, A::NamedDimsArray{L,T,N,<:KeyedArray}) where {L,T,N} = _summary(io, A)
 
 function _summary(io, x)
     print(io, ndims(x), "-dimensional ")
     showtype(io, x)
-    println(io, " with range", ndims(x)>1 ? "s:" : ":")
+    println(io, " with keys:")
     for d in 1:ndims(x)
         print(io, d==1 ? "↓" : d==2 ? "→" : "□", "   ")
         c = colour(x, d)
         hasnames(x) && printstyled(io, dimnames(x,d), " ∈ ", color=c)
-        printstyled(io, length(ranges(x,d)), "-element ", shorttype(ranges(x,d)), "\n", color=c)
+        printstyled(io, length(axiskeys(x,d)), "-element ", shorttype(axiskeys(x,d)), "\n", color=c)
     end
-    print(io, "And data, ", summary(rangeless(unname(x))))
-    if ndims(x)==1 && length(ranges_or_axes(x, 1)) != length(x)
-        throw(ArgumentError("length of range, $(length(ranges_or_axes(x, 1))), must match length of vector, $(length(x))! "))
+    print(io, "And data, ", summary(keyless(unname(x))))
+    if ndims(x)==1 && length(keys_or_axes(x, 1)) != length(x)
+        throw(ArgumentError("length of keys, $(length(keys_or_axes(x, 1))), must match length of vector, $(length(x))! "))
     end
 end
 
@@ -28,20 +28,20 @@ function shorttype(r)
     bits[1] * ",...}"
 end
 
-showtype(io::IO, ::RangeArray) =
-    print(io, "RangeArray(...)")
-showtype(io::IO, ::RangeArray{T,N,<:NamedDimsArray}) where {T,N} =
-    print(io, "RangeArray(NamedDimsArray(...))")
-showtype(io::IO, ::NamedDimsArray{L,T,N,<:RangeArray}) where {L,T,N} =
-    print(io, "NamedDimsArray(RangeArray(...))")
+showtype(io::IO, ::KeyedArray) =
+    print(io, "KeyedArray(...)")
+showtype(io::IO, ::KeyedArray{T,N,<:NamedDimsArray}) where {T,N} =
+    print(io, "KeyedArray(NamedDimsArray(...))")
+showtype(io::IO, ::NamedDimsArray{L,T,N,<:KeyedArray}) where {L,T,N} =
+    print(io, "NamedDimsArray(KeyedArray(...))")
 
 function colour(A::AbstractArray, d::Int)
-    ranges_or_axes(A,d) === OneTo(1) && return :light_black
-    colour(A, eltype(ranges_or_axes(A,d)))
+    keys_or_axes(A,d) === OneTo(1) && return :light_black
+    colour(A, eltype(keys_or_axes(A,d)))
 end
 function colour(A::AbstractArray, dims)
-    all(d -> ranges_or_axes(A,d) === OneTo(1), dims) && return :light_black
-    colour(A, promote_type(map(d -> eltype(ranges_or_axes(A,d)), dims)...))
+    all(d -> keys_or_axes(A,d) === OneTo(1), dims) && return :light_black
+    colour(A, promote_type(map(d -> eltype(keys_or_axes(A,d)), dims)...))
 end
 function colour(A::AbstractArray, T::Type)
     T <: AbstractFloat && return :cyan
@@ -53,7 +53,7 @@ function colour(A::AbstractArray, T::Type)
 end
 
 #=
-using AxisRanges, OffsetArrays
+using AxisKeys, OffsetArrays
 
 A = wrapdims(rand(20), r='a':'t')
 C = wrapdims(rand(4,200), r='a':'d', col=10:10:2000)
@@ -67,12 +67,12 @@ sum(F, dims=(:b,:c))
 
 =#
 
-# Print ranges as extra rows/cols appended to vec/matrix, or each slice of hihger-dim:
+# Print keys as extra rows/cols appended to vec/matrix, or each slice of hihger-dim:
 
-Base.print_matrix(io::IO, A::RangeArray) = range_print_matrix(io, A, true)
-Base.print_matrix(io::IO, A::NdaRa) = range_print_matrix(io, A, true)
+Base.print_matrix(io::IO, A::KeyedArray) = keyed_print_matrix(io, A, true)
+Base.print_matrix(io::IO, A::NdaKa) = keyed_print_matrix(io, A, true)
 
-function range_print_matrix(io::IO, A, reduce_size::Bool=false)
+function keyed_print_matrix(io::IO, A, reduce_size::Bool=false)
     if reduce_size # not applied when called from show_nd
         io = IOContext(io, :displaysize => displaysize(io) .- (3+ndims(A), 0))
     end
@@ -84,13 +84,13 @@ function range_print_matrix(io::IO, A, reduce_size::Bool=false)
     ind2 = size(A,2) < wn ? Colon() : vcat(1:(wn÷2), (wn÷2)+1:size(A,2))
 
     fakearray = hcat(
-        ShowWith.(no_offset(ranges(A,1))[ind1]; color=colour(A,1)),
-        getindex(no_offset(unname(rangeless(A))), ind1, ind2)
+        ShowWith.(no_offset(axiskeys(A,1))[ind1]; color=colour(A,1)),
+        getindex(no_offset(unname(keyless(A))), ind1, ind2)
         )
     if ndims(A) == 2
         toprow = vcat(
             ShowWith(0, hide=true),
-            ShowWith.(no_offset(ranges(A,2))[ind2]; color=colour(A,2))
+            ShowWith.(no_offset(axiskeys(A,2))[ind2]; color=colour(A,2))
             )
         fakearray = vcat(permutedims(toprow), fakearray)
     end
@@ -128,8 +128,8 @@ Base.print(io::IO, x::ShowWith) = printstyled(io, string(x.val); x.nt...)
 
 using Base: tail, print_matrix, printstyled, alignment
 
-function Base.show_nd(io::IO, A::Union{RangeArray, NamedDimsArray}, print_matrix::Function, label_slices::Bool)
-    f = hasranges(A) ? range_print_matrix : Base.print_matrix
+function Base.show_nd(io::IO, A::Union{KeyedArray, NamedDimsArray}, print_matrix::Function, label_slices::Bool)
+    f = haskeys(A) ? keyed_print_matrix : Base.print_matrix
     limit = get(io, :limit, false)
     if limit
         limited_show_nd(io, A, f, label_slices)
@@ -159,7 +159,7 @@ function limited_show_nd(io::IO, a::AbstractArray, print_matrix::Function, label
     end
 
     # Given how many we're printing, adjust the size allocated to each
-    top = hasranges(a) ? 3+ndims(a) : 0 # same as in range_print_matrix, but do it once.
+    top = haskeys(a) ? 3+ndims(a) : 0 # same as in keyed_print_matrix, but do it once.
     if length(fewpanels) > 1
         displayheight = max(13, (displaysize(io)[1]-top) ÷ length(fewpanels))
     else
@@ -172,19 +172,19 @@ function limited_show_nd(io::IO, a::AbstractArray, print_matrix::Function, label
         if label_slices
             printstyled(io, "[:, :", color=c3)
             for i = 1:nd
-                if hasnames(a) && !hasranges(a)
+                if hasnames(a) && !haskeys(a)
                     name = dimnames(a, i+2)
                     printstyled(io, ", $name=$(idxs[i])", color=c3)
                 else
                     printstyled(io, ", $(idxs[i])", color=c3)
                 end
             end
-            if !hasranges(a)
+            if !haskeys(a)
                 printstyled(io, "]", color=c3) # done! I forgot \n here, but prefer this.
             else
                 printstyled(io, "] ~ (:, :", color=c3)
                 for i = 1:nd
-                    key = sprint(show, ranges(a, i+2)[idxs[i]], context=io)
+                    key = sprint(show, axiskeys(a, i+2)[idxs[i]], context=io)
                     # if hasnames(a)
                     #     name = dimnames(a, i+2)
                     #     printstyled(io, ", $name = $key", color=c3)
