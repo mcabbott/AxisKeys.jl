@@ -67,7 +67,8 @@ as a trailing colon makes a zero-dimensional view.
 
 (Possibly selectors should be made to work in square brackets too,
 allowing mixed indexing `B[1, Key('β')] == B(Index[1], 'β')` 
-and `setkey!` via `B[Key(13.0), Key('α')] = 0`. But they don't right now.)
+and `setkey!` via `B[Key(13.0), Key('α')] = 0`. But they don't right now,
+see [PR#5](https://github.com/mcabbott/AxisKeys.jl/pull/5) for an attempt.)
 
 ### Construction
 
@@ -234,4 +235,4 @@ In 🐍-land:
   [DataFrames](https://github.com/JuliaData/DataFrames.jl), only one- and two-dimensional.
   Writes indexing "by position" as `df.iat[1, 1]` for scalars or `df.iloc[1:3, :]` allowing slices,
   and lookup "by label" as `df.at[dates[0], 'A']` for scalars or `df.loc['20130102':'20130104', ['A', 'B']]` for slices, "both endpoints are *included*" in this.
-
+  See also [Pandas.jl](https://github.com/JuliaPy/Pandas.jl) for a wrapper.
