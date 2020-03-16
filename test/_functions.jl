@@ -1,8 +1,9 @@
 using Test, AxisKeys, Statistics
 
-M = KeyedArray(rand(Int8, 3,4), r='a':'c', c=2:5)
+M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
 MN = NamedDimsArray(M.data.data, r='a':'c', c=2:5)
 V = wrapdims(rand(1:99, 10), v=10:10:100)
+VN = NamedDimsArray(V.data.data, v=10:10:100)
 
 @testset "dims" begin
 
@@ -51,13 +52,16 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     @test axiskeys(sort(M, dims=:c), :c) isa Base.OneTo
     @test axiskeys(sort(M, dims=:c), :r) == 'a':'c'
 
-    @test sortslices(M, dims=:c) isa NamedDimsArray
+    AxisKeys.OUTER[]==:KeyedArray && # sortslices(keyless(M), dims=:c) # is an error
+        @test sortslices(M, dims=:c) isa NamedDimsArray
 
     # reshape
     @test reshape(M, 4,3) isa Array
     @test reshape(M, 2,:) isa Array
-    @test reshape(M, (4,3)) isa Array
-    @test reshape(M, (2,:)) isa Array
+    if AxisKeys.OUTER[]==:KeyedArray # reshape(keyless(M), (2,:)) # is an error
+        @test reshape(M, (4,3)) isa Array
+        @test reshape(M, (2,:)) isa Array
+    end
 
 end
 @testset "map & collect" begin
@@ -74,10 +78,10 @@ end
     V2 = wrapdims(rand(1:99, 10), v=2:11) # different keys
     V3 = wrapdims(rand(1:99, 10), w=10:10:100) # different name
     @test_throws Exception map(+, V, V2)
-    @test_skip map(+, V, V3) # should throw an error
+    @test_throws Exception map(+, V, V3) # should throw an error ???
 
     genM =  [exp(x) for x in M]
-    @test axiskeys(genM) == ('a':'c', 2:5) # fails with nda(ka(...))
+    @test axiskeys(genM) == ('a':'c', 2:5)
     @test dimnames(genM) == (:r, :c)
 
     @test axiskeys([exp(x) for x in V]) == (10:10:100,)
@@ -105,11 +109,17 @@ end
     @test axiskeys(hcat(M,MN)) == ('a':'c', [2, 3, 4, 5, 2, 3, 4, 5])
 
     V = wrapdims(rand(1:99, 3), r=['a', 'b', 'c'])
-    @test axiskeys(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1]) # fails with nda(ka(...))
+    VN = NamedDimsArray(V.data.data, r=['a', 'b', 'c'])
+    @test axiskeys(hcat(M,V)) == ('a':'c', [2, 3, 4, 5, 1])
+    @test axiskeys(hcat(M,VN)) == ('a':'c', [2, 3, 4, 5, 1])
+    @test axiskeys(hcat(MN,V)) == ('a':'c', [2, 3, 4, 5, 1])
     @test axiskeys(hcat(V,V),2) === Base.OneTo(2)
+    @test axiskeys(hcat(V,VN),2) === Base.OneTo(2)
 
     @test axiskeys(vcat(V,V),1) == ['a', 'b', 'c', 'a', 'b', 'c']
+    @test axiskeys(vcat(V,VN),1) == ['a', 'b', 'c', 'a', 'b', 'c']
     @test axiskeys(vcat(V', V')) == (1:2, ['a', 'b', 'c'])
+    @test axiskeys(vcat(V', VN')) == (1:2, ['a', 'b', 'c'])
 
     @test hcat(M, ones(3)) == hcat(M.data, ones(3))
     @test axiskeys(hcat(M, ones(3))) == ('a':1:'c', [2, 3, 4, 5, 1])
@@ -135,10 +145,13 @@ end
 
     # two vectors
     @test (V' * V) isa Int
+    @test (V' * VN) isa Int
     @test (V' * rand(Int, 10)) isa Int
     @test (rand(Int, 10)' * V) isa Int
     @test axiskeys(V * V') === (10:10:100, 10:10:100)
     @test dimnames(V * V') === (:v, :v)
+    @test axiskeys(V * VN') === (10:10:100, 10:10:100)
+    @test dimnames(V * VN') === (:v, :v)
     @test axiskeys(V * rand(1,10)) === (10:10:100, Base.OneTo(10))
     @test dimnames(V * rand(1,10)) === (:v, :_)
 
@@ -164,18 +177,12 @@ end
 
     # copy, similar, etc
     @test axiskeys(copy(M)) == ('a':'c', 2:5)
-    @test axiskeys(copy(MN)) == ('a':'c', 2:5)
     @test zero(M)('a',2) == 0
-    @test zero(MN)('a',2) == 0
 
     @test axiskeys(similar(M, Int)) == axiskeys(M)
-    @test axiskeys(similar(MN, Int)) == axiskeys(M)
     @test AxisKeys.haskeys(similar(M, Int, 3,3)) == false
-    @test AxisKeys.haskeys(similar(MN, Int, 3,3)) == false
     @test dimnames(similar(M, 3,3)) == (:r, :c)
-    @test dimnames(similar(MN, 3,3)) == (:r, :c)
     @test AxisKeys.hasnames(similar(M, 2,2,2)) == false
-    @test AxisKeys.hasnames(similar(MN, 2,2,2)) == false
 
 end
 @testset "equality" begin
@@ -191,11 +198,13 @@ end
     M5 = wrapdims(data, r='a':'c', c=4:7) # wrong keys
     M6 = wrapdims(data, r='a':'c', nope=2:5) # wrong name
     M7 = wrapdims(2 .* data, r='a':'c', c=2:5) # wrong data
-    @test M != M5 # fails with nda(ka(...))
+    @test M != M5
     @test M != M6
     @test M != M7
-    @test !isapprox(M, M5) && !isapprox(M, M7) # errors with nda(ka(...))
+    @test !isapprox(M, M5) && !isapprox(M, M7)
 
-    @test M == MN
+    @test M == MN # order of wrappers
+    @test isequal(M, MN)
+    @test M ≈ MN
 
 end
