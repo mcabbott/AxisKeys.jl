@@ -13,14 +13,22 @@ const KeyedVecOrMat{T,AT,RT} = Union{KeyedVector{T,AT,RT}, KeyedMatrix{T,AT,RT}}
 
 function KeyedArray(data::AbstractArray{T,N},
             keys::Union{Tuple,RefValue}) where {T,N}
-
-    length(keys) == N || throw(ArgumentError(
-        "wrong number of key vectors, got $(length(keys)) with ndims(A) == $N"))
-    all(r -> r isa AbstractVector, keys) || throw(ArgumentError(
-        "keys must all be AbstractVectors"))
-
+    _type_checks(data, keys) # pulled out to reduce allocations
     final = (N==1 && keys isa Tuple) ? Ref(first(keys)) : keys
     KeyedArray{T, N, typeof(data), typeof(final)}(data, final)
+end
+
+function _type_checks(data, keys::Tuple)
+    length(keys) == ndims(data) || throw(ArgumentError(
+        "wrong number of key vectors, got $(length(keys)) with ndims(A) == $(ndims(data))"))
+    keys isa Tuple{Vararg{AbstractVector}} || throw(ArgumentError(
+        "key vectors must all be AbstractVectors"))
+end
+function _type_checks(data, keys::Ref)
+    ndims(data) == 1 || throw(ArgumentError(
+        "wrong number of key vectors, got 1 with ndims(A) == $(ndims(data))"))
+    keys isa RefValue{<:AbstractArray} || throw(ArgumentError(
+        "key vector must be an AbstractVector"))
 end
 
 KeyedArray(data::AbstractVector, arr::AbstractVector) =
@@ -30,6 +38,7 @@ function KeyedArray(A::KeyedArray, r2::Tuple)
     r3 = unify_keys(axiskeys(A), r2)
     KeyedArray(parent(A), r3)
 end
+KeyedArray(data::KeyedVector, arr::AbstractVector) = KeyedArray(data, (arr,))
 
 Base.size(x::KeyedArray) = size(parent(x))
 

@@ -9,6 +9,8 @@ using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
 
     include("_functions.jl")
 
+    include("_fast.jl")
+
     include("_packages.jl")
 
 end
