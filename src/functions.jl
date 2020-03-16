@@ -62,7 +62,7 @@ end
 
 function Base.dropdims(A::KeyedArray; dims)
     numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
-    data = dropdims(A.data; dims=dims)
+    data = dropdims(parent(A); dims=dims)
     new_keys = key_skip(axiskeys(A), numerical_dims...)
     KeyedArray(data, new_keys)#, A.meta)
 end
@@ -74,7 +74,7 @@ key_skip(tup::Tuple) = tup
 
 function Base.permutedims(A::KeyedArray, perm)
     numerical_perm = hasnames(A) ? NamedDims.dim(dimnames(A), perm) : perm
-    data = permutedims(A.data, numerical_perm)
+    data = permutedims(parent(A), numerical_perm)
     new_keys = ntuple(d -> copy(axiskeys(A, perm[d])), ndims(A))
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
@@ -154,7 +154,7 @@ using LinearAlgebra
 for (mod, fun, lazy) in [(Base, :permutedims, false),
         (LinearAlgebra, :transpose, true), (LinearAlgebra, :adjoint, true)]
     @eval function $mod.$fun(A::KeyedArray)
-        data = $mod.$fun(A.data)
+        data = $mod.$fun(parent(A))
         new_keys = ndims(A)==1 ? (Base.OneTo(1), axiskeys(A,1)) :
             ndims(data)==1 ? (axiskeys(A,2),) :
             reverse(axiskeys(A))
@@ -171,11 +171,11 @@ for fun in [:copy, :deepcopy, :similar, :zero, :one]
         $fun(parent(parent(A))),
         map(copy, axiskeys(A))), dimnames(A))
 end
-Base.similar(A::KeyedArray, T::Type) = KeyedArray(similar(A.data, T), map(copy, axiskeys(A)))
+Base.similar(A::KeyedArray, T::Type) = KeyedArray(similar(parent(A), T), map(copy, axiskeys(A)))
 Base.similar(A::NdaKa, T::Type) = NamedDimsArray(KeyedArray(
-    similar(A.data.data, T), map(copy, axiskeys(A))), dimnames(A))
-Base.similar(A::KeyedArray, T::Type, dims::Int...) = similar(A.data, T, dims...)
-Base.similar(A::KeyedArray, dims::Int...) = similar(A.data, dims...)
+    similar(parent(parent(A)), T), map(copy, axiskeys(A))), dimnames(A))
+Base.similar(A::KeyedArray, T::Type, dims::Int...) = similar(parent(A), T, dims...)
+Base.similar(A::KeyedArray, dims::Int...) = similar(parent(A), dims...)
 
 for fun in [:(==), :isequal, :isapprox]
     for (T, S) in [ (:KeyedArray, :KeyedArray), (:KeyedArray, :NdaKa), (:NdaKa, :KeyedArray) ]
