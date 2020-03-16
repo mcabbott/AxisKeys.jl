@@ -1,9 +1,9 @@
 using Test, AxisKeys, NamedDims
 using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
 
-@testset "wrapdims with $out outside" for out in [:NamedDimsArray, :KeyedArray]
+@testset "wrapdims with $outside outside" for outside in [:NamedDimsArray, :KeyedArray]
 
-    AxisKeys.OUTER[] = out
+    AxisKeys.OUTER[] = outside
 
     include("_basic.jl")
 
