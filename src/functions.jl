@@ -150,6 +150,13 @@ function Base.sort(A::KeyedVector; kw...)
     KeyedArray(parent(A)[perm], (axiskeys(A,1)[perm],))
 end
 
+function Base.sort!(A::KeyedVector; kw...)
+    perm = sortperm(parent(A); kw...)
+    permute!(axiskeys(A,1), perm) # error if keys cannot be sorted, could treat like push!
+    permute!(parent(A), perm)
+    A
+end
+
 function Base.sortslices(A::KeyedArray; dims, kw...)
     dims′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
     data = sortslices(parent(A); dims=dims′, kw...)

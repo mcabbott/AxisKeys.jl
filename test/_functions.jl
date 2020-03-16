@@ -55,6 +55,12 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
     AxisKeys.OUTER[]==:KeyedArray && # sortslices(keyless(M), dims=:c) # is an error
         @test sortslices(M, dims=:c) isa NamedDimsArray
 
+    A = KeyedArray([1,0], vec=[:a, :b]) # https://github.com/JuliaArrays/AxisArrays.jl/issues/172
+    sort!(A)
+    @test A(:a) == 1
+    @test axiskeys(A, 1) == [:b, :a]
+    @test_throws Exception sort!(KeyedArray([1,0], 'a':'b'))
+
     # reshape
     @test reshape(M, 4,3) isa Array
     @test reshape(M, 2,:) isa Array
