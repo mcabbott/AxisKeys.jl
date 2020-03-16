@@ -1,4 +1,5 @@
 using Base: @propagate_inbounds, OneTo, RefValue
+using Compat # 2.0 hasfield + 3.1 filter
 
 struct KeyedArray{T,N,AT,KT} <: AbstractArray{T,N}
     data::AT
@@ -204,7 +205,9 @@ and `findindex(array, vec) = vcat((findindex(x, vec) for x in array)...)`.
 It also understands functions `findindex(<(4), vec) = findall(x -> x<4, vec)`,
 and selectors like `Nearest(key)` and `Interval(lo,hi)`.
 """
-@inline function findindex(a, r::AbstractArray)
+@inline findindex(a, r::AbstractArray) = find_one(a, r)
+
+@inline function find_one(a, r::AbstractArray)
     i = findfirst(isequal(a), r)
     i === nothing && error("could not find key $(repr(a)) in vector $r")
     i
@@ -219,3 +222,36 @@ findindex(f::Function, r::AbstractArray) = findall(f, r)
 
 # It's possible this should be a method of to_indices or one of its friends?
 # https://docs.julialang.org/en/v1/base/arrays/#Base.to_indices
+
+# Faster methods for AbstractRange -- simpler than notpiracy.jl's findfirst overloads
+
+@inline function find_one(a, r::AbstractRange)
+    # is = searchsorted(r, a)
+    # is = searchsorted(r, a; rev=must_rev(r))
+    is = issorted(r) ? searchsorted(r, a) : searchsorted(r, a; rev=true)
+    isempty(is) && error("could not find key $(repr(a)) in vector $r")
+    first(is)
+end
+must_rev(r::AbstractRange) = !issorted(r) # step(r) < 0
+must_rev(r::AbstractUnitRange) = false
+
+findindex(f::Base.Fix2{typeof(isequal)}, r::AbstractRange) = searchsorted(r, f.x; rev=must_rev(r))
+findindex(f::Base.Fix2{typeof(==)}, r::AbstractRange) = searchsorted(r, f.x; rev=must_rev(r))
+
+#=
+
+@btime searchsorted(1:100, 50)    # 1ns
+@btime searchsorted(100:-1:1, 50) # 12ns, and right!
+@btime searchsorted(100:-1:1, 50; rev=true) # 44ns
+@btime searchsorted(1:100, 50; rev=false)   # 9ns
+
+@btime searchsorted('a':'z', 'm')     # 33ns
+@btime searchsorted('z':-1:'a', 'm' ) # wrong
+@btime searchsorted('a':'z', 'm', rev=false)   # 51ns
+@btime searchsorted('z':-1:'a', 'm', rev=true) # 61ns
+
+@btime AxisKeys.findfirst(isequal('m'), 'a':'z')    # 0.3ns
+@btime AxisKeys.findfirst(isequal('m'), 'z':-1:'a') # 0.3ns
+
+=#
+
