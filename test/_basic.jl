@@ -205,6 +205,15 @@ end
     m = rand(3,4) .> 0.5 # BitArray{2}
     @test size(x[m]) == (sum(m),)
 
+    # indexing a view, https://github.com/JuliaArrays/AxisArrays.jl/issues/179
+    v = view(x, :, 1:2)
+    b = rand(6) .> 0.5 # BitArray{1}
+    @test length(v[b]) == sum(b)
+    @test length(view(v, b)) == sum(b)
+    m = rand(3,2) .> 0.5 # BitArray{2}
+    @test size(v[m]) == (sum(m),)
+    @test size(view(v, m)) == (sum(m),)
+
 end
 @testset "mutation" begin
 
