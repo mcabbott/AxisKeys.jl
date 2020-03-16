@@ -66,7 +66,7 @@ for (bget, rget, cpy) in [(:getindex, :keys_getindex, :copy), (:view, :keys_view
             @inbounds Base.$bget(parent(A), I...)
         end
 
-        @inline function Base.$bget(A::KeyedArray, I::Union{Colon, CartesianIndex})
+        @inline function Base.$bget(A::KeyedArray, I::Union{Colon, CartesianIndex, BitArray})
             @boundscheck checkbounds(parent(A), I)
             @inbounds Base.$bget(parent(A), I)
         end

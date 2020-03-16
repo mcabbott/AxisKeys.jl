@@ -22,7 +22,7 @@ using Test, AxisKeys
     @test R[:] == vec(R.data)
     @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1] # trailing 1s are broken
     @test axiskeys(R[:, [0.9,0.1,0.9,0.1] .> 0.5],2) == [10,30]
-    @test_broken ndims(R[R.data .> 0.5]) == 1 # BitArray{2} is broken
+    @test ndims(R[R.data .> 0.5]) == 1
 
     @test_throws Exception R(:nope) # ideally ArgumentError
     @test_throws Exception R('z')   # ideally BoundsError?
@@ -196,6 +196,15 @@ end
         @test_throws Exception unify_keys((1:2,), ([3,4],))
 
     end
+end
+@testset "bitarray" begin
+
+    x = wrapdims(rand(3,4), a=11:13, b=21:24.0)
+    b = rand(12) .> 0.5
+    @test length(x[b]) == sum(b)
+    m = rand(3,4) .> 0.5 # BitArray{2}
+    @test size(x[m]) == (sum(m),)
+
 end
 @testset "mutation" begin
 
