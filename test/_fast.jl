@@ -54,8 +54,10 @@ end
     @test 64 >= @ballocated KeyedArray($V, 'a':'b')
 
     # nested pair via keywords
-    @test 80 >= @ballocated KeyedArray($M, row='a':'b', col=10:10:30) # 464 >=
-    @test 80 >= @ballocated NamedDimsArray($M, row='a':'b', col=10:10:30) # 400 >=
+    if VERSION >= v"1.3" # 144 alloc on 1.2, have not tried 1.1
+        @test 80 >= @ballocated KeyedArray($M, row='a':'b', col=10:10:30) # 464 >=
+        @test 80 >= @ballocated NamedDimsArray($M, row='a':'b', col=10:10:30) # 400 >=
+    end
     @ballocated wrapdims($M, row='a':'b', col=10:10:30) # 560 >=
 
     @test (@inferred KeyedArray(M, row='a':'b', col=10:10:30); true)
