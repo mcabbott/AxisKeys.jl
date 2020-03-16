@@ -20,12 +20,12 @@ using Test, AxisKeys
     @test R[1,1] == 321
 
     @test R[:] == vec(R.data)
-    @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1]
+    @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1] # trailing 1s are broken
     @test axiskeys(R[:, [0.9,0.1,0.9,0.1] .> 0.5],2) == [10,30]
-    @test_broken ndims(R[R.data .> 0.5]) == 1
+    @test_broken ndims(R[R.data .> 0.5]) == 1 # BitArray{2} is broken
 
     @test_throws Exception R(:nope) # ideally ArgumentError
-    @test_throws Exception R('z')   # ideally BoundsError
+    @test_throws Exception R('z')   # ideally BoundsError?
     @test_throws Exception R(99)
     @test_throws Exception R('c', 99)
     @test_throws BoundsError axiskeys(R,0)

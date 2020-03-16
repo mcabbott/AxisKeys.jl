@@ -45,6 +45,7 @@ end
 @testset "construction" begin
 
     M = rand(2,3);
+
     @test 64 >= @ballocated KeyedArray($M, ('a':'b', 10:10:30))
     @test 16 >= @ballocated NamedDimsArray($M, (:row, :col))
     @test (@inferred KeyedArray(M, ('a':'b', 10:10:30)); true)
@@ -53,11 +54,11 @@ end
     @test 64 >= @ballocated KeyedArray($V, 'a':'b')
 
     # nested pair via keywords
-    @ballocated KeyedArray($M, row='a':'b', col=10:10:30) # 464 >=
-    @ballocated NamedDimsArray($M, row='a':'b', col=10:10:30) # 400 >=
-    @ballocated wrapdims($M, row='a':'b', col=10:10:30) # 816 >=
+    @test 80 >= @ballocated KeyedArray($M, row='a':'b', col=10:10:30) # 464 >=
+    @test 80 >= @ballocated NamedDimsArray($M, row='a':'b', col=10:10:30) # 400 >=
+    @ballocated wrapdims($M, row='a':'b', col=10:10:30) # 560 >=
 
-    @test_broken (@inferred KeyedArray(M, row='a':'b', col=10:10:30); true)
-    @test_broken (@inferred NamedDimsArray(M, row='a':'b', col=10:10:30); true)
+    @test (@inferred KeyedArray(M, row='a':'b', col=10:10:30); true)
+    @test (@inferred NamedDimsArray(M, row='a':'b', col=10:10:30); true)
 
 end

@@ -17,7 +17,7 @@ The function `wrapdims` constructs a nested pair of these wrappers, for example:
 ```julia
 using AxisKeys
 data = rand(Int8, 2,10,3) .|> abs;
-A = wrapdims(data; channel=[:left, :right], time=range(13, step=2.5, length=10), iter=31:33)
+A = KeyedArray(data; channel=[:left, :right], time=range(13, step=2.5, length=10), iter=31:33)
 ```
 
 <p align="center">
@@ -85,7 +85,9 @@ NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(K
 ```
 
 The function `wrapdims` does a bit more checking and fixing. 
-It will adjust the length of key vectors if it can, and their indexing if needed to match the array:
+It will adjust the length of key vectors if it can, and their indexing if needed to match the array. 
+The order of wrappers produced is controlled by `AxisKeys.OUTER[]`, hence this is not type-stable.
+
 
 ```julia
 wrapdims(rand(Int8, 10), alpha='a':'z') 
