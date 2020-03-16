@@ -30,7 +30,7 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     @test dimnames(transpose(M2)) == (:c, :r)
     @test axiskeys(permutedims(M, (2,1))) == (2:5, 'a':'c')
     @test dimnames(M3') == (:_, :r)
-    @test axiskeys(transpose(transpose(V))) == axiskeys(V)
+    @test_skip axiskeys(transpose(transpose(V))) == axiskeys(V) # needs fix fom https://github.com/invenia/NamedDims.jl/pull/77#issue-336049207
     @test axiskeys(permutedims(transpose(V))) == (axiskeys(V,1), Base.OneTo(1))
 
     V2 = wrapdims(rand(3), along=[:a, :b, :c])

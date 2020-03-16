@@ -24,10 +24,12 @@ function Base.collect(x::Generator{<:Iterators.Enumerate{<:KeyedArray}})
     data = collect(Generator(x.f, enumerate(x.iter.itr.data)))
     KeyedArray(data, map(copy, axiskeys(x.iter.itr)))
 end
-function Base.collect(x::Generator{<:Iterators.ProductIterator{<:Tuple{KeyedArray,Vararg{Any}}}})
-    data = collect(Generator(x.f, Iterators.product(keyless.(x.iter.iterators)...)))
-    all_keys = tuple_flatten(keys_or_axes.(x.iter.iterators)...)
-    KeyedArray(data, map(copy, all_keys))
+for Ts in [(:KeyedArray,), (:KeyedArray, :NamedDimsArray), (:NamedDimsArray, :KeyedArray)]
+    @eval function Base.collect(x::Generator{<:Iterators.ProductIterator{<:Tuple{$(Ts...),Vararg{Any}}}})
+        data = collect(Generator(x.f, Iterators.product(keyless.(x.iter.iterators)...)))
+        all_keys = tuple_flatten(keys_or_axes.(x.iter.iterators)...)
+        KeyedArray(data, map(copy, all_keys))
+    end
 end
 
 tuple_flatten(x::Tuple, ys::Tuple...) = (x..., tuple_flatten(ys...)...)
