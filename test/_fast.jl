@@ -18,7 +18,9 @@ using Test, AxisKeys, BenchmarkTools
     @test al_A == @ballocated $A(11.0)
     @test al_A == @ballocated $A(11)
     @test 0 == @ballocated AxisKeys.inferdim(11, $(axiskeys(A)))
-    @test (@inferred A(11); true)
+    if VERSION >= v"1.1"
+        @test (@inferred A(11); true)
+    end
 
     # with names
     N = wrapdims(rand(2,3), row=11.0:12.0, col=[:a, :b, :c])
@@ -50,6 +52,7 @@ end
     V = rand(3);
     @test 64 >= @ballocated KeyedArray($V, 'a':'b')
 
+    # nested pair via keywords
     @ballocated KeyedArray($M, row='a':'b', col=10:10:30) # 464 >=
     @ballocated NamedDimsArray($M, row='a':'b', col=10:10:30) # 400 >=
     @ballocated wrapdims($M, row='a':'b', col=10:10:30) # 816 >=
