@@ -79,6 +79,15 @@ function Base.permutedims(A::KeyedArray, perm)
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
 
+function Base.mapslices(f, A::KeyedArray; dims)
+    numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    data = mapslices(f, parent(A); dims=dims)
+    new_keys = ntuple(ndims(A)) do d
+        d in dims ? axes(data,d) : copy(axiskeys(A, d))
+    end
+    KeyedArray(data, new_keys)#, copy(A.meta))
+end
+
 for (T, S) in [(:KeyedVecOrMat, :KeyedVecOrMat), # KeyedArray gives ambiguities
     (:KeyedVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :KeyedVecOrMat),
     (:NdaKaVoM, :NdaKaVoM), # These are needed because hcat(NamedDimsArray...) relies on similar()

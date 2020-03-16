@@ -39,6 +39,11 @@ V = wrapdims(rand(1:99, 10), v=10:10:100)
     axiskeys(V2', 2)[1] = :zed
     @test axiskeys(V2,1) == [:zed, :b, :c]
 
+    # mapslices
+    @test axiskeys(mapslices(identity, M, dims=1)) === (Base.OneTo(3), 2:5)
+    @test axiskeys(mapslices(sum, M, dims=1)) === (Base.OneTo(1), 2:5)
+    @test axiskeys(mapslices(v -> rand(10), M, dims=2)) === ('a':'c', Base.OneTo(10))
+
     # sort
     @test sort(V)(20) == V(20)
 

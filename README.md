@@ -110,7 +110,7 @@ Many functions should work, for example:
 * Broadcasting `log.(A)` and `map(log, A)`, as well as comprehensions 
   `[log(x) for x in A]` should all work. 
 
-* Transpose etc, `permutedims`.  
+* Transpose etc, `permutedims`, `mapslices`.
 
 * Concatenation `hcat(B, B .+ 100)` works. 
   Note that the keys along the glued direction may not be unique afterwards.
