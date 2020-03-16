@@ -1,20 +1,18 @@
-<img src="docs/readmefigure.png" alt="block picture" width="450" align="right">
-
 # AxisKeys.jl
 
 [![Build Status](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.org/mcabbott/AxisKeys.jl)
+
+<img src="docs/readmefigure.png" alt="block picture" width="400" align="right">
 
 This package defines a thin wrapper which, alongside any array, stores a vector of "keys" 
 for each dimension. This may be useful to store perhaps actual times of measurements, 
 or some strings labeling columns, etc. These will be propagated through many 
 operations on arrays, including broadcasting, `map`, comprehensions, `sum` etc.
 
-It works closely with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), 
+It works closely with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), another wrapper 
 which attaches names to dimensions. These names are a tuple of symbols, like those of 
 a `NamedTuple`. They can be used for specifying which dimensions to sum over, etc.
-
-The function `wrapdims` constructs a nested pair of these wrappers,
-for example: 
+The function `wrapdims` constructs a nested pair of these wrappers, for example: 
 
 ```julia
 using AxisKeys
