@@ -51,7 +51,7 @@ end
     @test (@inferred KeyedArray(M, ('a':'b', 10:10:30)); true)
 
     V = rand(3);
-    @test 64 >= @ballocated KeyedArray($V, 'a':'b')
+    @test 64 >= @ballocated KeyedArray($V, 'a':'c')
 
     # nested pair via keywords
     if VERSION >= v"1.3" # 144 alloc on 1.2, have not tried 1.1

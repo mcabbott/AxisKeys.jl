@@ -7,6 +7,7 @@ using OffsetArrays, Tables, UniqueVectors, LazyStack
     w = wrapdims(o, i='a':'e')
     @test axiskeys(w,1) isa OffsetArray
     @test w[i=-2] == w('a')
+    @test_throws ArgumentError KeyedArray(o, i='a':'e')
 
 end
 @testset "unique" begin

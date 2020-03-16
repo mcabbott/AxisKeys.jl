@@ -29,6 +29,7 @@ using Test, AxisKeys
     @test_throws Exception R(99)
     @test_throws Exception R('c', 99)
     @test_throws BoundsError axiskeys(R,0)
+    @test_throws Exception KeyedArray(rand(3,4), (['a', 'b'], 10:10:40)) # keys wrong length
 
     C = wrapdims(rand(10), 'a':'j')
     @test C('a':'c') == C[1:3]
@@ -48,6 +49,7 @@ using Test, AxisKeys
     F = wrapdims(rand(5), 'a':'z')
     @test axiskeys(F,1) == 'a':'e'
     @test_throws Exception wrapdims(rand(5), ['a','b','c'])
+    @test_throws Exception KeyedArray(rand(5), ['a','b','c'])
 
 end
 @testset "selectors" begin

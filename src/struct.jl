@@ -11,34 +11,32 @@ const KeyedVector{T,AT,RT} = KeyedArray{T,1,AT,RT}
 const KeyedMatrix{T,AT,RT} = KeyedArray{T,2,AT,RT}
 const KeyedVecOrMat{T,AT,RT} = Union{KeyedVector{T,AT,RT}, KeyedMatrix{T,AT,RT}}
 
-function KeyedArray(data::AbstractArray{T,N},
-            keys::Union{Tuple,RefValue}) where {T,N}
-    _type_checks(data, keys) # pulled out to reduce allocations
-    final = (N==1 && keys isa Tuple) ? Ref(first(keys)) : keys
-    KeyedArray{T, N, typeof(data), typeof(final)}(data, final)
+function KeyedArray(data::AbstractArray{T,N}, keys::Tuple) where {T,N}
+    construction_check(data, keys)
+    KeyedArray{T, N, typeof(data), typeof(keys)}(data, keys)
 end
+function KeyedArray(data::AbstractVector{T}, keys::RefValue{<:AbstractVector}) where {T}
+    construction_check(data, (keys[],))
+    KeyedArray{T, 1, typeof(data), typeof(keys)}(data, keys)
+end
+KeyedArray(data::AbstractVector, tup::Tuple{AbstractVector}) =
+    KeyedArray(data, Ref(first(tup)))
+KeyedArray(data::AbstractVector, arr::AbstractVector) =
+    KeyedArray(data, Ref(arr))
 
-function _type_checks(data, keys::Tuple)
+function construction_check(data::AbstractArray, keys::Tuple)
     length(keys) == ndims(data) || throw(ArgumentError(
         "wrong number of key vectors, got $(length(keys)) with ndims(A) == $(ndims(data))"))
     keys isa Tuple{Vararg{AbstractVector}} || throw(ArgumentError(
         "key vectors must all be AbstractVectors"))
-end
-function _type_checks(data, keys::Ref)
-    ndims(data) == 1 || throw(ArgumentError(
-        "wrong number of key vectors, got 1 with ndims(A) == $(ndims(data))"))
-    keys isa RefValue{<:AbstractArray} || throw(ArgumentError(
-        "key vector must be an AbstractVector"))
+    map(v -> axes(v,1), keys) == axes(data) || throw(ArgumentError(
+        "lengths of key vectors must match those of axes"))
 end
 
-KeyedArray(data::AbstractVector, arr::AbstractVector) =
-    KeyedArray{eltype(data), 1, typeof(data), typeof(Ref(arr))}(data, Ref(arr))
-
-function KeyedArray(A::KeyedArray, r2::Tuple)
-    r3 = unify_keys(axiskeys(A), r2)
-    KeyedArray(parent(A), r3)
+function KeyedArray(A::KeyedArray, k2::Tuple)
+    k3 = unify_keys(axiskeys(A), k2)
+    KeyedArray(parent(A), k3)
 end
-KeyedArray(data::KeyedVector, arr::AbstractVector) = KeyedArray(data, (arr,))
 
 Base.size(x::KeyedArray) = size(parent(x))
 
