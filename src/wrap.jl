@@ -62,7 +62,6 @@ function check_keys(A, keys)
             throw(DimensionMismatch("length of range does not match size of array: size(A, $d) == $(size(A,d)) != length(r) == $(length(r)), for range r = $r"))
         end
     end
-    ndims(A) == 1 ? Ref(first(checked)) : checked
 end
 
 extend_range(r::AbstractRange, l::Int) = range(first(r), step=step(r), length=l)

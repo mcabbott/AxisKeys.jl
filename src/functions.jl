@@ -88,7 +88,7 @@ for (T, S) in [(:KeyedVecOrMat, :KeyedVecOrMat), # KeyedArray gives ambiguities
     @eval function Base.vcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
         data = vcat(keyless(A), keyless(B), keyless.(Cs)...)
         new_1 = key_vcat(keys_or_axes(A,1), keys_or_axes(B,1), keys_or_axes.(Cs,1)...)
-        new_keys = ndims(A) == 1 ? Ref(new_1) :
+        new_keys = ndims(A) == 1 ? (new_1,) :
             (new_1, unify_one(keys_or_axes(A,2), keys_or_axes(B,2), keys_or_axes.(Cs,2)...))
         KeyedArray(data, map(copy, new_keys))
     end

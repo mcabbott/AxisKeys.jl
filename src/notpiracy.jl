@@ -1,24 +1,28 @@
 #===== Adding new functionality =====#
 
-# # https://github.com/JuliaLang/julia/pull/32968
-# filter(args...) = Base.filter(args...)
-# filter(f, xs::Tuple) = Base.afoldl((ys, x) -> f(x) ? (ys..., x) : ys, (), xs...)
-# filter(f, t::Base.Any16) = Tuple(filter(f, collect(t)))
+#=
 
-# # https://github.com/JuliaLang/julia/pull/30496 -> Compat.jl
-# if VERSION < v"1.2.0-DEV.272"
-#     Base.@pure hasfield(::Type{T}, name::Symbol) where T =
-#         Base.fieldindex(T, name, false) > 0
-#     hasproperty(x, s::Symbol) = s in propertynames(x)
-# end
+# https://github.com/JuliaLang/julia/pull/32968
+filter(args...) = Base.filter(args...)
+filter(f, xs::Tuple) = Base.afoldl((ys, x) -> f(x) ? (ys..., x) : ys, (), xs...)
+filter(f, t::Base.Any16) = Tuple(filter(f, collect(t)))
 
-using Compat # 2.0 hasfield + 3.1 filter
+# https://github.com/JuliaLang/julia/pull/30496 -> Compat.jl
+if VERSION < v"1.2.0-DEV.272"
+    Base.@pure hasfield(::Type{T}, name::Symbol) where T =
+        Base.fieldindex(T, name, false) > 0
+    hasproperty(x, s::Symbol) = s in propertynames(x)
+end
 
 # Treat Ref() like a 1-tuple in map:
 map(args...) = Base.map(args...)
-map(f, r::Base.RefValue) = Ref(f(r[]))
-map(f, r::Base.RefValue, t::Tuple) = Ref(f(r[], first(t)))
-map(f, t::Tuple, r::Base.RefValue) = Ref(f(first(t), r[]))
+map(f, r::Base.RefValue) = error("one arg") # Ref(f(r[]))
+map(f, r::Base.RefValue, t::Tuple) = error("ref first") # Ref(f(r[], first(t)))
+map(f, t::Tuple, r::Base.RefValue) = error("ref second") # Ref(f(first(t), r[]))
+
+=#
+
+using Compat # 2.0 hasfield + 3.1 filter
 
 #===== Speeding up with same results =====#
 
