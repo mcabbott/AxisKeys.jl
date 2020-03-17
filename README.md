@@ -2,27 +2,27 @@
 
 [![Build Status](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.org/mcabbott/AxisKeys.jl)
 
+<img src="docs/readmefigure.png" alt="block picture" width="400" align="right">
+
 This package defines a thin wrapper which, alongside any array, stores a vector of "keys" 
 for each dimension. This may be useful to store perhaps actual times of measurements, 
 or some strings labeling columns, etc. These will be propagated through many 
 operations on arrays, including broadcasting, `map`, comprehensions, `sum` etc.
 
-It works closely with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), 
+It works closely with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), another wrapper 
 which attaches names to dimensions. These names are a tuple of symbols, like those of 
 a `NamedTuple`. They can be used for specifying which dimensions to sum over, etc.
-
-The function `wrapdims` constructs a nested pair of these wrappers,
-for example: 
+The function `wrapdims` constructs a nested pair of these wrappers, for example: 
 
 ```julia
 using AxisKeys
 data = rand(Int8, 2,10,3) .|> abs;
-A = wrapdims(data; channel=[:left, :right], time=range(13, step=2.5, length=10), iter=31:33)
+A = KeyedArray(data; channel=[:left, :right], time=range(13, step=2.5, length=10), iter=31:33)
 ```
 
-<center>
-<img src="docs/readmeterminal.png" alt="??" width="600" align="center"></img>
-</center>
+<p align="center">
+<img src="docs/readmeterminal.png" alt="terminal pretty printing" width="550" align="center">
+</p>
 
 ### Selections
 
@@ -86,7 +86,9 @@ NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(K
 ```
 
 The function `wrapdims` does a bit more checking and fixing. 
-It will adjust the length of key vectors if it can, and their indexing if needed to match the array:
+It will adjust the length of key vectors if it can, and their indexing if needed to match the array. 
+The order of wrappers produced is controlled by `AxisKeys.OUTER[]`, hence this is not type-stable.
+
 
 ```julia
 wrapdims(rand(Int8, 10), alpha='a':'z') 
@@ -111,7 +113,7 @@ Many functions should work, for example:
 * Broadcasting `log.(A)` and `map(log, A)`, as well as comprehensions 
   `[log(x) for x in A]` should all work. 
 
-* Transpose etc, `permutedims`.  
+* Transpose etc, `permutedims`, `mapslices`.
 
 * Concatenation `hcat(B, B .+ 100)` works. 
   Note that the keys along the glued direction may not be unique afterwards.
@@ -236,4 +238,4 @@ In 🐍-land:
   [DataFrames](https://github.com/JuliaData/DataFrames.jl), only one- and two-dimensional.
   Writes indexing "by position" as `df.iat[1, 1]` for scalars or `df.iloc[1:3, :]` allowing slices,
   and lookup "by label" as `df.at[dates[0], 'A']` for scalars or `df.loc['20130102':'20130104', ['A', 'B']]` for slices, "both endpoints are *included*" in this.
-
+  See also [Pandas.jl](https://github.com/JuliaPy/Pandas.jl) for a wrapper.

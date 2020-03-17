@@ -1,5 +1,7 @@
 #===== Adding new functionality =====#
 
+#=
+
 # https://github.com/JuliaLang/julia/pull/32968
 filter(args...) = Base.filter(args...)
 filter(f, xs::Tuple) = Base.afoldl((ys, x) -> f(x) ? (ys..., x) : ys, (), xs...)
@@ -14,9 +16,13 @@ end
 
 # Treat Ref() like a 1-tuple in map:
 map(args...) = Base.map(args...)
-map(f, r::Base.RefValue) = Ref(f(r[]))
-map(f, r::Base.RefValue, t::Tuple) = Ref(f(r[], first(t)))
-map(f, t::Tuple, r::Base.RefValue) = Ref(f(first(t), r[]))
+map(f, r::Base.RefValue) = error("one arg") # Ref(f(r[]))
+map(f, r::Base.RefValue, t::Tuple) = error("ref first") # Ref(f(r[], first(t)))
+map(f, t::Tuple, r::Base.RefValue) = error("ref second") # Ref(f(first(t), r[]))
+
+=#
+
+using Compat # 2.0 hasfield + 3.1 filter
 
 #===== Speeding up with same results =====#
 

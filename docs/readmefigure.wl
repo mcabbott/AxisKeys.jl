@@ -31,14 +31,14 @@ Text["[:l, :r]",{10.5,1.5,4},{-1,-1},{4,-1}]
 },
 {Darker[Orange],
 Arrow[Tube[{{10.5,0.1,0.8}, {10.5,0.1,3.5}}]],
-Text["'\[Alpha]':'\[Gamma]'",{10.5,0,2},{0,1},{1,20}]
+Text["31:33",{10.5,0,2},{0,1},{1,20}]
 }
 
 },
 Boxed->False, 
 Axes->True,
 Ticks->{Range[10], Range[2], Range[3]},
-AxesLabel->{":time", ":channel", ":z"},
+AxesLabel->{":time", ":channel", ":iter"},
 AxesStyle->Directive[Darker[Gray], Thickness[0.004]],
 
 (*FormatType\[Rule]StandardForm,*)

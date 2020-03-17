@@ -1,4 +1,5 @@
-@testset "filter" begin
+#=
+@testset "filter" begin # now using Compat
 
     @test AxisKeys.filter(iseven, (1,2,3,4)) === (2,4)
     if VERSION >= v"1.2" # fails on 1.0
@@ -6,7 +7,7 @@
     end
 
 end
-@testset "map" begin
+@testset "map" begin # not required anymore
 
     @test AxisKeys.map(sqrt, Ref(4))[] == 2.0
     @test AxisKeys.map(sqrt, Ref(4)) isa Ref
@@ -17,6 +18,7 @@ end
     @test 0 == @allocated AxisKeys.map(+, (2,), Ref(3))
 
 end
+=#
 if VERSION >= v"1.2" # <(3) doesn't exist on 1.1, but Base.Fix2 is fine
 @testset "unit ranges" begin
 

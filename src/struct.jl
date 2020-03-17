@@ -1,5 +1,7 @@
 using Base: @propagate_inbounds, OneTo, RefValue
 
+using Compat # 2.0 hasfield + 3.1 filter
+
 struct KeyedArray{T,N,AT,KT} <: AbstractArray{T,N}
     data::AT
     keys::KT
@@ -9,24 +11,31 @@ const KeyedVector{T,AT,RT} = KeyedArray{T,1,AT,RT}
 const KeyedMatrix{T,AT,RT} = KeyedArray{T,2,AT,RT}
 const KeyedVecOrMat{T,AT,RT} = Union{KeyedVector{T,AT,RT}, KeyedMatrix{T,AT,RT}}
 
-function KeyedArray(data::AbstractArray{T,N},
-            keys::Union{Tuple,RefValue}) where {T,N}
+function KeyedArray(data::AbstractArray{T,N}, keys::Tuple) where {T,N}
+    construction_check(data, keys)
+    KeyedArray{T, N, typeof(data), typeof(keys)}(data, keys)
+end
+function KeyedArray(data::AbstractVector{T}, keys::RefValue{<:AbstractVector}) where {T}
+    construction_check(data, (keys[],))
+    KeyedArray{T, 1, typeof(data), typeof(keys)}(data, keys)
+end
+KeyedArray(data::AbstractVector, tup::Tuple{AbstractVector}) =
+    KeyedArray(data, Ref(first(tup)))
+KeyedArray(data::AbstractVector, arr::AbstractVector) =
+    KeyedArray(data, Ref(arr))
 
-    length(keys) == N || throw(ArgumentError(
-        "wrong number of key vectors, got $(length(keys)) with ndims(A) == $N"))
-    all(r -> r isa AbstractVector, keys) || throw(ArgumentError(
-        "keys must all be AbstractVectors"))
-
-    final = (N==1 && keys isa Tuple) ? Ref(first(keys)) : keys
-    KeyedArray{T, N, typeof(data), typeof(final)}(data, final)
+function construction_check(data::AbstractArray, keys::Tuple)
+    length(keys) == ndims(data) || throw(ArgumentError(
+        "wrong number of key vectors, got $(length(keys)) with ndims(A) == $(ndims(data))"))
+    keys isa Tuple{Vararg{AbstractVector}} || throw(ArgumentError(
+        "key vectors must all be AbstractVectors"))
+    map(v -> axes(v,1), keys) == axes(data) || throw(ArgumentError(
+        "lengths of key vectors must match those of axes"))
 end
 
-KeyedArray(data::AbstractVector, arr::AbstractVector) =
-    KeyedArray{eltype(data), 1, typeof(data), typeof(Ref(arr))}(data, Ref(arr))
-
-function KeyedArray(A::KeyedArray, r2::Tuple)
-    r3 = unify_keys(axiskeys(A), r2)
-    KeyedArray(parent(A), r3)
+function KeyedArray(A::KeyedArray, k2::Tuple)
+    k3 = unify_keys(axiskeys(A), k2)
+    KeyedArray(parent(A), k3)
 end
 
 Base.size(x::KeyedArray) = size(parent(x))
@@ -44,25 +53,26 @@ axiskeys(x::KeyedArray, d::Int) = d<=ndims(x) ? getindex(axiskeys(x), d) : OneTo
 axiskeys(x::KeyedVector, d::Int) = d==1 ? getindex(getfield(x, :keys)) : OneTo(1)
 
 Base.IndexStyle(A::KeyedArray) = IndexStyle(parent(A))
+
 Base.eachindex(A::KeyedArray) = eachindex(parent(A))
+
+Base.keys(A::KeyedArray) = error("Base.keys(::KeyedArray) not defined, please open an issue if this happens unexpectedly.")
 
 for (bget, rget, cpy) in [(:getindex, :keys_getindex, :copy), (:view, :keys_view, :identity)]
     @eval begin
 
         @inline function Base.$bget(A::KeyedArray, I::Integer...)
-            # @boundscheck println("boundscheck getindex/view integers $I")
             @boundscheck checkbounds(parent(A), I...)
             @inbounds Base.$bget(parent(A), I...)
         end
 
-        @inline function Base.$bget(A::KeyedArray, I::Union{Colon, CartesianIndex})
-            # @boundscheck println("boundscheck getindex/view CartesianIndex $I")
+        @inline function Base.$bget(A::KeyedArray, I::Union{Colon, CartesianIndex, BitArray})
             @boundscheck checkbounds(parent(A), I)
             @inbounds Base.$bget(parent(A), I)
         end
 
         @inline @propagate_inbounds function Base.$bget(A::KeyedArray, I...)
-            # @boundscheck println("boundscheck getindex/view general $I")
+      
             I = selector_indices(A, I)
 
             @boundscheck checkbounds(parent(A), I...)
@@ -87,11 +97,15 @@ for (bget, rget, cpy) in [(:getindex, :keys_getindex, :copy), (:view, :keys_view
     end
 end
 
-@inline @propagate_inbounds function Base.setindex!(A::KeyedArray, val, I...)
-    # @boundscheck println("boundscheck setindex! $I")
+@inline function Base.setindex!(A::KeyedArray, val, I...)
     @boundscheck checkbounds(A, I...)
     @inbounds setindex!(parent(A), val, I...)
     val
+end
+
+@inline function Base.Broadcast.dotview(A::KeyedArray, I...)
+    @boundscheck checkbounds(A, I...)
+    @inbounds Base.dotview(parent(A), I...)
 end
 
 """
@@ -133,7 +147,7 @@ see `Nearest` and `Index`.
 
     elseif length(args)==1
         arg = first(args)
-        d = guessdim(arg, axiskeys(A))
+        d = inferdim(arg, axiskeys(A))
         i = findindex(arg, axiskeys(A,d))
         inds = ntuple(n -> n==d ? i : (:), ndims(A))
         @boundscheck checkbounds(A, inds...)
@@ -142,9 +156,10 @@ see `Nearest` and `Index`.
     end
 
     if length(args) != ndims(A)
-        error("wrong number of keys: got $(length(args)) arguments, expected ndims(A) = $(ndims(A))")
+        throw(ArgumentError(string("wrong number of keys: got ", length(args),
+            " arguments, expected ndims(A) = ", ndims(A)," and perhaps a trailing colon.")))
     else
-        error("can't understand what to do with $args, sorry")
+        throw(ArgumentError("can't understand what to do with $args, sorry"))
     end
 end
 
@@ -158,15 +173,15 @@ end
 end
 
 """
-    guessdim(key, axiskeys::Tuple)
+    inferdim(key, axiskeys::Tuple)
 
 When you call `A(key)` for `ndims(A) > 1`, this returns which `d` you meant,
-if unambigous, by comparing types & gradually widening
+if unambigous, by comparing types & gradually widening.
 """
-@generated guessdim(arg, tup) = _guessdim(arg, map(eltype, Tuple(tup.parameters)))
+@generated inferdim(arg, tup) = _inferdim(arg, map(eltype, Tuple(tup.parameters)))
 
-function _guessdim(argT, types, subtypes=())
-    types == subtypes && error("key of type $argT doesn't match any dimensions")
+function _inferdim(argT, types, subtypes=())
+    types == subtypes && throw(ArgumentError("key of type $argT doesn't match any dimensions"))
 
     # First look for direct match
     ds = findall(T -> argT <: T, types)
@@ -174,7 +189,7 @@ function _guessdim(argT, types, subtypes=())
     if length(ds) == 1
         return first(ds)
     elseif length(ds) >= 2
-        error("key of type $argT is ambiguous, matches dimensions $(Tuple(ds))")
+        throw(ArgumentError("key of type $argT is ambiguous, matches dimensions $(Tuple(ds))"))
     end
 
     # If no direct match, look for a container whose eltype matches:
@@ -187,13 +202,13 @@ function _guessdim(argT, types, subtypes=())
     if length(ds) == 1
         return first(ds)
     elseif length(ds) >= 2
-        error("key of type $argT is ambiguous, matches dimensions $(Tuple(ds))")
+        throw(ArgumentError("key of type $argT is ambiguous, matches dimensions $(Tuple(ds))"))
     end
 
     # Otherwise, widen the key types and try again.
     # This will recurse until types stop changing.
     supers = map(T -> supertype(T) == Any ? T : supertype(T), types)
-    return _guessdim(argT, supers, types)
+    return _inferdim(argT, supers, types)
 end
 
 """
@@ -208,7 +223,7 @@ and selectors like `Nearest(key)` and `Interval(lo,hi)`.
 """
 @inline function findindex(a, r::AbstractArray)
     i = findfirst(isequal(a), r)
-    i === nothing && error("could not find key $(repr(a)) in vector $r")
+    i === nothing && throw(ArgumentError("could not find key $(repr(a)) in vector $r"))
     i
 end
 

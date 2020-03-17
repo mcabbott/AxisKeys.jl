@@ -62,7 +62,6 @@ function check_keys(A, keys)
             throw(DimensionMismatch("length of range does not match size of array: size(A, $d) == $(size(A,d)) != length(r) == $(length(r)), for range r = $r"))
         end
     end
-    ndims(A) == 1 ? Ref(first(checked)) : checked
 end
 
 extend_range(r::AbstractRange, l::Int) = range(first(r), step=step(r), length=l)
@@ -78,7 +77,7 @@ wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
 const OUTER = Ref(:KeyedArray)
 
 function wrapdims(A::AbstractArray, T::Union{Type,Function}=identity; kw...)
-    L = check_names(A, keys(kw))
+    L = check_names(A, keys(values(kw)))
     R = map(T, check_keys(A, values(values(kw))))
     if OUTER[] == :KeyedArray
         return KeyedArray(NamedDimsArray(A, L), R)
@@ -104,18 +103,18 @@ These perform less sanity checking than `wrapdims(A; kw...)`.
 """
 @doc _construc_doc
 function KeyedArray(A::AbstractArray; kw...)
-    L = keys(kw)
+    L = keys(values(kw))
     length(L) == ndims(A) || throw(ArgumentError("number of names must match number of dimensions"))
     R = values(values(kw))
-    axes.(R, 1) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
+    map(x -> axes(x, 1), R) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
     KeyedArray(NamedDimsArray(A, L), R)
 end
 
 @doc _construc_doc
 function NamedDims.NamedDimsArray(A::AbstractArray; kw...)
-    L = keys(kw)
+    L = keys(values(kw))
     length(L) == ndims(A) || throw(ArgumentError("number of names must match number of dimensions"))
     R = values(values(kw))
-    axes.(R, 1) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
+    map(x -> axes(x, 1), R) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
     NamedDimsArray(KeyedArray(A, R), L)
 end

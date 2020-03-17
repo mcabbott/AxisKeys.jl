@@ -20,8 +20,8 @@ hasnames(A::KaNda) = true
 hasnames(A::NamedDimsArray) = true
 hasnames(A) = false
 
-NamedDims.unname(A::KaNda) = KeyedArray(unname(A.data), axiskeys(A))
-keyless(A::NdaKa{L}) where {L} = NamedDimsArray(A.data.data, L)
+NamedDims.unname(A::KaNda) = KeyedArray(unname(parent(A)), axiskeys(A))
+keyless(A::NdaKa{L}) where {L} = NamedDimsArray(parent(parent(A)), L)
 
 axiskeys(A::NdaKa) = axiskeys(parent(A))
 axiskeys(A::NdaKa, d::Int) = axiskeys(parent(A), d)
@@ -89,37 +89,3 @@ end
     args = map(s -> Base.sym_in(s, kw.itr) ? getfield(kw.data, s) : Colon(), list)
     A(args...)
 end
-
-#=
-# NamedTuple-makers.
-
-"""
-    namedaxiskeys(A)
-    namedaxes(A)
-
-Combines `dimnames(A)` and either `axiskeys(A)` or `axes(A)` into a `NamedTuple`.
-"""
-namedaxiskeys(A::NdaKa{L}) where {L} = NamedTuple{L}(axiskeys(A))
-namedaxiskeys(A::KaNda{L}) where {L} = NamedTuple{L}(axiskeys(A))
-namedaxiskeys(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
-
-@doc @doc(namedranges)
-namedaxes(A::NdaKa{L}) where {L} = NamedTuple{L}(axes(A))
-namedaxes(A::KaNda{L}) where {L} = NamedTuple{L}(axes(A))
-namedaxes(A::NamedDimsArray{L}) where {L} = NamedTuple{L}(axes(A))
-
-=#
-#=
-using LazyStack
-
-# decide on this function name, and register it
-function LazyStack.maybe_add_names(A, a::NamedTuple)
-    range_first = ntuple(d -> d==1 ? collect(keys(a)) : axes(A,d), ndims(A))
-    name_first = ntuple(d -> d==1 ? :names : :_, ndims(A))
-    rs = unify_keys(keys_or_axes(A), range_first)
-    KeyedArray(NamedDimsArray(keyless(A), name_first), rs)
-end
-
-stack((a=1,b=2,c=3), (a=2,b=3,c=4))
-stack(:new, [(a=1,b=2,c=3), (a=2,b=3,c=4)])
-=#

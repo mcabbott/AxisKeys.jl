@@ -20,15 +20,16 @@ using Test, AxisKeys
     @test R[1,1] == 321
 
     @test R[:] == vec(R.data)
-    @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1]
+    @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1] # trailing 1s are broken
     @test axiskeys(R[:, [0.9,0.1,0.9,0.1] .> 0.5],2) == [10,30]
-    @test_broken ndims(R[R.data .> 0.5]) == 1
+    @test ndims(R[R.data .> 0.5]) == 1
 
     @test_throws Exception R(:nope) # ideally ArgumentError
-    @test_throws Exception R('z')   # ideally BoundsError
+    @test_throws Exception R('z')   # ideally BoundsError?
     @test_throws Exception R(99)
     @test_throws Exception R('c', 99)
     @test_throws BoundsError axiskeys(R,0)
+    @test_throws Exception KeyedArray(rand(3,4), (['a', 'b'], 10:10:40)) # keys wrong length
 
     C = wrapdims(rand(10), 'a':'j')
     @test C('a':'c') == C[1:3]
@@ -48,6 +49,7 @@ using Test, AxisKeys
     F = wrapdims(rand(5), 'a':'z')
     @test axiskeys(F,1) == 'a':'e'
     @test_throws Exception wrapdims(rand(5), ['a','b','c'])
+    @test_throws Exception KeyedArray(rand(5), ['a','b','c'])
 
 end
 @testset "selectors" begin
@@ -195,6 +197,24 @@ end
 
     end
 end
+@testset "bitarray" begin
+
+    x = wrapdims(rand(3,4), a=11:13, b=21:24.0)
+    b = rand(12) .> 0.5
+    @test length(x[b]) == sum(b)
+    m = rand(3,4) .> 0.5 # BitArray{2}
+    @test size(x[m]) == (sum(m),)
+
+    # indexing a view, https://github.com/JuliaArrays/AxisArrays.jl/issues/179
+    v = view(x, :, 1:2)
+    b = rand(6) .> 0.5 # BitArray{1}
+    @test length(v[b]) == sum(b)
+    @test length(view(v, b)) == sum(b)
+    m = rand(3,2) .> 0.5 # BitArray{2}
+    @test size(v[m]) == (sum(m),)
+    @test size(view(v, m)) == (sum(m),)
+
+end
 @testset "mutation" begin
 
     V = wrapdims([3,5,7,11], μ=10:10:40)
@@ -207,7 +227,8 @@ end
     @test axiskeys(push!(V2, 0)) === (Base.OneTo(4),)
     @test axiskeys(append!(V2, [7,7])) === (Base.OneTo(6),)
 
-    @test axiskeys(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40] # fails with nda(ra(...))
+    AxisKeys.OUTER[]==:KeyedArray && # fails with nda(ka(...))
+        @test axiskeys(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40]
 
     W = wrapdims([1,2,3], ["a", "b", "c"])
     push!(W, d=4)

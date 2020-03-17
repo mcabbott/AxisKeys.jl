@@ -24,10 +24,12 @@ function Base.collect(x::Generator{<:Iterators.Enumerate{<:KeyedArray}})
     data = collect(Generator(x.f, enumerate(x.iter.itr.data)))
     KeyedArray(data, map(copy, axiskeys(x.iter.itr)))
 end
-function Base.collect(x::Generator{<:Iterators.ProductIterator{<:Tuple{KeyedArray,Vararg{Any}}}})
-    data = collect(Generator(x.f, Iterators.product(keyless.(x.iter.iterators)...)))
-    all_keys = tuple_flatten(keys_or_axes.(x.iter.iterators)...)
-    KeyedArray(data, map(copy, all_keys))
+for Ts in [(:KeyedArray,), (:KeyedArray, :NamedDimsArray), (:NamedDimsArray, :KeyedArray)]
+    @eval function Base.collect(x::Generator{<:Iterators.ProductIterator{<:Tuple{$(Ts...),Vararg{Any}}}})
+        data = collect(Generator(x.f, Iterators.product(keyless.(x.iter.iterators)...)))
+        all_keys = tuple_flatten(keys_or_axes.(x.iter.iterators)...)
+        KeyedArray(data, map(copy, all_keys))
+    end
 end
 
 tuple_flatten(x::Tuple, ys::Tuple...) = (x..., tuple_flatten(ys...)...)
@@ -62,7 +64,7 @@ end
 
 function Base.dropdims(A::KeyedArray; dims)
     numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
-    data = dropdims(A.data; dims=dims)
+    data = dropdims(parent(A); dims=dims)
     new_keys = key_skip(axiskeys(A), numerical_dims...)
     KeyedArray(data, new_keys)#, A.meta)
 end
@@ -74,8 +76,17 @@ key_skip(tup::Tuple) = tup
 
 function Base.permutedims(A::KeyedArray, perm)
     numerical_perm = hasnames(A) ? NamedDims.dim(dimnames(A), perm) : perm
-    data = permutedims(A.data, numerical_perm)
+    data = permutedims(parent(A), numerical_perm)
     new_keys = ntuple(d -> copy(axiskeys(A, perm[d])), ndims(A))
+    KeyedArray(data, new_keys)#, copy(A.meta))
+end
+
+function Base.mapslices(f, A::KeyedArray; dims)
+    numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    data = mapslices(f, parent(A); dims=dims)
+    new_keys = ntuple(ndims(A)) do d
+        d in dims ? axes(data,d) : copy(axiskeys(A, d))
+    end
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
 
@@ -88,7 +99,7 @@ for (T, S) in [(:KeyedVecOrMat, :KeyedVecOrMat), # KeyedArray gives ambiguities
     @eval function Base.vcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
         data = vcat(keyless(A), keyless(B), keyless.(Cs)...)
         new_1 = key_vcat(keys_or_axes(A,1), keys_or_axes(B,1), keys_or_axes.(Cs,1)...)
-        new_keys = ndims(A) == 1 ? Ref(new_1) :
+        new_keys = ndims(A) == 1 ? (new_1,) :
             (new_1, unify_one(keys_or_axes(A,2), keys_or_axes(B,2), keys_or_axes.(Cs,2)...))
         KeyedArray(data, map(copy, new_keys))
     end
@@ -139,6 +150,13 @@ function Base.sort(A::KeyedVector; kw...)
     KeyedArray(parent(A)[perm], (axiskeys(A,1)[perm],))
 end
 
+function Base.sort!(A::KeyedVector; kw...)
+    perm = sortperm(parent(A); kw...)
+    permute!(axiskeys(A,1), perm) # error if keys cannot be sorted, could treat like push!
+    permute!(parent(A), perm)
+    A
+end
+
 function Base.sortslices(A::KeyedArray; dims, kw...)
     dims′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
     data = sortslices(parent(A); dims=dims′, kw...)
@@ -154,7 +172,7 @@ using LinearAlgebra
 for (mod, fun, lazy) in [(Base, :permutedims, false),
         (LinearAlgebra, :transpose, true), (LinearAlgebra, :adjoint, true)]
     @eval function $mod.$fun(A::KeyedArray)
-        data = $mod.$fun(A.data)
+        data = $mod.$fun(parent(A))
         new_keys = ndims(A)==1 ? (Base.OneTo(1), axiskeys(A,1)) :
             ndims(data)==1 ? (axiskeys(A,2),) :
             reverse(axiskeys(A))
@@ -171,11 +189,11 @@ for fun in [:copy, :deepcopy, :similar, :zero, :one]
         $fun(parent(parent(A))),
         map(copy, axiskeys(A))), dimnames(A))
 end
-Base.similar(A::KeyedArray, T::Type) = KeyedArray(similar(A.data, T), map(copy, axiskeys(A)))
+Base.similar(A::KeyedArray, T::Type) = KeyedArray(similar(parent(A), T), map(copy, axiskeys(A)))
 Base.similar(A::NdaKa, T::Type) = NamedDimsArray(KeyedArray(
-    similar(A.data.data, T), map(copy, axiskeys(A))), dimnames(A))
-Base.similar(A::KeyedArray, T::Type, dims::Int...) = similar(A.data, T, dims...)
-Base.similar(A::KeyedArray, dims::Int...) = similar(A.data, dims...)
+    similar(parent(parent(A)), T), map(copy, axiskeys(A))), dimnames(A))
+Base.similar(A::KeyedArray, T::Type, dims::Int...) = similar(parent(A), T, dims...)
+Base.similar(A::KeyedArray, dims::Int...) = similar(parent(A), dims...)
 
 for fun in [:(==), :isequal, :isapprox]
     for (T, S) in [ (:KeyedArray, :KeyedArray), (:KeyedArray, :NdaKa), (:NdaKa, :KeyedArray) ]
