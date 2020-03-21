@@ -9,6 +9,9 @@ using OffsetArrays, Tables, UniqueVectors, LazyStack
     @test w[i=-2] == w('a')
     @test_throws ArgumentError KeyedArray(o, i='a':'e')
 
+    w′ = wrapdims(o)
+    @test axiskeys(w′,1) == -2:2
+
 end
 @testset "unique" begin
 

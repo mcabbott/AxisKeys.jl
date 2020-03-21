@@ -41,12 +41,12 @@ using Test, AxisKeys
     @test_throws Exception D(10) # ambiguous
     @test_throws Exception D("cat", 10) # too few
     @test_throws Exception D("cat", 10, -10) # out of bounds
+    @test_throws Exception D(10, "cat", 3) # wrong order
 
-    E = wrapdims(ComplexF32, [:a, :b], [:c, :d, :e])
-    @test E(:a, :e) isa ComplexF32
-    @test_throws Exception E(:a) # ambiguous
+    E = wrapdims(rand(2,3,4))
+    @test axiskeys(E) == axes(E)
 
-    F = wrapdims(rand(5), 'a':'z')
+    F = wrapdims(rand(5), 'a':'z') # range needs adjusting
     @test axiskeys(F,1) == 'a':'e'
     @test_throws Exception wrapdims(rand(5), ['a','b','c'])
     @test_throws Exception KeyedArray(rand(5), ['a','b','c'])

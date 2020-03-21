@@ -31,15 +31,6 @@ for fast lookup.
 wrapdims(A::AbstractArray, T::Type, r::Union{AbstractVector,Nothing}, keys::Union{AbstractVector,Nothing}...) =
     KeyedArray(A, map(T, check_keys(A, (r, keys...))))
 
-"""
-    wrapdims(T, keys...)
-    wrapdims(T; name=range, ...)
-
-Given a datatype `T`, this creates `Array{T}(undef, ...)` before wrapping as instructed.
-"""
-wrapdims(T::Type, r::AbstractVector, keys::AbstractVector...) =
-    wrapdims(Array{T}(undef, map(length, (r, keys...))), r, keys...)
-
 using OffsetArrays
 
 function check_keys(A, keys)
@@ -59,7 +50,7 @@ function check_keys(A, keys)
             l > 0 && @warn "range $r replaced by $r′, to match size(A, $d) == $l" maxlog=1 _id=hash(r)
             r′
         else
-            throw(DimensionMismatch("length of range does not match size of array: size(A, $d) == $(size(A,d)) != length(r) == $(length(r)), for range r = $r"))
+            throw(DimensionMismatch("length of key vector does not match size of array: size(A, $d) == $(size(A,d)) != length(r) == $(length(r)), for range r = $r"))
         end
     end
 end
@@ -77,7 +68,9 @@ wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
 const OUTER = Ref(:KeyedArray)
 
 function wrapdims(A::AbstractArray, T::Union{Type,Function}=identity; kw...)
-    L = check_names(A, keys(values(kw)))
+    L0 = keys(values(kw))
+    length(L0) == 0 && return KeyedArray(A, axes(A))
+    L = check_names(A, L0)
     R = map(T, check_keys(A, values(values(kw))))
     if OUTER[] == :KeyedArray
         return KeyedArray(NamedDimsArray(A, L), R)
