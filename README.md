@@ -73,7 +73,7 @@ see [PR#5](https://github.com/mcabbott/AxisKeys.jl/pull/5) for an attempt.)
 ### Construction
 
 ```julia
-KeyedArray(rand(Int8, 2,10), ([:a, :b], 10:10:100))
+KeyedArray(rand(Int8, 2,10), ([:a, :b], 10:10:100)) # AbstractArray, Tuple{AbstractVector, ...}
 ```
 
 A nested pair with names can be constructed with keywords, 
@@ -129,7 +129,9 @@ To allow for this limited mutability, `V.keys isa Ref` for vectors,
 while `A.keys isa Tuple` for matrices & higher. But `axiskeys(A)` always returns a tuple.
 
 * [LazyStack](https://github.com/mcabbott/LazyStack.jl)`.stack` is now hooked up.
-  Stacks of named tuples like `stack((a=i, b=i^2) for i=1:3)` create axis keys.
+  Stacks of named tuples like `stack((a=i, b=i^2) for i=1:5)` create axis keys.
+
+* [NamedPlus](https://github.com/mcabbott/NamedPlus.jl) has a macro: `@named [n^pow for n=1:10, pow=0:2:4]` has names & keys.
 
 ### Absent
 
