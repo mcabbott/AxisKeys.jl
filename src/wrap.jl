@@ -111,3 +111,33 @@ function NamedDims.NamedDimsArray(A::AbstractArray; kw...)
     map(x -> axes(x, 1), R) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
     NamedDimsArray(KeyedArray(A, R), L)
 end
+
+#===== Conversions to & from NamedTuples =====#
+
+"""
+    wrapdims(::NamedTuple)
+    wrapdims(::NamedTuple, ::Symbol)
+
+Converts the `NamedTuple`'s keys into those of a one-dimensional `KeyedArray`.
+If a dimension name is provided, the this adds a `NamedDimsArray` wrapper too.
+"""
+wrapdims(nt::NamedTuple) = KeyedArray(nt)
+KeyedArray(nt::NamedTuple) = KeyedArray(collect(values(nt)), tuple(collect(keys(nt))))
+
+function wrapdims(nt::NamedTuple, s::Symbol)
+    if nameouter() == false
+        return KeyedArray(NamedDimsArray(collect(values(nt)), (s,)), tuple(collect(keys(nt))))
+    else
+        return NamedDimsArray(KeyedArray(nt), (s,))
+    end
+end
+
+function Base.NamedTuple(A::KeyedVector)
+    keys = map(Symbol, Tuple(axiskeys(A,1)))
+    vals = Tuple(keyless(A))
+    NamedTuple{keys}(vals)
+end
+Base.NamedTuple(A::NamedDimsArray{L,T,1,<:KeyedVector}) where {L,T} = NamedTuple(parent(A))
+
+Base.convert(::Type{NamedTuple}, A::KeyedVector) = NamedTuple(A)
+Base.convert(::Type{NamedTuple}, A::NamedDimsArray{L,T,1,<:KeyedVector}) where {L,T} = NamedTuple(A)

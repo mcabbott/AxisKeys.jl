@@ -215,6 +215,15 @@ end
     @test size(view(v, m)) == (sum(m),)
 
 end
+@testset "namedtuple" begin
+
+    @test keys(NamedTuple(wrapdims([1,2,3], z='a':'c'))) == (:a, :b, :c)
+
+    @test axiskeys(KeyedArray((a=1, b=2, c=3))) == ([:a, :b, :c],)
+    @test axiskeys(wrapdims((a=1, b=2, c=3))) == ([:a, :b, :c],)
+    @test dimnames(wrapdims((a=1, b=1+2, c=33), :z)) == (:z,)
+
+end
 @testset "mutation" begin
 
     V = wrapdims([3,5,7,11], μ=10:10:40)
