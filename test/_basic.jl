@@ -227,7 +227,7 @@ end
     @test axiskeys(push!(V2, 0)) === (Base.OneTo(4),)
     @test axiskeys(append!(V2, [7,7])) === (Base.OneTo(6),)
 
-    AxisKeys.OUTER[]==:KeyedArray && # fails with nda(ka(...))
+    AxisKeys.nameouter() || # fails with nda(ka(...))
         @test axiskeys(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40]
 
     W = wrapdims([1,2,3], ["a", "b", "c"])

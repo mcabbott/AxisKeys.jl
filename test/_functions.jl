@@ -62,7 +62,7 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
     # reshape
     @test reshape(M, 4,3) isa Array
     @test reshape(M, 2,:) isa Array
-    if AxisKeys.OUTER[]==:KeyedArray # reshape(keyless(M), (2,:)) # is an error
+    if AxisKeys.nameouter() == false  # reshape(keyless(M), (2,:)) # is an error
         @test reshape(M, (4,3)) isa Array
         @test reshape(M, (2,:)) isa Array
     end
@@ -71,7 +71,7 @@ end
 @testset "map & collect" begin
 
     mapM =  map(exp, M)
-    @test axiskeys(mapM) == ('a':'c', 2:5) # fails with nda(ka(...)), has lost keys?
+    @test axiskeys(mapM) == ('a':'c', 2:5)
     @test dimnames(mapM) == (:r, :c)
 
     @test axiskeys(map(+, M, M, M)) == ('a':'c', 2:5)

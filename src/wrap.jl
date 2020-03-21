@@ -14,8 +14,8 @@ Performs some sanity checks which are skipped by `KeyedArray` constructor:
 * Given `A::OffsetArray` and key vectors which are not, it will wrap them so that
   `axes.(axiskeys(A_wrapped)) == axes(A)`.
 
-By default it wraps in this order: `KeyedArray{...,NamedDimsArray{...}}`.
-This tests a flag `AxisKeys.OUTER[] == :KeyedArray` which you can change.
+By default it wraps in this order: `KeyedArray{...,NamedDimsArray{...}}`,
+which you can change by re-defining `AxisKeys.nameouter() == true`.
 """
 wrapdims(A::AbstractArray, r::Union{AbstractVector,Nothing}, keys::Union{AbstractVector,Nothing}...) =
     KeyedArray(A, check_keys(A, (r, keys...)))
@@ -65,14 +65,14 @@ extend_range(r::OneTo, l::Int) = OneTo(l)
 wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
     NamedDimsArray(A, check_names(A, (n, names...)))
 
-const OUTER = Ref(:KeyedArray)
+nameouter() = false # re-definable function
 
-function wrapdims(A::AbstractArray, T::Union{Type,Function}=identity; kw...)
+function wrapdims(A::AbstractArray, KT::Union{Type,Function}=identity; kw...)
     L0 = keys(values(kw))
     length(L0) == 0 && return KeyedArray(A, axes(A))
     L = check_names(A, L0)
-    R = map(T, check_keys(A, values(values(kw))))
-    if OUTER[] == :KeyedArray
+    R = map(KT, check_keys(A, values(values(kw))))
+    if nameouter() == false
         return KeyedArray(NamedDimsArray(A, L), R)
     else
         return NamedDimsArray(KeyedArray(A, R), L)

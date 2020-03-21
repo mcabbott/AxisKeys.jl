@@ -84,10 +84,9 @@ KeyedArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100)     # KeyedArray(Named
 NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(KeyedArray(...))
 ```
 
-The function `wrapdims` does a bit more checking and fixing. 
+The function `wrapdims` does a bit more checking and fixing, but is not type-stable. 
 It will adjust the length of key vectors if it can, and their indexing if needed to match the array. 
-The order of wrappers produced is controlled by `AxisKeys.OUTER[]`, hence this is not type-stable.
-
+The order of wrappers produced is controlled by `AxisKeys.nameouter()=false`.
 
 ```julia
 wrapdims(rand(Int8, 10), alpha='a':'z') 
