@@ -1,5 +1,5 @@
 using Test, AxisKeys
-using OffsetArrays, Tables, UniqueVectors, LazyStack
+using OffsetArrays, UniqueVectors, Tables, LazyStack, Dates
 
 @testset "offset" begin
 
@@ -57,3 +57,13 @@ end
     @test axiskeys(stack(n for n in nts), 1) == [:i, :j, :k]
 
 end
+@testset "dates" begin
+
+    D = wrapdims(rand(2,53), row = [:one, :two], week = Date(2020):Week(1):Date(2021))
+    w9 = axiskeys(D,:week)[9]
+    @test w9 isa Date
+    @test D(w9) == D[week=9]
+    # But steps of Year(1) don't work, https://github.com/JuliaLang/julia/issues/35203
+
+end
+
