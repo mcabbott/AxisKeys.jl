@@ -1,7 +1,5 @@
 using Base: @propagate_inbounds, OneTo, RefValue
 
-using Compat # 2.0 hasfield + 3.1 filter
-
 struct KeyedArray{T,N,AT,KT} <: AbstractArray{T,N}
     data::AT
     keys::KT
@@ -74,7 +72,7 @@ for (get_or_view, key_get, maybe_copy) in [
             raw_keys === () && return data # things like A[A .> 0]
 
             new_keys = ntuple(ndims(data)) do d
-                isnothing(raw_keys) && return axes(data, d)
+                raw_keys === nothing && return axes(data, d)
                 raw_keys[d]
             end
             KeyedArray(data, new_keys)
