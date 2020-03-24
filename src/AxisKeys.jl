@@ -3,6 +3,8 @@ module AxisKeys
 include("struct.jl")
 export KeyedArray, axiskeys
 
+include("lookup.jl")
+
 include("names.jl")
 export NamedDimsArray, dimnames
 
