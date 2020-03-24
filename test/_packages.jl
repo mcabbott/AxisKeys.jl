@@ -1,5 +1,5 @@
 using Test, AxisKeys
-using OffsetArrays, UniqueVectors, Tables, LazyStack, Dates
+using OffsetArrays, UniqueVectors, Tables, LazyStack, Dates, InvertedIndices
 
 @testset "offset" begin
 
@@ -66,4 +66,14 @@ end
     # But steps of Year(1) don't work, https://github.com/JuliaLang/julia/issues/35203
 
 end
+@testset "inverted" begin
 
+    K = wrapdims(rand(4,5))
+    @test K[:, Not(4)] == K[:, vcat(1:3, 5)] == K(:, !=(4))
+    @test K[Not(1,4), :] == K[2:3, :] == K(r -> 2<=r<=3, :)
+
+    N = wrapdims(rand(Int8, 2,3,4), a=[:one, :two], b='α':'γ', c=31:34)
+    @test N[b=Not(2)] == N[:,[1,3],:] == N(b=!=('β')) == N(:,['α','γ'],:)
+    @test N[c=Not(2,4)] == N(c=Index[Not(2,4)])
+
+end

@@ -71,7 +71,9 @@ for (bget, rget, cpy) in [(:getindex, :keys_getindex, :copy), (:view, :keys_view
             @inbounds Base.$bget(parent(A), I)
         end
 
-        @inline @propagate_inbounds function Base.$bget(A::KeyedArray, I...)
+        @inline @propagate_inbounds function Base.$bget(A::KeyedArray, Iraw...)
+            I = Base.to_indices(A, Iraw) # allows InvertedIndices.jl
+
             @boundscheck checkbounds(parent(A), I...)
             data = @inbounds Base.$bget(parent(A), I...)
 
@@ -128,13 +130,15 @@ see `Nearest` and `Index`.
 
 @inline function getkey(A, args...)
     if length(args) == ndims(A)
-        inds = map(findindex, args, axiskeys(A))
+        inds_raw = map(findindex, args, axiskeys(A))
+        inds = Base.to_indices(A, inds_raw)
         @boundscheck checkbounds(A, inds...)
         return @inbounds get_or_view(A, inds...)
 
     elseif length(args) > ndims(A) && all(args[ndims(A)+1:end] .== (:)) # trailing colons
         args_nd = args[1:ndims(A)]
-        inds = map(findindex, args_nd, axiskeys(A))
+        inds_raw = map(findindex, args_nd, axiskeys(A))
+        inds = Base.to_indices(A, inds_raw)
         @boundscheck checkbounds(A, inds...)
         if inds isa NTuple{<:Any, Int}
             return @inbounds view(keyless(A), inds...) # zero-dim view of underlying

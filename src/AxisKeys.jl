@@ -10,7 +10,7 @@ include("wrap.jl")
 export wrapdims
 
 include("selectors.jl")
-export Near, Index, Interval
+export Near, Index, Interval, Not
 
 include("functions.jl")
 

@@ -1,4 +1,6 @@
 
+using InvertedIndices # needs only Base.to_indices in struct.jl to work
+
 using IntervalSets
 
 findindex(s::Interval, r::AbstractVector) = findall(i -> i in s, r)
@@ -55,7 +57,7 @@ struct Index{T} <: Selector{T}
     ind::T
 end
 
-Base.show(io::IO, s::Index{T}) where {T} = print(io, "Index(",s.ind, ")")
+Base.show(io::IO, s::Index{T}) where {T} = print(io, "Index[",s.ind, "]")
 
 Base.getindex(::Type{Index}, i) = Index(i)
 
