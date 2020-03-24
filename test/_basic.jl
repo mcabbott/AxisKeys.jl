@@ -20,9 +20,11 @@ using Test, AxisKeys
     @test R[1,1] == 321
 
     @test R[:] == vec(R.data)
-    @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1] # trailing 1s are broken
+    @test R[1:2, 1, 1] == R.data[1:2, 1, 1]
     @test axiskeys(R[:, [0.9,0.1,0.9,0.1] .> 0.5],2) == [10,30]
     @test ndims(R[R.data .> 0.5]) == 1
+    newaxis = [CartesianIndex{0}()]
+    @test axiskeys(R[[1,3],newaxis,:]) == (['a', 'c'], Base.OneTo(1), 10:10:40)
 
     @test_throws Exception R(:nope) # ideally ArgumentError
     @test_throws Exception R('z')   # ideally BoundsError?

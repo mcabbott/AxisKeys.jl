@@ -58,53 +58,78 @@ Base.eachindex(A::KeyedArray) = eachindex(parent(A))
 
 Base.keys(A::KeyedArray) = error("Base.keys(::KeyedArray) not defined, please open an issue if this happens unexpectedly.")
 
-for (bget, rget, cpy) in [(:getindex, :keys_getindex, :copy), (:view, :keys_view, :identity)]
+for (get_or_view, key_get, maybe_copy) in [
+        (:getindex, :keys_getindex, :copy),
+        (:view, :keys_view, :identity)
+    ]
     @eval begin
 
-        @inline function Base.$bget(A::KeyedArray, I::Integer...)
-            @boundscheck checkbounds(parent(A), I...)
-            @inbounds Base.$bget(parent(A), I...)
-        end
+        @inline function Base.$get_or_view(A::KeyedArray, raw_inds...)
+            inds = to_indices(A, raw_inds)
+            @boundscheck checkbounds(parent(A), inds...)
+            data = @inbounds $get_or_view(parent(A), inds...)
+            data isa AbstractArray || return data # scalar output
 
-        @inline function Base.$bget(A::KeyedArray, I::Union{Colon, CartesianIndex, BitArray})
-            @boundscheck checkbounds(parent(A), I)
-            @inbounds Base.$bget(parent(A), I)
-        end
+            raw_keys = $key_get(axiskeys(A), inds)
+            raw_keys === () && return data # things like A[A .> 0]
 
-        @inline @propagate_inbounds function Base.$bget(A::KeyedArray, Iraw...)
-            I = Base.to_indices(A, Iraw) # allows InvertedIndices.jl
-
-            @boundscheck checkbounds(parent(A), I...)
-            data = @inbounds Base.$bget(parent(A), I...)
-
-            @boundscheck map(checkbounds, axiskeys(A), I)
-            new_keys = $rget(axiskeys(A), I)
-
-            new_keys isa Tuple{} ? data : KeyedArray(data, new_keys)
-        end
-
-        @inline function $rget(keys, inds)
-            got = map(keys, inds) do r,i
-                i isa Integer       && return nothing
-                i isa Colon         && return $cpy(r)        # avoids view([1,2,3], :)
-                r isa AbstractRange && return getindex(r,i)  # don't make views of 1:10
-                return @inbounds $bget(r,i)
+            new_keys = ntuple(ndims(data)) do d
+                isnothing(raw_keys) && return axes(data, d)
+                raw_keys[d]
             end
-            filter(r -> r isa AbstractArray, got)
+            KeyedArray(data, new_keys)
         end
+
+        # drop all, for A[:] and A[A .> 0] with ndims>=2
+        @inline $key_get(keys::Tuple{Any, Any, Vararg{Any}}, inds::Tuple{Base.LogicalIndex}) = ()
+        @inline $key_get(keys::Tuple{Any, Any, Vararg{Any}}, inds::Tuple{Base.Slice}) = ()
+
+        # drop one, for integer index
+        @inline $key_get(keys::Tuple, inds::Tuple{Integer, Vararg{Any}}) =
+            $key_get(tail(keys), tail(inds))
+
+        # from a Colon, k[:] would copy too, but this avoids view([1,2,3], :)
+        @inline $key_get(keys::Tuple, inds::Tuple{Base.Slice, Vararg{Any}}) =
+            ($maybe_copy(first(keys)), $key_get(tail(keys), tail(inds))...)
+
+        # this avoids making views of 1:10 etc, they are immutable anyway
+        @inline function $key_get(keys::Tuple, inds::Tuple{AbstractVector, Vararg{Any}})
+            got = if first(keys) isa AbstractRange
+                @inbounds getindex(first(keys), first(inds))
+            else
+                @inbounds $get_or_view(first(keys), first(inds))
+            end
+            (got, $key_get(tail(keys), tail(inds))...)
+        end
+
+        # newindex=[CartesianIndex{0}()], uses up one ind, sets N keys to default i.e. axes
+        @inline function $key_get(keys::Tuple, inds::Tuple{AbstractVector{CartesianIndex{0}}, Vararg{Any}})
+            (OneTo(1), $key_get(keys, tail(inds))...)
+        end
+        @inline function $key_get(keys::Tuple, inds::Tuple{AbstractVector{CartesianIndex{N}}, Vararg{Any}}) where {N}
+            _, keys_left = Base.IteratorsMD.split(keys, Val(N))
+            (ntuple(_->nothing, N)..., $key_get(keys_left, tail(inds))...)
+        end
+
+        # terminating case, trailing 1s (already checked) could be left over
+        @inline $key_get(keys::Tuple{}, inds::Tuple{}) = ()
+        @inline $key_get(keys::Tuple{}, inds::Tuple{Integer, Vararg{Any}}) = ()
 
     end
 end
 
-@inline function Base.setindex!(A::KeyedArray, val, I...)
+@inline function Base.setindex!(A::KeyedArray, val, raw_inds...)
+    I = Base.to_indices(A, raw_inds)
     @boundscheck checkbounds(A, I...)
     @inbounds setindex!(parent(A), val, I...)
     val
 end
 
-@inline function Base.Broadcast.dotview(A::KeyedArray, I...)
+@inline function Base.dotview(A::KeyedArray, raw_inds...)
+    I = Base.to_indices(A, raw_inds)
     @boundscheck checkbounds(A, I...)
-    @inbounds Base.dotview(parent(A), I...)
+    @inbounds setindex!(parent(A), val, I...)
+    val
 end
 
 """
