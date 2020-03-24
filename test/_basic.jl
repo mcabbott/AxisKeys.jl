@@ -65,9 +65,9 @@ end
     @test V(Index[1]) == V[1]
     @test V(Index[2:3]) == V[2:3]
     @test V(Index[end]) == V[end]
-    if VERSION >= v"1.4"
-        @test V(Index[begin]) == V[1]
-    end
+    # if VERSION >= v"1.4"
+    #     @test V(Index[begin]) == V[1] # syntax error on 1.0
+    # end
 
     V2 = wrapdims(rand(Int8, 5), [1,2,3,2,1])
     @test V2(==(2)) == V2[[2,4]]
