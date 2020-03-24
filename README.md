@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.org/mcabbott/AxisKeys.jl)
 
-<img src="docs/readmefigure.png" alt="block picture" width="400" align="right">
+<!--<img src="docs/readmefigure.png" alt="block picture" width="400" align="right">-->
 
 This package defines a thin wrapper which, alongside any array, stores a vector of "keys" 
 for each dimension. This may be useful to store perhaps actual times of measurements, 
