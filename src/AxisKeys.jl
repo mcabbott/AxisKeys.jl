@@ -3,6 +3,8 @@ module AxisKeys
 include("struct.jl")
 export KeyedArray, axiskeys
 
+include("lookup.jl")
+
 include("names.jl")
 export NamedDimsArray, dimnames
 
@@ -10,7 +12,7 @@ include("wrap.jl")
 export wrapdims
 
 include("selectors.jl")
-export Near, Index, Interval, Key
+export Near, Index, Interval, Not, Key
 
 include("functions.jl")
 

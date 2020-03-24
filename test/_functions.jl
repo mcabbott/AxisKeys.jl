@@ -31,8 +31,7 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
     @test dimnames(transpose(M2)) == (:c, :r)
     @test axiskeys(permutedims(M, (2,1))) == (2:5, 'a':'c')
     @test dimnames(M3') == (:_, :r)
-    AxisKeys.OUTER[]==:KeyedArray && # needs fix fom https://github.com/invenia/NamedDims.jl/pull/77#issue-336049207
-        @test axiskeys(transpose(transpose(V))) == axiskeys(V)
+    @test axiskeys(transpose(transpose(V))) == axiskeys(V) # fixed by NamedDims.jl/pull/105
     @test axiskeys(permutedims(transpose(V))) == (axiskeys(V,1), Base.OneTo(1))
 
     V2 = wrapdims(rand(3), along=[:a, :b, :c])
@@ -52,10 +51,9 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
     @test axiskeys(sort(M, dims=:c), :c) isa Base.OneTo
     @test axiskeys(sort(M, dims=:c), :r) == 'a':'c'
 
-    AxisKeys.OUTER[]==:KeyedArray && # sortslices(keyless(M), dims=:c) # is an error
-        @test sortslices(M, dims=:c) isa NamedDimsArray
+    @test sortslices(M, dims=:c) isa NamedDimsArray
 
-    A = KeyedArray([1,0], vec=[:a, :b]) # https://github.com/JuliaArrays/AxisArrays.jl/issues/172
+    A = wrapdims([1,0], vec=[:a, :b]) # https://github.com/JuliaArrays/AxisArrays.jl/issues/172
     sort!(A)
     @test A(:a) == 1
     @test axiskeys(A, 1) == [:b, :a]
@@ -64,7 +62,7 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
     # reshape
     @test reshape(M, 4,3) isa Array
     @test reshape(M, 2,:) isa Array
-    if AxisKeys.OUTER[]==:KeyedArray # reshape(keyless(M), (2,:)) # is an error
+    if AxisKeys.nameouter() == false  # reshape(keyless(M), (2,:)) # is an error
         @test reshape(M, (4,3)) isa Array
         @test reshape(M, (2,:)) isa Array
     end
@@ -73,7 +71,7 @@ end
 @testset "map & collect" begin
 
     mapM =  map(exp, M)
-    @test axiskeys(mapM) == ('a':'c', 2:5) # fails with nda(ka(...)), has lost keys?
+    @test axiskeys(mapM) == ('a':'c', 2:5)
     @test dimnames(mapM) == (:r, :c)
 
     @test axiskeys(map(+, M, M, M)) == ('a':'c', 2:5)

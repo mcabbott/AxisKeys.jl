@@ -14,8 +14,8 @@ Performs some sanity checks which are skipped by `KeyedArray` constructor:
 * Given `A::OffsetArray` and key vectors which are not, it will wrap them so that
   `axes.(axiskeys(A_wrapped)) == axes(A)`.
 
-By default it wraps in this order: `KeyedArray{...,NamedDimsArray{...}}`.
-This tests a flag `AxisKeys.OUTER[] == :KeyedArray` which you can change.
+By default it wraps in this order: `KeyedArray{...,NamedDimsArray{...}}`,
+which you can change by re-defining `AxisKeys.nameouter() == true`.
 """
 wrapdims(A::AbstractArray, r::Union{AbstractVector,Nothing}, keys::Union{AbstractVector,Nothing}...) =
     KeyedArray(A, check_keys(A, (r, keys...)))
@@ -30,15 +30,6 @@ for fast lookup.
 """
 wrapdims(A::AbstractArray, T::Type, r::Union{AbstractVector,Nothing}, keys::Union{AbstractVector,Nothing}...) =
     KeyedArray(A, map(T, check_keys(A, (r, keys...))))
-
-"""
-    wrapdims(T, keys...)
-    wrapdims(T; name=range, ...)
-
-Given a datatype `T`, this creates `Array{T}(undef, ...)` before wrapping as instructed.
-"""
-wrapdims(T::Type, r::AbstractVector, keys::AbstractVector...) =
-    wrapdims(Array{T}(undef, map(length, (r, keys...))), r, keys...)
 
 using OffsetArrays
 
@@ -59,7 +50,7 @@ function check_keys(A, keys)
             l > 0 && @warn "range $r replaced by $r′, to match size(A, $d) == $l" maxlog=1 _id=hash(r)
             r′
         else
-            throw(DimensionMismatch("length of range does not match size of array: size(A, $d) == $(size(A,d)) != length(r) == $(length(r)), for range r = $r"))
+            throw(DimensionMismatch("length of key vector does not match size of array: size(A, $d) == $(size(A,d)) != length(r) == $(length(r)), for range r = $r"))
         end
     end
 end
@@ -74,12 +65,14 @@ extend_range(r::OneTo, l::Int) = OneTo(l)
 wrapdims(A::AbstractArray, n::Symbol, names::Symbol...) =
     NamedDimsArray(A, check_names(A, (n, names...)))
 
-const OUTER = Ref(:KeyedArray)
+nameouter() = false # re-definable function
 
-function wrapdims(A::AbstractArray, T::Union{Type,Function}=identity; kw...)
-    L = check_names(A, keys(values(kw)))
-    R = map(T, check_keys(A, values(values(kw))))
-    if OUTER[] == :KeyedArray
+function wrapdims(A::AbstractArray, KT::Union{Type,Function}=identity; kw...)
+    L0 = keys(values(kw))
+    length(L0) == 0 && return KeyedArray(A, axes(A))
+    L = check_names(A, L0)
+    R = map(KT, check_keys(A, values(values(kw))))
+    if nameouter() == false
         return KeyedArray(NamedDimsArray(A, L), R)
     else
         return NamedDimsArray(KeyedArray(A, R), L)
@@ -118,3 +111,33 @@ function NamedDims.NamedDimsArray(A::AbstractArray; kw...)
     map(x -> axes(x, 1), R) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
     NamedDimsArray(KeyedArray(A, R), L)
 end
+
+#===== Conversions to & from NamedTuples =====#
+
+"""
+    wrapdims(::NamedTuple)
+    wrapdims(::NamedTuple, ::Symbol)
+
+Converts the `NamedTuple`'s keys into those of a one-dimensional `KeyedArray`.
+If a dimension name is provided, the this adds a `NamedDimsArray` wrapper too.
+"""
+wrapdims(nt::NamedTuple) = KeyedArray(nt)
+KeyedArray(nt::NamedTuple) = KeyedArray(collect(values(nt)), tuple(collect(keys(nt))))
+
+function wrapdims(nt::NamedTuple, s::Symbol)
+    if nameouter() == false
+        return KeyedArray(NamedDimsArray(collect(values(nt)), (s,)), tuple(collect(keys(nt))))
+    else
+        return NamedDimsArray(KeyedArray(nt), (s,))
+    end
+end
+
+function Base.NamedTuple(A::KeyedVector)
+    keys = map(Symbol, Tuple(axiskeys(A,1)))
+    vals = Tuple(keyless(A))
+    NamedTuple{keys}(vals)
+end
+Base.NamedTuple(A::NamedDimsArray{L,T,1,<:KeyedVector}) where {L,T} = NamedTuple(parent(A))
+
+Base.convert(::Type{NamedTuple}, A::KeyedVector) = NamedTuple(A)
+Base.convert(::Type{NamedTuple}, A::NamedDimsArray{L,T,1,<:KeyedVector}) where {L,T} = NamedTuple(A)

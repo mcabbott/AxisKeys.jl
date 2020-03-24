@@ -4,7 +4,7 @@ and of other packages of similar or overlapping concerns.
 Plus generally a place to collect their various syntax, for comparison.
 =#
 
-using AxisKeys, BenchmarkTools # Julia 1.3 + macbook escape
+using AxisKeys, BenchmarkTools # Julia 1.4 + macbook escape
 
 #==============================#
 #===== getkey vs getindex =====#
@@ -19,9 +19,9 @@ bothmat2 = wrapdims(mat.data, x=collect(11:13), y=collect(21:24))
 
 @btime $bothmat[3,4]        # 1.700 ns
 @btime $bothmat[x=3, y=4]   # 1.701 ns
-@btime $bothmat(13, 24)     # 5.874 ns
-@btime $bothmat(x=13, y=24) # 43.302 ns (2 allocations: 64 bytes)
-@btime $bothmat2(13, 24)    # 16.719 ns
+@btime $bothmat(13, 24)     # 5.874 ns -- fast range lookup
+@btime $bothmat(x=13, y=24) # 14.063 ns
+@btime $bothmat2(13, 24)    # 16.719 ns -- collected vector
 
 ind_collect(A) = [@inbounds(A[ijk...]) for ijk in Iterators.ProductIterator(axes(A))]
 key_collect(A) = [@inbounds(A(vals...)) for vals in Iterators.ProductIterator(axiskeys(A))]
@@ -31,14 +31,14 @@ bigmat2 = wrapdims(rand(100,100), collect(1:100), collect(1:100));
 
 @btime ind_collect($(bigmat.data)); #  9.117 μs (4 allocations: 78.25 KiB)
 @btime ind_collect($bigmat);        # 11.530 μs (4 allocations: 78.25 KiB)
-@btime key_collect($bigmat);        # 20.671 μs (4 allocations: 78.27 KiB) -- fast range lookup
+@btime key_collect($bigmat);        # 64.064 μs (4 allocations: 78.27 KiB) -- fast range lookup, was 20μs!
 @btime key_collect($bigmat2);      # 718.804 μs (5 allocations: 78.27 KiB) -- findfirst(..., vector) lookup
 
 twomat = wrapdims(mat.data, x=[:a, :b, :c], y=21:24)
-@btime $twomat(x=:a, y=24)  # 57.396 ns (2 allocations: 64 bytes)
+@btime $twomat(x=:a, y=24)  # 36.734 ns (2 allocations: 64 bytes)
 
 @btime $twomat(24.0)        # 26.686 ns (4 allocations: 112 bytes)
-@btime $twomat(y=24.0)      # 52.372 ns (6 allocations: 144 bytes)
+@btime $twomat(y=24.0)      # 33.860 ns (4 allocations: 112 bytes)
 @btime view($twomat, :,3)   # 24.951 ns (4 allocations: 112 bytes)
 
 
@@ -50,7 +50,7 @@ using OffsetArrays                      #===== OffsetArrays =====#
 
 of1 = OffsetArray(rand(3,4), 11:13, 21:24)
 
-@btime $of1[13,24] # 3.652 ns
+@btime $of1[13,24] # 1.700 ns
 
 bigoff = OffsetArray(bigmat.data, 1:100, 1:100);
 @btime ind_collect($bigoff);        # 15.372 μs (5 allocations: 78.30 KiB)

@@ -20,9 +20,11 @@ using Test, AxisKeys
     @test R[1,1] == 321
 
     @test R[:] == vec(R.data)
-    @test_broken R[1:2, 1, 1] == R.data[1:2, 1, 1] # trailing 1s are broken
+    @test R[1:2, 1, 1] == R.data[1:2, 1, 1]
     @test axiskeys(R[:, [0.9,0.1,0.9,0.1] .> 0.5],2) == [10,30]
     @test ndims(R[R.data .> 0.5]) == 1
+    newaxis = [CartesianIndex{0}()]
+    @test axiskeys(R[[1,3],newaxis,:]) == (['a', 'c'], Base.OneTo(1), 10:10:40)
 
     @test_throws Exception R(:nope) # ideally ArgumentError
     @test_throws Exception R('z')   # ideally BoundsError?
@@ -41,12 +43,12 @@ using Test, AxisKeys
     @test_throws Exception D(10) # ambiguous
     @test_throws Exception D("cat", 10) # too few
     @test_throws Exception D("cat", 10, -10) # out of bounds
+    @test_throws Exception D(10, "cat", 3) # wrong order
 
-    E = wrapdims(ComplexF32, [:a, :b], [:c, :d, :e])
-    @test E(:a, :e) isa ComplexF32
-    @test_throws Exception E(:a) # ambiguous
+    E = wrapdims(rand(2,3,4))
+    @test axiskeys(E) == axes(E)
 
-    F = wrapdims(rand(5), 'a':'z')
+    F = wrapdims(rand(5), 'a':'z') # range needs adjusting
     @test axiskeys(F,1) == 'a':'e'
     @test_throws Exception wrapdims(rand(5), ['a','b','c'])
     @test_throws Exception KeyedArray(rand(5), ['a','b','c'])
@@ -63,6 +65,9 @@ end
     @test V(Index[1]) == V[1]
     @test V(Index[2:3]) == V[2:3]
     @test V(Index[end]) == V[end]
+    # if VERSION >= v"1.4"
+    #     @test V(Index[begin]) == V[1] # syntax error on 1.0
+    # end
 
     V2 = wrapdims(rand(Int8, 5), [1,2,3,2,1])
     @test V2(==(2)) == V2[[2,4]]
@@ -215,6 +220,15 @@ end
     @test size(view(v, m)) == (sum(m),)
 
 end
+@testset "namedtuple" begin
+
+    @test keys(NamedTuple(wrapdims([1,2,3], z='a':'c'))) == (:a, :b, :c)
+
+    @test axiskeys(KeyedArray((a=1, b=2, c=3))) == ([:a, :b, :c],)
+    @test axiskeys(wrapdims((a=1, b=2, c=3))) == ([:a, :b, :c],)
+    @test dimnames(wrapdims((a=1, b=1+2, c=33), :z)) == (:z,)
+
+end
 @testset "mutation" begin
 
     V = wrapdims([3,5,7,11], μ=10:10:40)
@@ -227,7 +241,7 @@ end
     @test axiskeys(push!(V2, 0)) === (Base.OneTo(4),)
     @test axiskeys(append!(V2, [7,7])) === (Base.OneTo(6),)
 
-    AxisKeys.OUTER[]==:KeyedArray && # fails with nda(ka(...))
+    AxisKeys.nameouter() || # fails with nda(ka(...))
         @test axiskeys(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40]
 
     W = wrapdims([1,2,3], ["a", "b", "c"])

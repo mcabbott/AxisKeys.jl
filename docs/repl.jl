@@ -1,10 +1,18 @@
-julia> #===== Examples of how to use the AxisArrays package. =====#
+julia> #===== Examples of how to use the AxisKeys package. =====#
 
-(v1.3) pkg> add https://github.com/mcabbott/AxisKeys.jl # Not a registered package
+(v1.3) pkg> add AxisKeys  # Now registered
 
 julia> using AxisKeys, Random
 
 julia> Random.seed!(42);
+
+julia> KeyedArray((a=3, b=5, c=7)) # Using keys of a NamedTuple
+1-dimensional KeyedArray(...) with keys:
+↓   3-element Vector{Symbol}
+And data, 3-element Array{Int64,1}:
+ (:a)  3
+ (:b)  5
+ (:c)  7
 
 julia> D = wrapdims(rand(Int8,5), iter = 10:10:50) # Convenience constructor
 1-dimensional KeyedArray(NamedDimsArray(...)) with range:
@@ -39,7 +47,7 @@ julia> @view E[col=1] # Fixing one index gives a slice
 ↓ row  -105
           3
 
-julia> C = wrapdims(rand(2,10) .+ (0:1), obs=["dog", "cat"], time=range(0, step=0.5, length=10))
+julia> C = KeyedArray(rand(2,10) .+ (0:1), obs=["dog", "cat"], time=range(0, step=0.5, length=10))
 2-dimensional KeyedArray(NamedDimsArray(...)) with ranges:
 ↓   obs ∈ 2-element Vector{String}
 →   time ∈ 10-element StepRangeLen{Float64,...}
@@ -48,7 +56,7 @@ And data, 2×10 Array{Float64,2}:
   ("dog")    0.160006    0.602298    0.383491    0.745181       0.0823367    0.452418    0.281987
   ("cat")    1.42296     1.36346     1.59291     1.26281        1.24468      1.76372     1.14364
 
-julia> names(C) # Works like size & axes, i.e. names(C,2) == :time
+julia> dimnames(C) # Works like size & axes, i.e. dimnames(C,2) == :time
 (:obs, :time)
 
 julia> axiskeys(C) # Likewise, axiskeys(C, :time) == 0:0.5:4.5
@@ -89,10 +97,10 @@ And data, 2×2 Array{Float64,2}:
   ("cat")   5.85958  21.8234
 
 julia> ans("mouse")
-ERROR: key of type String is ambiguous, matches dimensions (1, 2)
+ERROR: ArgumentError: key of type String is ambiguous, matches dimensions (1, 2)
 
 julia> C("mouse")
-ERROR: could not find key "mouse" in range ["dog", "cat"]
+ERROR: ArgumentError: could not find key "mouse" in vector ["dog", "cat"]
 
 julia> for (i,t) in enumerate(C.time)
        t > 3 && println("at time $t, value cat = ", C[2,i])
@@ -178,7 +186,19 @@ And data, 3×81×2 Array{Float64,3}:
   (:b)      0.123933      0.988803     0.243089         0.701553       0.11737
   (:c)      0.850917      0.0495313    0.0470764        0.322251       0.642556
 
-# Ranges are printed with colours based on eltype, btw!
-
-julia> H(:a, -14, "one") # uses UniqueVector's fast lookup
+julia> H(:a, -14, "one") # uses the UniqueVector's fast lookup
 0.9948971186701887
+
+julia> using LazyStack # A package for concatenating arrays
+
+julia> stack(:pre, n .* D for n in 1:10)
+2-dimensional NamedDimsArray(KeyedArray(...)) with keys:
+↓   iter ∈ 5-element StepRange{Int64,...}
+→   pre ∈ 10-element OneTo{Int}
+And data, 5×10 Array{Int64,2}:
+       (1)  (2)  (3)  (4)  (5)  (6)  (7)  (8)   (9)  (10)
+ (10)  115  230  345  460  575  690  805  920  1035  1150
+ (20)   99  198  297  396  495  594  693  792   891   990
+ (30)    0    0    0    0    0    0    0    0     0     0
+ (40)   57  114  171  228  285  342  399  456   513   570
+ (50)   88  176  264  352  440  528  616  704   792   880

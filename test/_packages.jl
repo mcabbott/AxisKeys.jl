@@ -1,5 +1,5 @@
 using Test, AxisKeys
-using OffsetArrays, Tables, UniqueVectors, LazyStack
+using OffsetArrays, UniqueVectors, Tables, LazyStack, Dates, InvertedIndices
 
 @testset "offset" begin
 
@@ -8,6 +8,9 @@ using OffsetArrays, Tables, UniqueVectors, LazyStack
     @test axiskeys(w,1) isa OffsetArray
     @test w[i=-2] == w('a')
     @test_throws ArgumentError KeyedArray(o, i='a':'e')
+
+    w′ = wrapdims(o)
+    @test axiskeys(w′,1) == -2:2
 
 end
 @testset "unique" begin
@@ -52,5 +55,25 @@ end
     @test axiskeys(stack(nts), 1) == [:i, :j, :k]
     @test axiskeys(stack(:z, nts...), 1) == [:i, :j, :k]
     @test axiskeys(stack(n for n in nts), 1) == [:i, :j, :k]
+
+end
+@testset "dates" begin
+
+    D = wrapdims(rand(2,53), row = [:one, :two], week = Date(2020):Week(1):Date(2021))
+    w9 = axiskeys(D,:week)[9]
+    @test w9 isa Date
+    @test D(w9) == D[week=9]
+    # But steps of Year(1) don't work, https://github.com/JuliaLang/julia/issues/35203
+
+end
+@testset "inverted" begin
+
+    K = wrapdims(rand(4,5))
+    @test K[:, Not(4)] == K[:, vcat(1:3, 5)] == K(:, Base.Fix2(!=,4))
+    @test K[Not(1,4), :] == K[2:3, :] == K(r -> 2<=r<=3, :)
+
+    N = wrapdims(rand(Int8, 2,3,4), a=[:one, :two], b='α':'γ', c=31:34)
+    @test N[b=Not(2)] == N[:,[1,3],:] == N(b=Base.Fix2(!=,'β')) == N(:,['α','γ'],:)
+    @test N[c=Not(2,4)] == N(c=Index[Not(2,4)])
 
 end

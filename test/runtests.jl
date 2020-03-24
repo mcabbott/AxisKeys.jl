@@ -3,7 +3,11 @@ using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
 
 @testset "wrapdims with $outside outside" for outside in [:NamedDimsArray, :KeyedArray]
 
-    AxisKeys.OUTER[] = outside
+    if outside == :NamedDimsArray
+        AxisKeys.nameouter() = true
+    else
+        AxisKeys.nameouter() = false
+    end
 
     include("_basic.jl")
 
