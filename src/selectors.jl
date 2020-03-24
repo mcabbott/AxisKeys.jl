@@ -70,3 +70,10 @@ Base.lastindex(::Type{Index}) = LastIndex()
 Index(::LastIndex) = LastIndex()
 
 findindex(sel::LastIndex, range::AbstractArray) = lastindex(range)
+
+if VERSION >= v"1.4" # same thing for Index[begin]
+    struct FirstIndex <: Selector{Int} end
+    Base.firstindex(::Type{Index}) = FirstIndex()
+    Index(::FirstIndex) = FirstIndex()
+    findindex(sel::FirstIndex, range::AbstractArray) = firstindex(range)
+end
