@@ -15,14 +15,17 @@ using Test, AxisKeys
     @test AxisKeys.setkey!(R, 123, 'a', 10) == 123
     @test R[1,1] == 123
 
-    @test R('a', 10, :) isa SubArray{Int,0}
+    @test R('a', 10, :) isa SubArray{Int,0} # trailing colon
     R('a', 10, :) .= 321
     @test R[1,1] == 321
+
+    @test (R[2,:] .= 1:4) isa SubArray # dotview
+    @test R[2,:] == KeyedArray(1:4, (10:10:40,))
 
     @test R[:] == vec(R.data)
     @test R[1:2, 1, 1] == R.data[1:2, 1, 1]
     @test axiskeys(R[:, [0.9,0.1,0.9,0.1] .> 0.5],2) == [10,30]
-    @test ndims(R[R.data .> 0.5]) == 1
+    @test ndims(R[R .> 0.5]) == 1
     newaxis = [CartesianIndex{0}()]
     @test axiskeys(R[[1,3],newaxis,:]) == (['a', 'c'], Base.OneTo(1), 10:10:40)
 
