@@ -16,6 +16,7 @@ using Test, AxisKeys, BenchmarkTools
     end
 
     al_A = @ballocated view($A,1,:) # 96
+
     @test al_A == @ballocated $A(11.0,:)
     @test al_A == @ballocated $A(11.0)
     @test al_A == @ballocated $A(11)
@@ -23,6 +24,7 @@ using Test, AxisKeys, BenchmarkTools
     if VERSION >= v"1.1"
         @test (@inferred A(11); true)
     end
+    @test al_A/2 >= @ballocated $A[1,:] .= 0 # dotview skips view of key vector
 
     # with names
     N = wrapdims(rand(2,3), row=11.0:12.0, col=[:a, :b, :c])
