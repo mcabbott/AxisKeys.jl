@@ -126,6 +126,5 @@ end
 @inline function Base.dotview(A::KeyedArray, raw_inds...)
     I = Base.to_indices(A, raw_inds)
     @boundscheck checkbounds(A, I...)
-    @inbounds setindex!(parent(A), val, I...)
-    val
+    @inbounds Base.dotview(parent(A), I...)
 end
