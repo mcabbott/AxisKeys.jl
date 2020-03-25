@@ -20,6 +20,6 @@ using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
 end
 @testset "fast findfirst & findall" begin
 
-    include("_notpiracy.jl")
+    include("_findrange.jl")
 
 end
