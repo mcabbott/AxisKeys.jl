@@ -69,7 +69,7 @@ nameouter() = false # re-definable function
 
 function wrapdims(A::AbstractArray, KT::Union{Type,Function}=identity; kw...)
     L0 = keys(values(kw))
-    length(L0) == 0 && return KeyedArray(A, axes(A))
+    length(L0) == 0 && return wrapdims_import(A)
     L = check_names(A, L0)
     R = map(KT, check_keys(A, values(values(kw))))
     if nameouter() == false
@@ -141,3 +141,48 @@ Base.NamedTuple(A::NamedDimsArray{L,T,1,<:KeyedVector}) where {L,T} = NamedTuple
 
 Base.convert(::Type{NamedTuple}, A::KeyedVector) = NamedTuple(A)
 Base.convert(::Type{NamedTuple}, A::NamedDimsArray{L,T,1,<:KeyedVector}) where {L,T} = NamedTuple(A)
+
+#===== Conversions from NamedArrays etc =====#
+
+"""
+    wrapdims(A::NamedArray)
+    wrapdims(A::AxisArray)
+
+Converts the wrapper from packages NamedArrays.jl or AxisArrays.jl.
+(Really it just guesses based on field names, since these packages are not loaded.)
+"""
+function wrapdims end
+
+function wrapdims_import(A::AbstractArray)
+    fields = fieldnames(typeof(A))
+
+    if fields == (:array, :dicts, :dimnames) # then it's a NamedArray
+        keys = map(A.dicts) do d
+            v = d.keys # usually a vector of strings
+            if v isa AbstractVector{<:AbstractString}
+                vi = tryparse.(Int, v)
+                any(i -> i==nothing, vi) || return vi
+                vr = tryparse.(Float64, v)
+                any(r -> r==nothing, vr) || return vr
+            end
+            v
+        end
+        if nameouter() == false
+            return KeyedArray(NamedDimsArray(A.array, A.dimnames), keys)
+        else
+            return NamedDimsArray(KeyedArray(A.array, keys), A.dimnames)
+        end
+
+    elseif fields == (:data, :axes) # then it's an AxisArray
+        keys = map(a -> a.val, A.axes)
+        names = map(a -> typeof(a).parameters[1], A.axes)
+        if nameouter() == false
+            return KeyedArray(NamedDimsArray(A.data, names), keys)
+        else
+            return NamedDimsArray(KeyedArray(A.data, keys), names)
+        end
+
+    else # just wrap it
+        return KeyedArray(A, axes(A))
+    end
+end

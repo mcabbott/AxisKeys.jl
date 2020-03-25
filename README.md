@@ -97,6 +97,8 @@ wrapdims(OffsetArray(rand(Int8, 10),-1), iter=10:10:100)
 axiskeys(ans,1) # 10:10:100 with indices 0:9
 ```
 
+Finally, it will also convert `AxisArray`s, `NamedArray`s, as well as `NamedTuple`s. 
+
 ### Functions
 
 As usual `axes(A)` returns (a tuple of vectors of) indices, 
@@ -193,6 +195,7 @@ Other older packages (pre-Julia-1.0):
 which are always `OrderedDict`s. Named lookup looks like `NA[:x => 13.0]` 
 instead of `A(x=13.0)` here; this is not very fast. 
 Dimension names & keys can be set after creation. Has nice pretty-printing routines. 
+Returned by [FreqTables](https://github.com/nalimilan/FreqTables.jl).
 
 * [LabelledArrays](https://github.com/JuliaDiffEq/LabelledArrays.jl) adds names for individual elements, more like a NamedTuple. 
 Only for small sizes: the storage inside is a Tuple, not an Array.
