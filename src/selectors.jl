@@ -53,7 +53,10 @@ You may also write `Index[end]`, although not yet `Index[end-2]`.
     Key(val)
 
 This exists to perform lookup inside indexing, to allow
-`A[Key(:b), Near(3.14), 4:5, Key("f")]`
+`A[Key(:b), Near(3.14), 4:5, Key("f")]`.
+
+Writing `Key(isequal(:b))` is equivalent to just `isequal(:b)`, and will find all matches,
+while `Key(:b)` finds only the first (and drops the dimension).
 """
 
 @doc _index_key_doc
@@ -93,20 +96,32 @@ Base.show(io::IO, ::MIME"text/plain", s::Key{T}) where {T} =
 
 findindex(sel::Key, range::AbstractArray) = findindex(sel.val, range)
 
-function selector_indices(A, tup)
-    length(tup) == ndims(A) || error("wrong number... maybe?")
-    ntuple(ndims(A)) do d
-        arg = tup[d]
-        if arg isa Selector || arg isa Function || arg isa IntervalSets.AbstractInterval
-            findindex(arg, axiskeys(A, d))
-        else
-            arg # Base.to_index(A, arg)
-        end
-    end
+"""
+    Base.to_indices(A, axes, inds)
+    select_to_indices(A, axes, inds)
+
+This recursively peels off the indices & axes, `select_to_indices` gets called
+when the first remaining index is a Selector, Interval, or a Function.
+"""
+@inline function select_to_indices(A, axes, inds)
+    d = ndims(A) - length(axes) + 1 # infer how many have been peeled off?
+    i = findindex(first(inds), axiskeys(A, d))
+    (i, Base.to_indices(A, Base.tail(axes), Base.tail(inds))...)
 end
 
-Base.to_indices(A::KeyedArray, tup::Tuple) = Base.to_indices(parent(A), selector_indices(A, tup))
-Base.to_indices(A::NdaKa, tup::Tuple) = Base.to_indices(parent(parent(A)), selector_indices(A, tup))
+@inline Base.to_indices(A, ax, inds::Tuple{Selector, Vararg}) = select_to_indices(A, ax, inds)
+
+# For the rest I don't own these types... which then creates ambiguities...
+@inline Base.to_indices(A::Union{KeyedArray,NdaKa}, ax, inds::Tuple{IntervalSets.Domain, Vararg}) =
+    select_to_indices(A, ax, inds)
+@inline Base.to_indices(A::Union{KeyedArray,NdaKa}, ax, inds::Tuple{Function, Vararg}) =
+    select_to_indices(A, ax, inds)
+
+using Base: to_indices, tail, _maybetail, uncolon
+
+@inline Base.to_indices(A::Union{KeyedArray,NdaKa}, inds, I::Tuple{Colon, Vararg{Any}}) =
+    (uncolon(inds, I), to_indices(A, _maybetail(inds), tail(I))...)
+
 
 #=
 
@@ -124,7 +139,17 @@ W[row=Interval(1,25)]
 W[row=Near(23)]
 
 
+B = wrapdims(rand(10,3,2), animal='🐶':'🐷', letter=["a","b","c"], number=6:7)
+newaxis = [CartesianIndex{0}()]
+
+B[rand(10) .> 0.7, ==("b"), :, newaxis]
+
+B[==('🐶'), CartesianIndex(1,1), 1,1,1]
+
+
 =#
+
+#=
 
 Base.@propagate_inbounds function Base.getindex(a::NamedDimsArray, inds_or_keys::Vararg{Union{
     Integer, Function, Selector, IntervalSets.Domain
@@ -135,3 +160,4 @@ Base.@propagate_inbounds function Base.getindex(a::NamedDimsArray, inds_or_keys:
     L = NamedDims.remaining_dimnames_from_indexing(dimnames(a), inds)
     return NamedDimsArray{L}(data)
 end
+=#
