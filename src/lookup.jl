@@ -89,22 +89,26 @@ findindex(a::Union{AbstractArray, Base.Generator}, r::AbstractArray) =
 findindex(f::Function, r::AbstractArray) = findall(f, r)
 
 # Faster than Base.findfirst(==(i), 1:10) etc:
+# Should really be in Julia, for related steprange things see:
+# https://github.com/JuliaLang/julia/pull/30778
 
-findindex(i::Int, r::Base.OneTo{Int}) = 1 <= i <= r.stop ? eq.x : nothing
+findindex(i::Int, r::Base.OneTo{Int}) = 1 <= i <= r.stop ? i : nothing
 
 findindex(i::Int, r::AbstractUnitRange) = first(r) <= i <= last(r) ? 1+Int(i - first(r)) : nothing
 
-# Faster than Base.findall(==(i), 1:10) etc:
+# Faster than Base.findall(==(i), 1:10) etc,
+# but returning a range not an Array:
 
-function findindex(eq::Base.Fix2{Union{typeof(==),typeof(isequal)},Int}, r::Base.OneTo{Int})
+function findindex(eq::Base.Fix2{<:Union{typeof(==),typeof(isequal)},Int}, r::Base.OneTo{Int})
     1 <= eq.x <= r.stop ? (eq.x:eq.x) : (1:0)
 end
 
-function findindex(eq::Base.Fix2{Union{typeof(==),typeof(isequal)},Int}, r::AbstractUnitRange)
+function findindex(eq::Base.Fix2{<:Union{typeof(==),typeof(isequal)},Int}, r::AbstractUnitRange)
     val = 1 + Int(eq.x - first(r))
     first(r) <= eq.x <= last(r) ? (val:val) : (1:0)
 end
 
+# See also findrange.jl for findindex(<=(3), range) things.
 
 """
     inferdim(key, axiskeys::Tuple)
