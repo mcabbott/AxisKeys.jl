@@ -20,7 +20,7 @@ end
 KeyedArray(data::AbstractVector, tup::Tuple{AbstractVector}) =
     KeyedArray(data, Ref(first(tup)))
 KeyedArray(data::AbstractVector, arr::AbstractVector) =
-    KeyedArray(data, Ref(arr))
+    KeyedArray(data, tuple(arr))
 
 function construction_check(data::AbstractArray, keys::Tuple)
     length(keys) == ndims(data) || throw(ArgumentError(
@@ -28,13 +28,13 @@ function construction_check(data::AbstractArray, keys::Tuple)
     keys isa Tuple{Vararg{AbstractVector}} || throw(ArgumentError(
         "key vectors must all be AbstractVectors"))
     map(v -> axes(v,1), keys) == axes(data) || throw(ArgumentError(
-        "lengths of key vectors must match those of axes"))
+        "lengths of key vectors must match size of array (and their axes too)"))
 end
 
-function KeyedArray(A::KeyedArray, k2::Tuple)
-    k3 = unify_keys(axiskeys(A), k2)
-    KeyedArray(parent(A), k3)
-end
+KeyedArray(A::KeyedArray, k2::Tuple) =
+    KeyedArray(parent(A), unify_keys(axiskeys(A), k2))
+KeyedArray(A::KeyedVector, k2::Tuple{AbstractVector}) =
+    KeyedArray(parent(A), unify_keys(axiskeys(A), k2)) # avoids an ambiguity
 
 Base.size(x::KeyedArray) = size(parent(x))
 

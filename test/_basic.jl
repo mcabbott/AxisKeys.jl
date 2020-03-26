@@ -41,6 +41,9 @@ using Test, AxisKeys
     @test C(Base.Fix2(<=,'c')) == C[1:3]
     @test_skip axiskeys(C(Base.Fix2(<=,'c')),1) == 'a':'c' # ('a':'z')[1:3] isa StepRangeLen
 
+    @test axiskeys(KeyedArray(C, collect('a':'j'))) === ('a':'j',) # re-constructor
+    @test axiskeys(KeyedArray(R, ('a':'c', Base.OneTo(4)))) === ('a':'c', 10:10:40)
+
     D = wrapdims(rand(2,10,3) .+ (1:10)'./10, ["cat", "dog"], 0:10:90, nothing)
     @test D("cat") == D[1,:,:]
     @test_throws Exception D(10) # ambiguous
