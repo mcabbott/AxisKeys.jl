@@ -182,6 +182,17 @@ function Base.sortslices(A::KeyedArray; dims, by=vec, kw...)
     KeyedArray(keyless(A)[perms...], new_keys)
 end
 
+if VERSION < v"1.1" # defn copied Julia 1.4 Base abstractarraymath.jl:452
+    @inline function eachslice(A::AbstractArray; dims)
+        length(dims) == 1 || throw(ArgumentError("only single dimensions are supported"))
+        dim = first(dims)
+        dim <= ndims(A) || throw(DimensionMismatch("A doesn't have $dim dimensions"))
+        inds_before = ntuple(d->(:), dim-1)
+        inds_after = ntuple(d->(:), ndims(A)-dim)
+        return (view(A, inds_before..., i, inds_after...) for i in axes(A, dim))
+    end
+end
+
 @doc sort_doc
 function sortkeys(A::Union{KeyedArray, NdaKa}; dims=1:ndims(A), kw...)
     dims′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
