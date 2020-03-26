@@ -85,33 +85,6 @@ function check_names(A, names)
     names
 end
 
-_construc_doc = """
-    KeyedArray(A; i=2:3, j=["a", "b"])
-    NamedDimsArray(A; i=2:3, j=["a", "b"])
-
-These constructors make `KeyedArray(NamedDimsArray(A, names), keys)`
-or `NamedDimsArray(KeyedArray(A, keys), names)`, which should be equivalent.
-
-These perform less sanity checking than `wrapdims(A; kw...)`.
-"""
-@doc _construc_doc
-function KeyedArray(A::AbstractArray; kw...)
-    L = keys(values(kw))
-    length(L) == ndims(A) || throw(ArgumentError("number of names must match number of dimensions"))
-    R = values(values(kw))
-    map(x -> axes(x, 1), R) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
-    KeyedArray(NamedDimsArray(A, L), R)
-end
-
-@doc _construc_doc
-function NamedDims.NamedDimsArray(A::AbstractArray; kw...)
-    L = keys(values(kw))
-    length(L) == ndims(A) || throw(ArgumentError("number of names must match number of dimensions"))
-    R = values(values(kw))
-    map(x -> axes(x, 1), R) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
-    NamedDimsArray(KeyedArray(A, R), L)
-end
-
 #===== Conversions to & from NamedTuples =====#
 
 """
