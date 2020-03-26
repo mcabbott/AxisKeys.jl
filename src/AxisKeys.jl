@@ -15,6 +15,7 @@ include("selectors.jl")
 export Near, Index, Interval, Not
 
 include("functions.jl")
+export sortkeys
 
 include("push.jl")
 

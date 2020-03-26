@@ -45,20 +45,6 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
     @test axiskeys(mapslices(sum, M, dims=1)) === (Base.OneTo(1), 2:5)
     @test axiskeys(mapslices(v -> rand(10), M, dims=2)) === ('a':'c', Base.OneTo(10))
 
-    # sort
-    @test sort(V)(20) == V(20)
-
-    @test axiskeys(sort(M, dims=:c), :c) isa Base.OneTo
-    @test axiskeys(sort(M, dims=:c), :r) == 'a':'c'
-
-    @test sortslices(M, dims=:c) isa NamedDimsArray
-
-    A = wrapdims([1,0], vec=[:a, :b]) # https://github.com/JuliaArrays/AxisArrays.jl/issues/172
-    sort!(A)
-    @test A(:a) == 1
-    @test axiskeys(A, 1) == [:b, :a]
-    @test_throws Exception sort!(KeyedArray([1,0], 'a':'b'))
-
     # reshape
     @test reshape(M, 4,3) isa Array
     @test reshape(M, 2,:) isa Array
@@ -66,6 +52,36 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
         @test reshape(M, (4,3)) isa Array
         @test reshape(M, (2,:)) isa Array
     end
+
+end
+@testset "sort" begin
+
+    @test sort(V)(20) == V(20)
+
+    @test axiskeys(sort(M, dims=:c), :c) isa Base.OneTo
+    @test axiskeys(sort(M, dims=:c), :r) == 'a':'c'
+
+    # sortslices
+    @test sortslices(M, dims=:c) == sortslices(AxisKeys.keyless(M), dims=:c)
+    @test axiskeys(sortslices(M, dims=:r), :r) isa Vector # not a steprange, it got sorted
+
+    T = wrapdims(rand(Int8, 5,7,3), a=1:5, b=0:6.0, c='a':'c')
+    T′ = sortslices(T, dims=:b)
+    @test issorted(T′[a=1, c=1])
+    @test T′ == sortslices(AxisKeys.keyless(T), dims=:b, by=vec)
+
+    A = wrapdims([1,0], vec=[:a, :b]) # https://github.com/JuliaArrays/AxisArrays.jl/issues/172
+    sort!(A)
+    @test A(:a) == 1
+    @test axiskeys(A, 1) == [:b, :a]
+    @test_throws Exception sort!(KeyedArray([1,0], 'a':'b'))
+
+    # sortkeys
+    B = wrapdims(rand(Int8,3,7), 🚣=rand(Int8,3), 🏛=rand(Int8,7))
+    p = sortperm(B.🏛; rev=true)
+    B′ = sortkeys(B, dims=:🏛, rev=true)
+    @test B′ == B[:,p]
+    @test issorted(reverse(B′.🏛))
 
 end
 @testset "map & collect" begin

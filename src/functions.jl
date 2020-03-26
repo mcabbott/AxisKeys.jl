@@ -157,11 +157,41 @@ function Base.sort!(A::KeyedVector; kw...)
     A
 end
 
-function Base.sortslices(A::KeyedArray; dims, kw...)
+sort_doc = """
+    sortslices(A; dims)
+    sortkeys(A; dims=1:ndims(A))
+
+`Base.sortslices` sorts the corresponding keys too, along one dimension.
+Calls its own implementation, roughly `p = sortperm(eachslice(A))`,
+with default keyword `by=vec` to make this work on slices of any shape.
+
+`sortkeys(A)` instead sorts everything by the keys.
+Works along any number of dimensions, by detault all of them.
+"""
+
+@doc sort_doc
+function Base.sortslices(A::KeyedArray; dims, by=vec, kw...)
+    d = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    d isa Tuple{Int} && return sortslices(A; dims=first(d), kw...)
+    d isa Int || throw(ArgumentError("sortslices(::KeyedArray; dims) only works along one dimension"))
+    perms = ntuple(ndims(A)) do i
+        i!=d && return Colon()
+        sortperm(collect(eachslice(parent(A), dims=d)); by=by, kw...)
+    end
+    new_keys = map(getindex, axiskeys(A), perms)
+    KeyedArray(keyless(A)[perms...], new_keys)
+end
+
+@doc sort_doc
+function sortkeys(A::Union{KeyedArray, NdaKa}; dims=1:ndims(A), kw...)
     dims′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
-    data = sortslices(parent(A); dims=dims′, kw...)
-    # It would be nice to sort the keys to match, but there is no sortpermslices.
-    # https://github.com/davidavdav/NamedArrays.jl/issues/79 constructs something
+    perms = ntuple(ndims(A)) do d
+        d in dims′ || return Colon()
+        axiskeys(A,d) isa AbstractUnitRange && return Colon() # avoids OneTo(n) -> 1:n
+        sortperm(axiskeys(A,d); kw...)
+    end
+    new_keys = map(getindex, axiskeys(A), perms)
+    KeyedArray(keyless(A)[perms...], new_keys)
 end
 
 Base.filter(f, A::KeyedVector) = getindex(A, map(f, parent(A)))

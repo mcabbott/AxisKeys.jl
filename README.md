@@ -84,6 +84,9 @@ KeyedArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100)     # KeyedArray(Named
 NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(KeyedArray(...))
 ```
 
+Calling `AxisKeys.keyless(A)` removes the `KeyedArray` wrapper, if any, 
+and `NamedDims.unname(A)` similarly removes the names. These work in either order. 
+
 The function `wrapdims` does a bit more checking and fixing, but is not type-stable. 
 It will adjust the length of ranges of keys if it can, 
 and will fix indexing offsets if needed to match the array. 
@@ -118,6 +121,9 @@ Many functions should work, for example:
 
 * Reductions like `sum(A; dims=:channel)` can use dimension names. 
   Likewise `prod`, `mean` etc., and `dropdims`.
+
+* Sorting: `sortslices` permutes keys & data by the array, 
+  while `sortkeys` goes by the keys.
 
 * Some linear algebra functions like `*` and `\` will work. 
 
