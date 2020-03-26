@@ -130,7 +130,7 @@ for (T, S) in [ (:KeyedArray, :KeyedArray),
                 unify_one(keys_or_axes(A,d), keys_or_axes(B,d), keys_or_axes.(Cs,d)...)
             end
         end
-        KeyedArray(data, map(copy, new_keys))
+        KeyedArray(data, map(copy, new_keys)) # , copy(A.meta))
     end
 
 end
@@ -143,11 +143,11 @@ function Base.sort(A::KeyedArray; dims, kw...)
     data = sort(parent(A); dims=dims′, kw...)
     # sorts each (say) col independently, thus keys along them loses meaning.
     new_keys = ntuple(d -> d==dims′ ? OneTo(size(A,d)) : axiskeys(A,d), ndims(A))
-    KeyedArray(data, map(copy, new_keys))
+    KeyedArray(data, map(copy, new_keys)) # , copy(A.meta))
 end
 function Base.sort(A::KeyedVector; kw...)
     perm = sortperm(parent(A); kw...)
-    KeyedArray(parent(A)[perm], (axiskeys(A,1)[perm],))
+    KeyedArray(parent(A)[perm], (axiskeys(A,1)[perm],)) # , copy(A.meta))
 end
 
 function Base.sort!(A::KeyedVector; kw...)
@@ -171,15 +171,13 @@ Works along any number of dimensions, by detault all of them.
 
 @doc sort_doc
 function Base.sortslices(A::KeyedArray; dims, by=vec, kw...)
-    d = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
-    d isa Tuple{Int} && return sortslices(A; dims=first(d), kw...)
-    d isa Int || throw(ArgumentError("sortslices(::KeyedArray; dims) only works along one dimension"))
-    perms = ntuple(ndims(A)) do i
-        i!=d && return Colon()
-        sortperm(collect(eachslice(parent(A), dims=d)); by=by, kw...)
+    dim′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    perms = ntuple(ndims(A)) do d
+        d in dim′ || return Colon()
+        sortperm(collect(eachslice(parent(A), dims=dim′)); by=by, kw...)
     end
     new_keys = map(getindex, axiskeys(A), perms)
-    KeyedArray(keyless(A)[perms...], new_keys)
+    KeyedArray(keyless(A)[perms...], new_keys) # , copy(A.meta))
 end
 
 if VERSION < v"1.1" # defn copied Julia 1.4 Base abstractarraymath.jl:452
@@ -202,7 +200,7 @@ function sortkeys(A::Union{KeyedArray, NdaKa}; dims=1:ndims(A), kw...)
         sortperm(axiskeys(A,d); kw...)
     end
     new_keys = map(getindex, axiskeys(A), perms)
-    KeyedArray(keyless(A)[perms...], new_keys)
+    KeyedArray(keyless(A)[perms...], new_keys) # , copy(A.meta))
 end
 
 Base.filter(f, A::KeyedVector) = getindex(A, map(f, parent(A)))
