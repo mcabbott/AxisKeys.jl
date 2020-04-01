@@ -56,6 +56,14 @@ Base.eachindex(A::KeyedArray) = eachindex(parent(A))
 
 Base.keys(A::KeyedArray) = error("Base.keys(::KeyedArray) not defined, please open an issue if this happens unexpectedly.")
 
+Base.pointer(A::KeyedArray, i::Integer) = Base.pointer(parent(A), i)
+
+Base.unsafe_convert(::Type{Ptr{T}}, A::KeyedArray{T}) where {T} =
+    Base.unsafe_convert(Ptr{T}, parent(A))
+
+Base.strides(A::KeyedArray) = Base.strides(parent(A))
+Base.stride(A::KeyedArray, d::Integer) = Base.stride(parent(A), d)
+
 for (get_or_view, key_get, maybe_copy) in [
         (:getindex, :keys_getindex, :copy),
         (:view, :keys_view, :identity)
