@@ -49,7 +49,7 @@ There are also a numer of special selectors, which work like this:
 | one nearest     | `B[time = 3]`    | `B(time = Near(17.0))`  | vector  |
 | all in a range  | `B[2:5, :]`      | `B(Interval(14,25), :)` | matrix  |
 | all matching    | `B[3:end, Not(3)]` | `B(>(17), !=(33))`      | matrix  |
-| mixture         | `B[1, Key('β')]` | `B(Index[1], 'β')`      | scalar  |
+| mixture         | `B[1, Key(33)]`  | `B(Index[1], 33)`       | scalar  |
 | non-scalar      | `B[iter=[1, 3]]` | `B(iter=[31, 33])`      | matrix  |
 
 Here `Interval(13,18)` can also be written `13..18`, it's from [IntervalSets.jl](https://github.com/JuliaMath/IntervalSets.jl). 
@@ -61,12 +61,12 @@ i.e. it does not drop a dimension, even if there is exactly one match.
 
 By default lookup returns a view, while indexing returns a copy unless you add `@views`. 
 This means that you can write into the array with `B(time = <=(18)) .= 0`. 
-For scalar output, you cannot of course write `B(13.0, 'α') = 0` 
-as this parsed as a function definition, but you can write `B(13.0, 'α', :) .= 0`
+For scalar output, you cannot of course write `B(13.0, 33) = 0` 
+as this parsed as a function definition, but you can write `B(13.0, 33, :) .= 0`
 as a trailing colon makes a zero-dimensional view.
 
 The selectors `Index[i]` and `Key(k)` allow mixing of indexing & lookup, 
-and `setindex!` via `B[Key(13.0), Key('α')] = 0`. 
+and `setindex!` via `B[Key(13.0), Key(33)] = 0`. 
 Any selectors can now be used within indexing, for instance `B[time = >(17)]`,
 but they will not select dimension based on type, i.e. `A[Key(:left)]` is an error. 
 You may also write `Index[end]` but not `Index[end-1]` sadly.
