@@ -92,6 +92,25 @@ end
     @test_throws BoundsError V(Index[99])
 
 end
+@testset "reverse selectors" begin # https://github.com/mcabbott/AxisKeys.jl/pull/5
+
+    V = wrapdims(rand(Int8, 11), 0:0.1:1)
+
+    @test V[Key(0.1)] == V(0.1) == V[2]
+    @test V[==(0.1)] == V[2:2]
+    @test V[Interval(0.1, 0.3)] == V[2:4]
+
+    newaxis = [CartesianIndex{0}()]
+    @test axiskeys(V[newaxis, Key(0.1), newaxis]) === (Base.OneTo(1), Base.OneTo(1))
+
+    A = wrapdims(rand(1:99, 5,7,3), alp='a':'e', num=21:27, sym=[:x, :y, :z])
+
+    r5 = rand(5) .> 0.5
+    @test A[r5, ==(21), Key(:x)] == A[r5, 1:1, 1]
+    @test axiskeys(A[CartesianIndex(1,1), ==(:z), 1,1,1]) == ([:z],)
+    @test dimnames(A[:,newaxis,Interval(25,99),Key(:y)]) == (:alp, :_, :num)
+
+end
 @testset "names" begin
 
     # constructor
