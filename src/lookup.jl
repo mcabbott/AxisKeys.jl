@@ -89,8 +89,7 @@ findindex(a::Union{AbstractArray, Base.Generator}, r::AbstractArray) =
 findindex(f::Function, r::AbstractArray) = findall(f, r)
 
 # Faster than Base.findfirst(==(i), 1:10) etc:
-# Should really be in Julia, for related steprange things see:
-# https://github.com/JuliaLang/julia/pull/30778
+# Now also https://github.com/JuliaLang/julia/pull/35256
 
 findindex(i::Int, r::Base.OneTo{Int}) = 1 <= i <= r.stop ? i : nothing
 
