@@ -100,7 +100,7 @@ Call `unify_one()` to have an error instead.
 """
 who_wins(x,y,zs...) = who_wins(who_wins(x,y), zs...)
 
-who_wins(r::AbstractVector, s::AbstractVector) = r == s ? r : nothing
+who_wins(r::AbstractVector, s::AbstractVector) = r === s ? r : r == s ? r : nothing
 who_wins(vec::AbstractVector, ran::AbstractRange) = vec == ran ? ran : nothing
 who_wins(ran::AbstractRange, vec::AbstractVector) = vec == ran ? ran : nothing
 who_wins(r::AbstractRange, s::AbstractRange) = r == s ? r : nothing
