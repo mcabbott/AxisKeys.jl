@@ -35,10 +35,10 @@ end
 tuple_flatten(x::Tuple, ys::Tuple...) = (x..., tuple_flatten(ys...)...)
 tuple_flatten() = ()
 
-function Base.mapreduce(f, op, A::KeyedArray; dims=:) # sum, prod, etc
+function Base.mapreduce(f, op, A::KeyedArray; dims=:, kwargs...) # sum, prod, etc
     dims === Colon() && return mapreduce(f, op, parent(A))
     numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
-    data = mapreduce(f, op, parent(A); dims=numerical_dims)
+    data = mapreduce(f, op, parent(A); dims=numerical_dims, kwargs...)
     new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
     return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
 end
