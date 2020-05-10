@@ -29,4 +29,6 @@ include("tables.jl") # Tables.jl
 
 include("stack.jl") # LazyStack.jl
 
+include("fft.jl") # AbstractFFTs.jl
+
 end
