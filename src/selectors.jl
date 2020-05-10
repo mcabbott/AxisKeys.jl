@@ -41,7 +41,7 @@ Base.show(io::IO, s::Near) = print(io, "Near(",s.val,")")
 Base.show(io::IO, ::MIME"text/plain", s::Near{T}) where {T} =
     print(io, "Near(",s.val,") ::Selector{",T,"}")
 
-findindex(sel::Near, range::AbstractArray) = argmin(map(x -> abs2(x-sel.val), range))
+findindex(sel::Near, range::AbstractArray) = argmin(map(x -> abs(x-sel.val), range))
 
 _index_key_doc = """
     Index[i]

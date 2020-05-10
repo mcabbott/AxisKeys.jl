@@ -65,6 +65,10 @@ end
     @test D(w9) == D[week=9]
     # But steps of Year(1) don't work, https://github.com/JuliaLang/julia/issues/35203
 
+    @test D(==(Date(2020, 1, 8))) == D[:, 2:2]
+    @test D(Near(Date(2020, 1, 10))) == D(Date(2020, 1, 8)) == D[:, 2]
+    @test D(Interval(Date(2020, 1, 8), Date(2020, 1, 22))) == D[:, 2:4]
+
 end
 @testset "inverted" begin
 

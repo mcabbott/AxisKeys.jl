@@ -1,7 +1,7 @@
 name = "AxisKeys"
 uuid = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 license = "MIT"
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
@@ -15,7 +15,7 @@ Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [compat]
 BenchmarkTools = "0.5"
-IntervalSets = "0.3, 0.4"
+IntervalSets = "0.3, 0.4, 0.5"
 InvertedIndices = "1.0"
 LazyStack = "0.0.7, 0.0.8"
 NamedDims = "0.2.21"
