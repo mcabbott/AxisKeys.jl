@@ -1,7 +1,7 @@
 using Test, AxisKeys
-using OffsetArrays, UniqueVectors, Tables, LazyStack, Dates, InvertedIndices
 
 @testset "offset" begin
+    using OffsetArrays
 
     o = OffsetArray(rand(1:99, 5), -2:2)
     w = wrapdims(o, i='a':'e')
@@ -14,6 +14,7 @@ using OffsetArrays, UniqueVectors, Tables, LazyStack, Dates, InvertedIndices
 
 end
 @testset "unique" begin
+    using UniqueVectors
 
     u = wrapdims(rand(Int8,5,1), UniqueVector, [:a, :b, :c, :d, :e], nothing)
     @test axiskeys(u,1) isa UniqueVector
@@ -26,6 +27,7 @@ end
 
 end
 @testset "tables" begin
+    using Tables
 
     R = wrapdims(rand(2,3), 11:12, 21:23)
     N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
@@ -37,6 +39,7 @@ end
 
 end
 @testset "stack" begin
+    using LazyStack
 
     rin = [wrapdims(1:3, a='a':'c') for i=1:4]
 
@@ -58,6 +61,7 @@ end
 
 end
 @testset "dates" begin
+    using Dates
 
     D = wrapdims(rand(2,53), row = [:one, :two], week = Date(2020):Week(1):Date(2021))
     w9 = axiskeys(D,:week)[9]
@@ -71,6 +75,7 @@ end
 
 end
 @testset "inverted" begin
+    using InvertedIndices
 
     K = wrapdims(rand(4,5))
     @test K[:, Not(4)] == K[:, vcat(1:3, 5)] == K(:, Base.Fix2(!=,4))
@@ -79,5 +84,51 @@ end
     N = wrapdims(rand(Int8, 2,3,4), a=[:one, :two], b='α':'γ', c=31:34)
     @test N[b=Not(2)] == N[:,[1,3],:] == N(b=Base.Fix2(!=,'β')) == N(:,['α','γ'],:)
     @test N[c=Not(2,4)] == N(c=Index[Not(2,4)])
+
+end
+@testset "fourier" begin
+    using FFTW
+
+    times = 0.1:0.1:10
+    data = rand(100) ./ 10; data[1:5:end] .= 1;
+    A = KeyedArray(data, times)
+    Atil = fft(A)
+    @test axiskeys(Atil,1)[end] == -0.1
+
+    Ashift = fftshift(Atil)
+    @test axiskeys(Ashift,1)[end] == +4.9
+
+    Ar = rfft(A) # different size, different freqencies
+    @test axiskeys(Ar,1)[end] == 5.0
+
+    A2 = ifft(ifftshift(Ashift))
+    A ≈ A2
+    @test all(mod.(axiskeys(A,1) .- axiskeys(A2,1),10) .≈ 0.1) # that's OK I think?
+
+    data2 = randn(32,2);
+    B = wrapdims(data2, time=100:10:410.0, col=[:a, :b])
+    @test_skip Btil = fftshift(fft(B, :time), :time) # result does not have names
+    Btil = fftshift(fft(B, :time), 1)
+    @test parent(Btil) ≈ fftshift(fft(data2,1),1)
+
+end
+@testset "unitful fourier" begin
+    using FFTW
+    using Unitful: s
+
+    times = 0.1s:0.1s:10s
+    A = wrapdims(rand(100), t=times)
+
+    ifft(fft(A))
+    fft(ifft(A))
+    irfft(rfft(A), 100)
+
+    abs.(fft(A)) # keys remain Frequencies thanks to copy method
+
+    fftshift(fft(A))
+    ifftshift(A) # keys become a Vector here, unavoidable I think
+
+    @test axiskeys(sortkeys(fft(A)),1) ≈ axiskeys(fftshift(fft(A)),1)
+    @test_broken sortkeys(fft(A)) ≈ fftshift(fft(A)) # isapprox should be used for keys
 
 end

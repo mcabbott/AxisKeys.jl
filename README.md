@@ -12,7 +12,7 @@ operations on arrays, including broadcasting, `map`, comprehensions, `sum` etc.
 It works closely with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), another wrapper 
 which attaches names to dimensions. These names are a tuple of symbols, like those of 
 a `NamedTuple`. They can be used for specifying which dimensions to sum over, etc.
-The function `wrapdims` constructs a nested pair of these wrappers, for example: 
+A nested pair of these wrappers can be made as follows:
 
 ```julia
 using AxisKeys
@@ -27,7 +27,7 @@ A = KeyedArray(data; channel=[:left, :right], time=range(13, step=2.5, length=10
 ### Selections
 
 Indexing still works directly on the underlying array, 
-and keyword indexing works exactly as for a `NamedDimsArray`.
+and keyword indexing (of a nested pair) works exactly as for a `NamedDimsArray`.
 But in addition, it is possible to pick out elements based on the keys,
 which for clarity we will call lookup. This is written with round brackets:
 
@@ -139,6 +139,10 @@ while `A.keys isa Tuple` for matrices & higher. But `axiskeys(A)` always returns
 
 * Named tuples can be converted to and from keyed vectors,
   with `collect(keys(nt)) == Symbol.(axiskeys(V),1)`
+
+* [FFTW](https://github.com/JuliaMath/FFTW.jl)`.fft` transforms the keys; 
+  if these are times such as [Unitful](https://github.com/PainterQubits/Unitful.jl)`.s` 
+  then the results are fequency labels.
 
 * [LazyStack](https://github.com/mcabbott/LazyStack.jl)`.stack` understands names and keys.
   Stacks of named tuples like `stack((a=i, b=i^2) for i=1:5)` create a matrix with `[:a, :b]`.
