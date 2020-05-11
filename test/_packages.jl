@@ -1,7 +1,7 @@
 using Test, AxisKeys
-using OffsetArrays, UniqueVectors, Tables, LazyStack, Dates, InvertedIndices, FFTW
 
 @testset "offset" begin
+    using OffsetArrays
 
     o = OffsetArray(rand(1:99, 5), -2:2)
     w = wrapdims(o, i='a':'e')
@@ -14,6 +14,7 @@ using OffsetArrays, UniqueVectors, Tables, LazyStack, Dates, InvertedIndices, FF
 
 end
 @testset "unique" begin
+    using UniqueVectors
 
     u = wrapdims(rand(Int8,5,1), UniqueVector, [:a, :b, :c, :d, :e], nothing)
     @test axiskeys(u,1) isa UniqueVector
@@ -26,6 +27,7 @@ end
 
 end
 @testset "tables" begin
+    using Tables
 
     R = wrapdims(rand(2,3), 11:12, 21:23)
     N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
@@ -37,6 +39,7 @@ end
 
 end
 @testset "stack" begin
+    using LazyStack
 
     rin = [wrapdims(1:3, a='a':'c') for i=1:4]
 
@@ -58,6 +61,7 @@ end
 
 end
 @testset "dates" begin
+    using Dates
 
     D = wrapdims(rand(2,53), row = [:one, :two], week = Date(2020):Week(1):Date(2021))
     w9 = axiskeys(D,:week)[9]
@@ -71,6 +75,7 @@ end
 
 end
 @testset "inverted" begin
+    using InvertedIndices
 
     K = wrapdims(rand(4,5))
     @test K[:, Not(4)] == K[:, vcat(1:3, 5)] == K(:, Base.Fix2(!=,4))
@@ -81,7 +86,8 @@ end
     @test N[c=Not(2,4)] == N(c=Index[Not(2,4)])
 
 end
-@testset "FFT" begin
+@testset "fourier" begin
+    using FFTW
 
     times = 0.1:0.1:10
     data = rand(100) ./ 10; data[1:5:end] .= 1;
@@ -106,71 +112,23 @@ end
     @test parent(Btil) ≈ fftshift(fft(data2,1),1)
 
 end
+@testset "unitful fourier" begin
+    using FFTW
+    using Unitful: s
 
+    times = 0.1s:0.1s:10s
+    A = wrapdims(rand(100), t=times)
 
+    ifft(fft(A))
+    fft(ifft(A))
+    irfft(rfft(A), 100)
 
+    abs.(fft(A)) # keys remain Frequencies thanks to copy method
 
+    fftshift(fft(A))
+    ifftshift(A) # keys become a Vector here, unavoidable I think
 
+    @test axiskeys(sortkeys(fft(A)),1) ≈ axiskeys(fftshift(fft(A)),1)
+    @test_broken sortkeys(fft(A)) ≈ fftshift(fft(A)) # isapprox should be used for keys
 
-
-#=
-using FFTW, Unitful, Plots, UnitfulRecipes
-using Unitful: s
-
-times = 0.1s:0.1s:10s
-data = rand(100) ./ 10; data[1:5:end] .= 1;
-# data = zeros(100) .* 1mV; data[1:5:end] .= 1mV; # MethodError: no method matching plan_fft(::Array{Quantity{Float64,𝐋²*𝐌*𝐈⁻¹*𝐓⁻³ ...
-
-# plot(ustrip(times), data)
-plot(times, data)
-
-fft(data)
-
-freqs = fftfreq(length(times), 1/step(times)) # better!
-
-fftfreq(freqs)
-
-# plot(ustrip(freqs) , abs2.(fft(data)))
-plot(freqs , abs2.(fft(data))) # DimensionError: Inf and 0.0 s are not dimensionally compatible.
-
-using AxisKeys, AbstractFFTs
-using AxisKeys: keyless
-
-
-kd = KeyedArray(data, times)
-
-abs.(fft(kd)) # broadcasting is collecting the keys to a vector here?
-
-fftshift(ans)
-
-data2 = rand(100,2) ./ 10; data2[1:5:end, 1] .= 1; data2[3:7:end, 2] .= 1;
-kd2 = KeyedArray(data2, (times, [:a, :b]))
-
-fftshift(fft(kd2, 1),1)
-
-
-
-
-fr = fftfreq(10, 1)
-dump(fr)
-fftshift(fr)
-typeof(ans)
-
-fr = fftfreq(10, inv(1s))
-fftshift(fr) # is a steprange, good
-
-
-
-
-using Plots, Unitful
-using Unitful: s
-
-times = 0.1s:0.1s:10s
-data = rand(100) ./ 10; data[1:5:end] .= 1;
-
-plot(ustrip(times), data)
-plot(times, data) # DimensionError: Inf and 0.1 s are not dimensionally compatible.
-# isless(::Quantity{Float64,NoDims,Unitful.FreeUnits{(),NoDims,nothing}}, ::Quantity{Float64,𝐓,Unitful.FreeUnits{(s,),𝐓,nothing}}) at /Users/me/.julia/packages/Unitful/PZjMS/src/quantities.jl:231
-
-=#
-
+end
