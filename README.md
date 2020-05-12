@@ -143,7 +143,7 @@ while `A.keys isa Tuple` for matrices & higher. But `axiskeys(A)` always returns
 
 * [FFTW](https://github.com/JuliaMath/FFTW.jl)`.fft` transforms the keys; 
   if these are times such as [Unitful](https://github.com/PainterQubits/Unitful.jl)`.s` 
-  then the results are fequency labels.
+  then the results are fequency labels. ([PR#15](https://github.com/mcabbott/AxisKeys.jl/pull/15).)
 
 * [LazyStack](https://github.com/mcabbott/LazyStack.jl)`.stack` understands names and keys.
   Stacks of named tuples like `stack((a=i, b=i^2) for i=1:5)` create a matrix with `[:a, :b]`.
@@ -239,9 +239,9 @@ plus some special ones like `X, Y` of the same abstract type (which must be in s
 Named lookup then looks like `DA[X <| At(13.0)]`, roughly like `A(x=13.0)` here.
 
 * [AxisIndices](https://github.com/Tokazama/AxisIndices.jl) differs mainly by storing 
-the keys with the axes in its own `Axis` type, I think. This is returned by `Base.axes(A)` 
-(instead of `Base.OneTo` etc.) Does not handle dimension names. 
-(Grew out of the same [discussion thread](https://github.com/JuliaCollections/AxisArraysFuture/issues/1)!)
+the keys with the axes in its own `Axis` type. This is returned by `Base.axes(A)` 
+(instead of `Base.OneTo` etc.) like [PR#6](https://github.com/mcabbott/AxisKeys.jl/pull/6).
+Does not handle dimension names. (Grew out of the same [discussion thread](https://github.com/JuliaCollections/AxisArraysFuture/issues/1)!)
 
 * [IndexedDims](https://github.com/invenia/IndexedDims.jl) [in progress?] 
 like this package adds keys on top of the names from NamedDims.
