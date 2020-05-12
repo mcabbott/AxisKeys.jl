@@ -49,7 +49,7 @@ There are also a numer of special selectors, which work like this:
 |-----------------|------------------|-------------------------|---------|
 | one nearest     | `B[time = 3]`    | `B(time = Near(17.0))`  | vector  |
 | all in a range  | `B[2:5, :]`      | `B(Interval(14,25), :)` | matrix  |
-| all matching    | `B[3:end, Not(3)]` | `B(>(17), !=(33))`      | matrix  |
+| all matching    | `B[3:end, Not(3)]` | `B(>(17), !=(33))`    | matrix  |
 | mixture         | `B[1, Key(33)]`  | `B(Index[1], 33)`       | scalar  |
 | non-scalar      | `B[iter=[1, 3]]` | `B(iter=[31, 33])`      | matrix  |
 
@@ -60,17 +60,16 @@ You may give just one `::Base.Fix2` function
 An interval or a function always selects via `findall`, 
 i.e. it does not drop a dimension, even if there is exactly one match. 
 
-By default lookup returns a view, while indexing returns a copy unless you add `@views`. 
-This means that you can write into the array with `B(time = <=(18)) .= 0`. 
-For scalar output, you cannot of course write `B(13.0, 33) = 0` 
-as this parsed as a function definition, but you can write `B(13.0, 33, :) .= 0`
-as a trailing colon makes a zero-dimensional view.
+While this table shows lookup selectors inside `B(...)`, they can in fact all be 
+used inside `B[...]`, not just `Key(k)` as shown. They still refer to keys not indices!
+(This will not select dimension based on type, i.e. `A[Key(:left)]` is an error.)
+You may also write `Index[end]` but not `Index[end-1]`.
 
-The selectors `Index[i]` and `Key(k)` allow mixing of indexing & lookup, 
-and `setindex!` via `B[Key(13.0), Key(33)] = 0`. 
-Any selectors can now be used within indexing, for instance `B[time = >(17)]`,
-but they will not select dimension based on type, i.e. `A[Key(:left)]` is an error. 
-You may also write `Index[end]` but not `Index[end-1]` sadly.
+By default lookup returns a view, while indexing returns a copy unless you add `@views`. 
+This means that you can write into the array with `B(time = <=(18)) .= 0`.
+For scalar output, you cannot of course write `B(13.0, 33) = 0` 
+as this parsed as a function definition, but you can write `B[Key(13.0), Key(33)] = 0`,
+or else `B(13.0, 33, :) .= 0` as a trailing colon makes a zero-dimensional view.
 
 ### Construction
 
@@ -78,8 +77,8 @@ You may also write `Index[end]` but not `Index[end-1]` sadly.
 KeyedArray(rand(Int8, 2,10), ([:a, :b], 10:10:100)) # AbstractArray, Tuple{AbstractVector, ...}
 ```
 
-A nested pair with names can be constructed with keywords for names,
-and (apart from a few bugs) everything should work the same way in either order:
+A nested pair of wrappers can be constructed with keywords for names,
+and everything should work the same way in either order:
 
 ```julia
 KeyedArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100)     # KeyedArray(NamedDimsArray(...))
@@ -87,7 +86,7 @@ NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(K
 ```
 
 Calling `AxisKeys.keyless(A)` removes the `KeyedArray` wrapper, if any, 
-and `NamedDims.unname(A)` similarly removes the names. These work in either order. 
+and `NamedDims.unname(A)` similarly removes the names (regardless of which is outermost).
 
 The function `wrapdims` does a bit more checking and fixing, but is not type-stable. 
 It will adjust the length of ranges of keys if it can, 
@@ -102,16 +101,16 @@ wrapdims(OffsetArray(rand(Int8, 10),-1), iter=10:10:100)
 axiskeys(ans,1) # 10:10:100 with indices 0:9
 ```
 
-Finally, it will also convert `AxisArray`s, `NamedArray`s, as well as `NamedTuple`s. 
+Finally, `wrapdims` will also convert `AxisArray`s, `NamedArray`s, as well as `NamedTuple`s. 
 
 ### Functions
 
-As usual `axes(A)` returns (a tuple of vectors of) indices, 
-and `axiskeys(A)` returns (a tuple of vectors of) keys.
+The function `axes(A)` returns (a tuple of vectors of) indices as usual, 
+and `axiskeys(A)` similarly returns (a tuple of vectors of) keys.
 If the array has names, then `dimnames(A)` returns them.
 These functions work like `size(A, d) = size(A, name)` to get just one.
 
-Many functions should work, for example:
+The following things should work:
 
 * Broadcasting `log.(A)` and `map(log, A)`, as well as comprehensions 
   `[log(x) for x in A]` should all work. 
