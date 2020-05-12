@@ -71,9 +71,9 @@ end
     @test V(Index[1]) == V[1]
     @test V(Index[2:3]) == V[2:3]
     @test V(Index[end]) == V[end]
-    # if VERSION >= v"1.4"
-    #     @test V(Index[begin]) == V[1] # syntax error on 1.0
-    # end
+    @static if VERSION >= v"1.4"
+        @test V(Index[begin]) == V[1] # syntax error on 1.0
+    end
 
     V2 = wrapdims(rand(Int8, 5), [1,2,3,2,1])
     @test V2(==(2)) == V2[[2,4]]
@@ -90,6 +90,11 @@ end
     @test axiskeys(R(Base.Fix2(<=,23)), 2) isa AbstractRange
 
     @test_throws BoundsError V(Index[99])
+
+    # faster Near using searchsortedfirst
+    V3 = wrapdims(parent(V), collect(axiskeys(V,1)))
+    xs = 0.3:0.001:0.5
+    @test [V(Near(x)) for x in xs] == [V3(Near(x)) for x in xs]
 
 end
 @testset "reverse selectors" begin # https://github.com/mcabbott/AxisKeys.jl/pull/5
