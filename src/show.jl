@@ -19,7 +19,7 @@ function _summary(io, x)
 end
 
 shorttype(r::Vector{T}) where {T} = "Vector{$T}"
-shorttype(r::OneTo) where {T} = "OneTo{Int}"
+shorttype(r::OneTo) = "OneTo{Int}"
 shorttype(r::SubArray) = "view(::" * shorttype(parent(r)) * ",...)"
 shorttype(r::OffsetArray) = "OffsetArray(::" * shorttype(parent(r)) * ",...)"
 function shorttype(r)
@@ -83,14 +83,22 @@ function keyed_print_matrix(io::IO, A, reduce_size::Bool=false)
     wn = w÷3 # integers take 3 columns each when printed, floats more
     ind2 = size(A,2) < wn ? Colon() : vcat(1:(wn÷2), (wn÷2)+1:size(A,2))
 
-    fakearray = hcat(
-        ShowWith.(no_offset(axiskeys(A,1))[ind1]; color=colour(A,1)),
-        getindex(no_offset(unname(keyless(A))), ind1, ind2)
-        )
-    if ndims(A) == 2
+    fakearray = if ndims(A) == 1
+        hcat(
+            ShowWith.(no_offset(axiskeys(A,1))[ind1]; color=colour(A,1)),
+            # showvec(A, 1, ind1),
+            getindex(no_offset(unname(keyless(A))), ind1) # avoid trailing index
+            )
+    else
+        fakearray = hcat(
+            ShowWith.(no_offset(axiskeys(A,1))[ind1]; color=colour(A,1)),
+            # showvec(A, 1, ind1),
+            getindex(no_offset(unname(keyless(A))), ind1, ind2)
+            )
         toprow = vcat(
             ShowWith(0, hide=true),
-            ShowWith.(no_offset(axiskeys(A,2))[ind2]; color=colour(A,2))
+            ShowWith.(no_offset(axiskeys(A,2))[ind2]; color=colour(A,2)),
+            # showvec(A, 2, ind2),
             )
         fakearray = vcat(permutedims(toprow), fakearray)
     end
@@ -99,6 +107,16 @@ end
 
 no_offset(x) = x
 no_offset(x::OffsetArray) = parent(x)
+
+# function showvec(A, d, ind) # doesn't work so well, spacing, string...
+#     # ShowWith.(no_offset(axiskeys(A,1))[ind1]; color=colour(A,1))
+#     keys = no_offset(axiskeys(A,d))[ind]
+#     if hasnames(A)
+#         k1 = string(dimnames(A,d), "=", keys[1])
+#         keys = vcat(k1, keys[2:end])
+#     end
+#     ShowWith.(keys; color=colour(A,d))
+# end
 
 # Figure out how to add colour without messing up spacing / style:
 
@@ -110,8 +128,9 @@ struct ShowWith{T,NT} <: AbstractString
         new{typeof(val),typeof(kw.data)}(val, hide, kw.data)
 end
 function Base.show(io::IO, x::ShowWith; kw...)
+    # ioc = IOContext(io, :compact => true) # using this really breaks spacing!
+    # xval = x.val isa Number ? round(x.val, sigdigits=6) : x.val # error with Unitful, wtf?
     s0 = sprint(show, x.val; context=io, kw...)
-    s = string('(', s0, ')')
     s = if endswith(s0, ')')
         string(' ', s0, ' ') # skip the brackets on Date(2016,08,01), but same spacing
     else
