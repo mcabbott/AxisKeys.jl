@@ -7,11 +7,12 @@
 This package defines a thin wrapper which, alongside any array, stores a vector of "keys" 
 for each dimension. This may be useful to store perhaps actual times of measurements, 
 or some strings labeling columns, etc. These will be propagated through many 
-operations on arrays, including broadcasting, `map`, comprehensions, `sum` etc.
+operations on arrays (including broadcasting, `map`, comprehensions, `sum` etc.)
+and altered by a few (sorting, `fft`, `push!`).
 
 It works closely with [NamedDims.jl](https://github.com/invenia/NamedDims.jl), another wrapper 
 which attaches names to dimensions. These names are a tuple of symbols, like those of 
-a `NamedTuple`. They can be used for specifying which dimensions to sum over, etc.
+a `NamedTuple`, and can be used for specifying which dimensions to sum over, etc.
 A nested pair of these wrappers can be made as follows:
 
 ```julia
@@ -29,7 +30,7 @@ A = KeyedArray(data; channel=[:left, :right], time=range(13, step=2.5, length=10
 Indexing still works directly on the underlying array, 
 and keyword indexing (of a nested pair) works exactly as for a `NamedDimsArray`.
 But in addition, it is possible to pick out elements based on the keys,
-which for clarity we will call lookup. This is written with round brackets:
+which for clarity I will call lookup. This is written with round brackets:
 
 | Dimension `d` | Indexing: `i ∈ axes(A,d)` | Lookup: `key ∈ axiskeys(A,d)` |
 |--------------------|---------------------|---------------------|
@@ -184,8 +185,10 @@ When a key vector is a Julia `AbstractRange`, then this package provides some fa
 overloads for things like `findall(<=(42), 10:10:100)`. 
 
 * There is also no automatic alignment by keys, like time. 
+  But this could be done elsewhere?
 
-But this can be done elsewhere...
+* There is no interaction with interpolation, although this seems a natural fit.
+  Why doesn't `A(:left, 13.7, :)` interpolate along continuous dimensions?
 
 ### Elsewhere
 
@@ -222,25 +225,30 @@ then `O[-1:0]` works.
 
 Other new packages (post-1.0):
 
-* [DimensionalData](https://github.com/rafaqz/DimensionalData.jl) is another replacement 
-for AxisArrays. It again uses types like `Dim{:name}` to store both name & keys, 
-plus some special ones like `X, Y` of the same abstract type. 
-Named lookup then looks like `DA[X <| At(13.0)]`, roughly like `A(x=13.0)` here.
+* [Dictionaries](https://github.com/andyferris/Dictionaries.jl) does very fast lookup only
+(in this terminology), with no indexing. Not `<: AbstractArray`, not a wrapped around an Array.
+And presently only one-dimensional. 
 
 * [NamedPlus](https://github.com/mcabbott/NamedPlus.jl) is some experiments using NamedDims. 
 Function `align` permutes dimensions automatically, 
 and macro `@named` can introduce this into broadcasting expressions. 
 
-* [IndexedDims](https://github.com/invenia/IndexedDims.jl) like this package adds keys 
-on top of the names from NamedDims.
+* [DimensionalData](https://github.com/rafaqz/DimensionalData.jl) is another replacement 
+for AxisArrays. It again uses types like `Dim{:name}` to store both name & keys, 
+plus some special ones like `X, Y` of the same abstract type (which must be in scope).
+Named lookup then looks like `DA[X <| At(13.0)]`, roughly like `A(x=13.0)` here.
+
+* [AxisIndices](https://github.com/Tokazama/AxisIndices.jl) differs mainly by storing 
+the keys with the axes in its own `Axis` type, I think. This is returned by `Base.axes(A)` 
+(instead of `Base.OneTo` etc.) Does not handle dimension names. 
+(Grew out of the same [discussion thread](https://github.com/JuliaCollections/AxisArraysFuture/issues/1)!)
+
+* [IndexedDims](https://github.com/invenia/IndexedDims.jl) [in progress?] 
+like this package adds keys on top of the names from NamedDims.
 These key vectors must always be [AcceleratedArrays](https://github.com/andyferris/AcceleratedArrays.jl). 
 Like AxisArrays, it tries to guess whether to do indexing or lookup based on type. 
 
-* [Dictionaries](https://github.com/andyferris/Dictionaries.jl) does very fast lookup only
-(in our terminology) no indexing. Not `<: AbstractArray`, not a wrapped around an Array.
-And presently only one-dimensional. 
-
-And see [docs/speed.jl](docs/speed.jl) for some checks on this package, 
+See also [docs/speed.jl](docs/speed.jl) for some checks on this package, 
 and comparisons to other ones.
 And see [docs/repl.jl](docs/repl.jl) for some usage examples, showing pretty printing. 
 For discussion, see [AxisArraysFuture](https://github.com/JuliaCollections/AxisArraysFuture/issues/1),
