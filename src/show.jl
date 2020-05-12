@@ -112,6 +112,11 @@ end
 function Base.show(io::IO, x::ShowWith; kw...)
     s0 = sprint(show, x.val; context=io, kw...)
     s = string('(', s0, ')')
+    s = if endswith(s0, ')')
+        string(' ', s0, ' ') # skip the brackets on Date(2016,08,01), but same spacing
+    else
+        string('(', s0, ')')
+    end
     if x.hide
         printstyled(io, " "^length(s); x.nt...)
     else
