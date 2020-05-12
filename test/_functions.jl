@@ -167,7 +167,18 @@ end
     @test (V' * V) isa Int
     @test (V' * VN) isa Int
     @test (V' * rand(Int, 10)) isa Int
-    @test (rand(Int, 10)' * V) isa Int
+    if VERSION < v"1.5-"
+        @test (rand(Int, 10)' * V) isa Int
+    else
+        @test_broken (rand(Int, 10)' * V) isa Int
+    end
+    #=
+    MethodError: *(::LinearAlgebra.Adjoint{Int64,Array{Int64,1}}, ::NamedDimsArray{(:v,),Int64,1,KeyedArray{Int64,1,Array{Int64,1},Base.RefValue{StepRange{Int64,Int64}}}}) is ambiguous. Candidates:
+    *(u::LinearAlgebra.Adjoint{T,var"#s814"} where var"#s814"<:(AbstractArray{T,1} where T), v::AbstractArray{T,1}) where T<:Number in LinearAlgebra at /Applications/Julia-1.5.app/Contents/Resources/julia/share/julia/stdlib/v1.5/LinearAlgebra/src/adjtrans.jl:267
+    *(a::LinearAlgebra.Adjoint{var"#s16",var"#s15"} where var"#s15"<:(AbstractArray{T,1} where T) where var"#s16", b::NamedDimsArray{L,T,1,var"#s17"} where var"#s17"<:AbstractArray{T,1}) where {L, T} in NamedDims at /Users/me/.julia/packages/NamedDims/p7e4G/src/functions_math.jl:48
+  Possible fix, define
+    *(::LinearAlgebra.Adjoint{T,var"#s15"} where var"#s15"<:(AbstractArray{T,1} where T), ::NamedDimsArray{L,T,1,var"#s17"} where var"#s17"<:AbstractArray{T,1}) where {L, T<:Number}
+    =#
     @test axiskeys(V * V') === (10:10:100, 10:10:100)
     @test dimnames(V * V') === (:v, :v)
     @test axiskeys(V * VN') === (10:10:100, 10:10:100)
