@@ -4,7 +4,7 @@ using Test, AxisKeys, BenchmarkTools
 
     A = wrapdims(rand(2,3), 11.0:12.0, [:a, :b, :c])
 
-    if VERSION >= v"1.1"
+    if VERSION >= v"1.2"
         # getindex
         @test 0 == @ballocated $A[1, 1]
         @test 272 >= @ballocated $A[1, :]
@@ -21,7 +21,7 @@ using Test, AxisKeys, BenchmarkTools
     @test al_A == @ballocated $A(11.0)
     @test al_A == @ballocated $A(11)
     @test 0 == @ballocated AxisKeys.inferdim(11, $(axiskeys(A)))
-    if VERSION >= v"1.1"
+    if VERSION >= v"1.2"
         @test (@inferred A(11); true)
     end
     @test al_A/2 >= @ballocated $A[1,:] .= 0 # dotview skips view of key vector
@@ -29,7 +29,7 @@ using Test, AxisKeys, BenchmarkTools
     # with names
     N = wrapdims(rand(2,3), row=11.0:12.0, col=[:a, :b, :c])
 
-    if VERSION >= v"1.1"
+    if VERSION >= v"1.2"
         @test 0 == @ballocated $N[1, 1]
         @test 0 == @ballocated $N[col=1, row=1]
         @test 288 >= @ballocated $N[row=1]
