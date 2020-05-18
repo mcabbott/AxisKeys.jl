@@ -23,3 +23,9 @@ end
     include("_findrange.jl")
 
 end
+@testset "ambiguities" begin
+
+    @test isempty(detect_unbound_args(AxisKeys))
+    @test_broken isempty(detect_ambiguities(AxisKeys, Base))
+
+end

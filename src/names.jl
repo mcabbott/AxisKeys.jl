@@ -2,8 +2,8 @@ using NamedDims
 
 # Abbreviations for things which have both names & keys:
 
-NdaKa{L,T,N} = NamedDimsArray{L,T,N,<:KeyedArray}
-KaNda{L,T,N} = KeyedArray{T,N,<:NamedDimsArray{L}}
+NdaKa{L,T,N} = NamedDimsArray{L,T,N,<:KeyedArray{T,N}}
+KaNda{L,T,N} = KeyedArray{T,N,<:NamedDimsArray{L,T,N}}
 NdaKaVoM{L,T,N} = NamedDimsArray{L,T,N,<:KeyedVecOrMat}
 
 # NamedDims now uses dimnames, which behaves like size(A,d), axes(A,d) etc.
