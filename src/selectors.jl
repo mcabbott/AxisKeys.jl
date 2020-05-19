@@ -7,16 +7,29 @@ findindex(not::InvertedIndex, r::AbstractVector) = Base.unalias(r, not)
 
 using IntervalSets
 
-findindex(s::Interval, r::AbstractVector) = findall(i -> i in s, r)
+findindex(int::Interval, r::AbstractVector) = findall(in(int), r)
 
-# For whether this can be efficient, see https://github.com/JuliaMath/IntervalSets.jl/issues/52
+# Since that is now efficient for ranges, comparisons can go there:
+
+findindex(eq::Base.Fix2{typeof(<=)}, r::AbstractRange{T}) where {T} =
+    findall(in(Interval(typemin(T), eq.x)), r)
+
+findindex(eq::Base.Fix2{typeof(>=)}, r::AbstractRange{T}) where {T} =
+    findall(in(Interval(eq.x, typemax(T))), r)
+
+findindex(eq::Base.Fix2{typeof(<)}, r::AbstractRange{T}) where {T} =
+    findall(in(Interval{:closed, :open}(typemin(T), eq.x)), r)
+
+findindex(eq::Base.Fix2{typeof(>)}, r::AbstractRange{T}) where {T} =
+    findall(in(Interval{:open, :closed}(eq.x, typemax(T))), r)
+
 
 """
     Near(val)
     Interval(lo, hi)
 
 These selectors modify lookup using `axiskeys(A)`:
-`B(time = Near(3))` matches one entry with minimum `abs2(t-3)` of named dimension `:time`.
+`B(time = Near(3))` matches one entry with minimum `abs(t-3)` of named dimension `:time`.
 `C("cat", Interval(10,20))` matches all entries with `10 <= iter <= 20`).
 
 `Interval` is from IntervalSets.jl, and using that you may also write `lo .. hi`,

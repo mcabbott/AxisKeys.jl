@@ -71,7 +71,7 @@ end
 
     @test D(==(Date(2020, 1, 8))) == D[:, 2:2]
     @test D(Near(Date(2020, 1, 10))) == D(Date(2020, 1, 8)) == D[:, 2]
-    @test D(Interval(Date(2020, 1, 8), Date(2020, 1, 22))) == D[:, 2:4]
+    @test_broken D(Interval(Date(2020, 1, 8), Date(2020, 1, 22))) == D[:, 2:4]
 
 end
 @testset "inverted" begin

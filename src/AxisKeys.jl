@@ -23,8 +23,6 @@ include("broadcast.jl")
 
 include("show.jl")
 
-include("findrange.jl")
-
 include("tables.jl") # Tables.jl
 
 include("stack.jl") # LazyStack.jl
