@@ -7,20 +7,23 @@ findindex(not::InvertedIndex, r::AbstractVector) = Base.unalias(r, not)
 
 using IntervalSets
 
-findindex(int::Interval, r::AbstractVector) = findall(in(int), r)
+findindex(int::Interval, r::AbstractVector) =
+    findall(x -> x in int, r)
+findindex(int::Interval, r::AbstractRange{T}) where {T<:Union{Number,Char}} =
+    findall(in(int), r)
 
 # Since that is now efficient for ranges, comparisons can go there:
 
-findindex(eq::Base.Fix2{typeof(<=)}, r::AbstractRange{T}) where {T} =
+findindex(eq::Base.Fix2{typeof(<=)}, r::AbstractRange{T}) where {T<:Union{Number,Char}} =
     findall(in(Interval(typemin(T), eq.x)), r)
 
-findindex(eq::Base.Fix2{typeof(>=)}, r::AbstractRange{T}) where {T} =
+findindex(eq::Base.Fix2{typeof(>=)}, r::AbstractRange{T}) where {T<:Union{Number,Char}} =
     findall(in(Interval(eq.x, typemax(T))), r)
 
-findindex(eq::Base.Fix2{typeof(<)}, r::AbstractRange{T}) where {T} =
+findindex(eq::Base.Fix2{typeof(<)}, r::AbstractRange{T}) where {T<:Union{Number,Char}} =
     findall(in(Interval{:closed, :open}(typemin(T), eq.x)), r)
 
-findindex(eq::Base.Fix2{typeof(>)}, r::AbstractRange{T}) where {T} =
+findindex(eq::Base.Fix2{typeof(>)}, r::AbstractRange{T}) where {T<:Union{Number,Char}} =
     findall(in(Interval{:open, :closed}(eq.x, typemax(T))), r)
 
 
