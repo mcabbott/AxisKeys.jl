@@ -1,7 +1,12 @@
 using Test, AxisKeys
 
+# These used to be special methods of AxisKeys.findindex,
+# now handled by Base.findall(in(Interval), ...)
+# and tested more carefully here:
+# https://github.com/JuliaMath/IntervalSets.jl/pull/63
+
 if VERSION >= v"1.2" # <(3) doesn't exist on 1.1, but Base.Fix2 is fine
-@testset "unit ranges" begin # now methods of AxisKeys.findindex, not Base.findfirst etc.
+@testset "unit ranges" begin
 
     for r in (Base.OneTo(5), 2:5)
         for x in -2:7
@@ -19,11 +24,11 @@ if VERSION >= v"1.2" # <(3) doesn't exist on 1.1, but Base.Fix2 is fine
     end
 
 end
-@testset "step ranges" begin # now methods of AxisKeys.findindex, not Base.finall
+@testset "step ranges" begin
 
-    for op in (Base.:<=, Base.:>, )# Base.:<)
+    for op in (Base.:<=, Base.:>=, Base.:<, Base.:>)
 
-        for r in (0:3:9, )# 0.5:0.5:8) # stepranges?
+        for r in (0:3:9, 0.5:0.5:8)
         for x in [-0.1, 0, 0.2, 0.5, 0.7, 1.0, 1.2,  1.9, 2.0, 2.1, 7.9, 8, 8.1, 7.9, 8, 8.1]
 
             @test AxisKeys.findindex(op(x), r) == Base.findall(op(x), collect(r))
