@@ -29,6 +29,9 @@ using Test, AxisKeys
     newaxis = [CartesianIndex{0}()]
     @test axiskeys(R[[1,3],newaxis,:]) == (['a', 'c'], Base.OneTo(1), 10:10:40)
 
+    @test axiskeys(R[[3,1,1], :]) == (['c','a','a'], 10:10:40) # repeated
+    @test axiskeys(R(['c','a','a'], :)) == (['c','a','a'], 10:10:40)
+
     @test_throws Exception R(:nope) # ideally ArgumentError
     @test_throws Exception R('z')   # ideally BoundsError?
     @test_throws Exception R(99)
