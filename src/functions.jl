@@ -206,11 +206,6 @@ end
 Base.filter(f, A::KeyedVector) = getindex(A, map(f, parent(A)))
 Base.filter(f, A::KeyedArray) = filter(f, parent(A))
 
-# These would otherwise call keys(A), which perhaps it would be better to allow:
-Base.hash(A::KeyedArray) = hash((parent(A), axiskeys(A)...))
-Base.findfirst(f::Function, A::KeyedArray) = findfirst(f, parent(A))
-Base.findlast(f::Function, A::KeyedArray) = findlast(f, parent(A))
-
 using LinearAlgebra
 
 for (mod, fun, lazy) in [(Base, :permutedims, false),

@@ -233,11 +233,3 @@ end
     @test M ≈ MN
 
 end
-@testset "hash & find" begin
-
-    @test hash(M) != hash(parent(M))
-
-    findfirst(x->x>50, V) == findfirst(x->x>50, parent(V))
-    findlast(x->x<=50, V) == findlast(x->x<=50, parent(V))
-
-end
