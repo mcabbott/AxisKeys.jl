@@ -54,7 +54,8 @@ Base.IndexStyle(A::KeyedArray) = IndexStyle(parent(A))
 
 Base.eachindex(A::KeyedArray) = eachindex(parent(A))
 
-Base.keys(A::KeyedArray) = error("Base.keys(::KeyedArray) not defined, please open an issue if this happens unexpectedly.")
+# Base.keys(A::KeyedArray) = error("Base.keys(::KeyedArray) not defined, please open an issue if this happens unexpectedly.") # https://github.com/mcabbott/AxisKeys.jl/issues/20
+Base.keys(A::KeyedArray) = Base.keys(parent(A))
 
 Base.pointer(A::KeyedArray, i::Integer) = Base.pointer(parent(A), i)
 
