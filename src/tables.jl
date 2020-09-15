@@ -115,3 +115,65 @@ end
 
 #     end
 # end
+
+"""
+    populate!(A, table, value)
+
+Populate A with the contents of the `value` column in a provided table.
+The provided table contain columns corresponding to the keys in A and support row iteration.
+"""
+function populate!(A, table, value::Symbol)
+    cols = [value, dimnames(A)...]
+    for r in Tables.rows(table)
+        setkey!(A, (Tables.getcolumn(r, c) for c in cols)...)
+    end
+    return A
+end
+
+"""
+    KeyedArray(table, value, keys...; default=undef)
+    NamedDimsArray(table, value, keys...; default=undef)
+
+Construct a KeyedArray/NamedDimsArray from a `table` supporting column and row.
+`keys` columns are extracted as is, without sorting, and are assumed to uniquely identify
+each `value`. The `default` value is used in cases where no value is identified for a given
+keypair.
+"""
+function KeyedArray(table, value::Symbol, keys::Symbol...; kwargs...)
+   return _construct_from_table(KeyedArray, table, value, keys...; kwargs...)
+end
+
+function NamedDimsArray(table, value::Symbol, keys::Symbol...; kwargs...)
+   return _construct_from_table(NamedDimsArray, table, value, keys...; kwargs...)
+end
+
+
+# Internal function for constructing the KeyedArray or NamedDimsArray.
+# This code doesn't care which type we produce so we just pass that along.
+function _construct_from_table(
+    T::Type, table, value::Symbol, keys::Symbol...;
+    default=undef, issorted=false
+)
+    # get columns of the input table source
+    cols = Tables.columns(table)
+
+    # Extract key columns
+    kw = Tuple(k => unique(Tables.getcolumn(cols, k)) for k in keys)
+
+    # Extract data/value column
+    vals = Tables.getcolumn(cols, value)
+
+    # Initialize the KeyedArray
+    sz = length.(last.(kw))
+
+    A = if default === undef
+        data = similar(vals, sz)
+    else
+        data = similar(vals, Union{eltype(vals), typeof(default)}, sz)
+        fill!(data, default)
+    end
+
+    A = T(data; kw...)
+    populate!(A, table, value)
+    return A
+end

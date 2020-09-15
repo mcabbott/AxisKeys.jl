@@ -29,14 +29,39 @@ end
 @testset "tables" begin
     using Tables
 
-    R = wrapdims(rand(2,3), 11:12, 21:23)
-    N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
+    @testset "source" begin
+        R = wrapdims(rand(2,3), 11:12, 21:23)
+        N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
 
-    @test keys(first(Tables.rows(R))) == (:dim_1, :dim_2, :value)
-    @test keys(first(Tables.rows(N))) == (:a, :b, :value)
+        @test keys(first(Tables.rows(R))) == (:dim_1, :dim_2, :value)
+        @test keys(first(Tables.rows(N))) == (:a, :b, :value)
 
-    @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
+        @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
+    end
+    @testset "sink" begin
+        A = KeyedArray(rand(24, 11, 3); :time => 0:23, :loc => -5:5, :id => ["a", "b", "c"])
+        table = Tables.columntable(A)
 
+        # Test fully constructing from a table
+        # Common when working with adhoc data
+        B = KeyedArray(table, :value, :time, :loc, :id)
+        @test B == A
+
+        # Test populating an existing array (e.g., expected data based on calculated targets/offsets)
+        C = KeyedArray(
+            zeros(Float64, size(A));
+            time = unique(table.time),
+            loc = unique(table.loc),
+            id = unique(table.id),
+        )
+        @test C != A
+        AxisKeys.populate!(C, table, :value)
+        @test C == A
+
+        # Constructing a NamedDimsArray with different default value and table type
+        D = NamedDimsArray(Tables.rowtable(A), :value, :time, :loc, :id; default=missing)
+        @test D == A
+    end
 end
 @testset "stack" begin
     using LazyStack
