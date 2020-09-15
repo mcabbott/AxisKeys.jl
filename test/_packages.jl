@@ -44,7 +44,7 @@ end
 
         # Test fully constructing from a table
         # Common when working with adhoc data
-        B = KeyedArray(table, :value, :time, :loc, :id)
+        B = wrapdims(table, :value, :time, :loc, :id)
         @test B == A
 
         # Test populating an existing array (e.g., expected data based on calculated targets/offsets)
@@ -59,8 +59,30 @@ end
         @test C == A
 
         # Constructing a NamedDimsArray with different default value and table type
-        D = NamedDimsArray(Tables.rowtable(A), :value, :time, :loc, :id; default=missing)
-        @test D == A
+        # Partial populating
+        table = Tables.rowtable(A)
+        n = length(table)
+        idx = rand(Bool, n)
+        D = wrapdims(table[idx], :value, :time, :loc, :id; default=missing)
+        # dimnames should still match, but we'll have missing values
+        @test dimnames(D) == dimnames(A)
+        @test any(ismissing, D)
+
+        # Construction with invalid columns error as expected, but the specific error is
+        # dependent on the table type.
+        # ERROR: ArgumentError: wrong number of names, got (:q, :time, :loc, :id) with ndims(A) == 1
+        @test_throws ArgumentError wrapdims(Tables.rowtable(A), :q, :time, :loc, :id)
+        # ERROR: ArgumentError: wrong number of names, got (:value, :p, :loc, :id) with ndims(A) == 1
+        @test_throws ArgumentError wrapdims(Tables.rowtable(A), :value, :p, :loc, :id)
+        # ERROR: type NamedTuple has no field q
+        @test_throws ErrorException wrapdims(Tables.columntable(A), :q, :time, :loc, :id)
+        # ERROR: type NamedTuple has no field p
+        @test_throws ErrorException wrapdims(Tables.columntable(A), :value, :p, :loc, :id)
+
+        # Construction with duplicates
+        # ERROR: ArgumentError: Key (Date("2019-01-01"), -5) is not unique
+        @test_throws ArgumentError wrapdims(table, :value, :time, :loc)
+        @test wrapdims(table, :value, :time, :loc; force=true) == C(:, :, Key("c"))
     end
 end
 @testset "stack" begin
