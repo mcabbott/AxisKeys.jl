@@ -92,9 +92,11 @@ end
 
 for (T, S) in [(:KeyedVecOrMat, :KeyedVecOrMat), # KeyedArray gives ambiguities
     (:KeyedVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :KeyedVecOrMat),
-    (:NdaKaVoM, :NdaKaVoM), # These are needed because hcat(NamedDimsArray...) relies on similar()
+    (:NdaKaVoM, :NdaKaVoM),
     (:NdaKaVoM, :KeyedVecOrMat), (:KeyedVecOrMat, :NdaKaVoM),
-    (:NdaKaVoM, :AbstractVecOrMat), (:AbstractVecOrMat, :NdaKaVoM) ]
+    # (:NdaKaV, :KeyedVecOrMat), (:KeyedVecOrMat, :NdaKaV),
+    (:NdaKaVoM, :AbstractVecOrMat), (:AbstractVecOrMat, :NdaKaVoM),
+    ]
 
     @eval function Base.vcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
         data = vcat(keyless(A), keyless(B), keyless.(Cs)...)
@@ -118,7 +120,8 @@ for (T, S) in [ (:KeyedArray, :KeyedArray),
         (:KeyedArray, :NamedDimsArray), (:NamedDimsArray, :KeyedArray),
         (:NdaKa, :NdaKa),
         (:NdaKa, :KeyedArray), (:KeyedArray, :NdaKa),
-        (:NdaKa, :AbstractArray), (:AbstractArray, :NdaKa) ]
+        (:NdaKa, :AbstractArray), (:AbstractArray, :NdaKa),
+        ]
 
     @eval function Base.cat(A::$T, B::$S, Cs::AbstractArray...; dims)
         # numerical_dims = hasnames(A) || hasnames(B) ? ... todo!

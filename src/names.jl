@@ -4,7 +4,9 @@ using NamedDims
 
 NdaKa{L,T,N} = NamedDimsArray{L,T,N,<:KeyedArray{T,N}}
 KaNda{L,T,N} = KeyedArray{T,N,<:NamedDimsArray{L,T,N}}
-NdaKaVoM{L,T,N} = NamedDimsArray{L,T,N,<:KeyedVecOrMat}
+
+NdaKaVoM{L,T} = Union{NamedDimsArray{L,T,1,<:KeyedArray}, NamedDimsArray{L,T,2,<:KeyedArray}}
+# NdaKaV{L,T} = NamedDimsArray{L,T,1,<:KeyedArray{T,1}}
 
 # NamedDims now uses dimnames, which behaves like size(A,d), axes(A,d) etc.
 

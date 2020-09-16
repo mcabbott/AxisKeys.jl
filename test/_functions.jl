@@ -151,7 +151,7 @@ end
     @test axiskeys(cat(MN,MN, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(2))
     @test axiskeys(cat(M,MN, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(2))
 
-    @test_broken axiskeys(cat(M,M, dims=:r)) # doesn't work in NamedDims either
+    @test_broken axiskeys(cat(M,M, dims=:r)) # maybe fixed in NamedDims now
 
 end
 @testset "matmul" begin
