@@ -117,60 +117,53 @@ end
 # end
 
 """
-    AxisKeys.populate!(A, table, value; force=false, quiet=false)
+    AxisKeys.populate!(A, table, value; force=false)
 
-Populate `A` with the contents of the `value` column in a provided `table`.
-The `table` must contain columns corresponding to the keys in `A` and support row iteration.
-If the keys in `A` do not uniquely identify rows in the `table` then an
-`ArgumentError` is throw. If `force` is true then the duplicate (non-unique) entries will be
-overwritten. Setting `quiet` to true will avoid any non-unique warnings.
+Populate `A` with the contents of the `value` column in a provided `table`, matching the
+[Tables.jl](https://github.com/JuliaData/Tables.jl) API. The `table` must contain columns
+corresponding to the keys in `A` and implements `Tables.rows`. If the keys in `A` do not
+uniquely identify rows in the `table` then an `ArgumentError` is throw. If `force` is true
+then the duplicate (non-unique) entries will be overwritten.
 """
-function populate!(A, table, value::Symbol; force=false, quiet=false)
+function populate!(A, table, value::Symbol; force=false)
     # Use a BitArray mask to detect duplicates and error instead of overwriting.
-    mask = falses(size(A))
-    overwritten = false
+    mask = force ? falses() : falses(size(A))
 
     for r in Tables.rows(table)
         vals = Tuple(Tables.getcolumn(r, c) for c in dimnames(A))
         inds = map(findindex, vals, axiskeys(A))
 
-        # Handle duplicate error if applicable
-        if mask[inds...]
-            if force
-                overwritten = true
-            else
-                throw(ArgumentError("Key $vals is not unique"))
-            end
+        # Handle duplicate error checking if applicable
+        if !force
+            # Error if mask already set.
+            mask[inds...] && throw(ArgumentError("Key $vals is not unique"))
+            # Set mask, marking that we've set this index
+            setindex!(mask, true, inds...)
         end
-
-        # Set or mask marking that we've set this index
-        setindex!(mask, true, inds...)
 
         # Insert our value into the data array
         setindex!(A, Tables.getcolumn(r, value), inds...)
-    end
-
-    if overwritten && !quiet
-        @warn "Columns $(dimnames(A)) do not uniquely identify rows in the table"
     end
 
     return A
 end
 
 """
-    wrapdims(table, [Type,] value, keys...; default=undef, sort=false, force=false, quiet=false)
+    wrapdims(table, value, keys...; default=undef, sort=false, force=false) -> KeyedArray
+    wrapdims(T, table, value, keys...; default=undef, sort=false, force=false) -> T
 
-Construct a KeyedArray/NamedDimsArray from a `table` supporting column and row.
-The `default` value is used in cases where no value is identified for a given keypair.
-If the `keys` columns do not uniquely identify rows in the table then an `ArgumentError` is
-throw. If `force` is true then the duplicate (non-unique) entries will be
-overwritten. Setting `quiet` to true will avoid any non-unique warnings.
+Construct a `KeyedArray`/`NamedDimsArray` (specified by type `T`) from a `table` matching
+the [Tables.jl](https://github.com/JuliaData/Tables.jl) API. The `table` should support both
+`Tables.columns` and `Tables.rows`. The `default` value is used in cases where no
+value is identified for a given keypair. If the `keys` columns do not uniquely identify
+rows in the table then an `ArgumentError` is throw. If `force` is true then the duplicate
+(non-unique) entries will be overwritten.
 """
 function wrapdims(table, value::Symbol, keys::Symbol...; kwargs...)
-    wrapdims(table, KeyedArray, value, keys...; kwargs...)
+    wrapdims(KeyedArray, table, value, keys...; kwargs...)
 end
 
-function wrapdims(table, T::Type, value::Symbol, keys::Symbol...; default=undef, sort::Bool=false, kwargs...)
+function wrapdims(T::Type, table, value::Symbol, keys::Symbol...; default=undef, sort::Bool=false, kwargs...)
     # get columns of the input table source
     cols = Tables.columns(table)
 
