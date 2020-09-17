@@ -29,4 +29,6 @@ include("stack.jl") # LazyStack.jl
 
 include("fft.jl") # AbstractFFTs.jl
 
+include("statsbase.jl") # StatsBase.jl
+
 end

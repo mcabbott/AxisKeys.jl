@@ -190,3 +190,65 @@ end
     @test_broken sortkeys(fft(A)) ≈ fftshift(fft(A)) # isapprox should be used for keys
 
 end
+
+@testset "statsbase" begin
+    using StatsBase
+
+    A = rand(4, 3)
+    A_ka = KeyedArray(A, (0:3, [:a, :b, :c]))
+    A_kanda = KeyedArray(A; time = 0:3, id = [:a, :b, :c])
+    wv = aweights(rand(4))
+
+    @testset "$f" for f in (mean, std, var)
+        R = f(A, wv, 1)
+
+        R_ka = f(A_ka, wv; dims=1)
+        R_kanda_int = f(A_kanda, wv; dims=1)
+        R_kanda_sym = f(A_kanda, wv; dims=:time)
+        expected_keys = (Base.OneTo(1), [:a, :b, :c])
+        expected_names = (:time, :id)
+
+        @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == expected_names
+        @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == expected_keys
+        @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ R
+    end
+
+    @testset "$f" for f in (cov, cor, scattermat)
+        R = f(A, wv, 1)
+
+        R_ka = f(A_ka, wv; dims=1)
+        R_kanda_int = f(A_kanda, wv; dims=1)
+        R_kanda_sym = f(A_kanda, wv; dims=:time)
+        expected_keys = ([:a, :b, :c], [:a, :b, :c])
+        expected_names = (:id, :id)
+
+        @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == expected_names
+        @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == expected_keys
+        @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ R
+    end
+
+    @testset "$f" for f in (mean_and_var, mean_and_std, mean_and_cov)
+        R1, R2 = f(A, wv, 1)
+        R1_ka, R2_ka = f(A_ka, wv; dims=1)
+        R1_kanda_int, R2_kanda_int = f(A_kanda, wv; dims=1)
+        R1_kanda_sym, R2_kanda_sym = f(A_kanda, wv; dims=:time)
+
+        @test parent(R1_ka) ≈ parent(parent(R1_kanda_int)) ≈ parent(parent(R1_kanda_sym)) ≈ R1
+        @test parent(R2_ka) ≈ parent(parent(R2_kanda_int)) ≈ parent(parent(R2_kanda_sym)) ≈ R2
+    end
+
+    @testset "conversions" begin
+        @testset "cov2cor" begin
+            @test cov2cor(cov(A_ka; dims=1), std(A_ka; dims=1)) ≈ cor(A_ka; dims=1)
+            @test cov2cor(cov(A_ka; dims=2), std(A_ka; dims=2)) ≈ cor(A_ka; dims=2)
+            @test cov2cor(cov(A_kanda; dims=:time), std(A_kanda; dims=:time)) ≈ cor(A_kanda; dims=:time)
+            @test cov2cor(cov(A_kanda; dims=:id), std(A_kanda; dims=:id)) ≈ cor(A_kanda; dims=:id)
+        end
+        @testset "cor2cov" begin
+            @test cor2cov(cor(A_ka; dims=1), std(A_ka; dims=1)) ≈ cov(A_ka; dims=1)
+            @test cor2cov(cor(A_ka; dims=2), std(A_ka; dims=2)) ≈ cov(A_ka; dims=2)
+            @test cor2cov(cor(A_kanda; dims=:time), std(A_kanda; dims=:time)) ≈ cov(A_kanda; dims=:time)
+            @test cor2cov(cor(A_kanda; dims=:id), std(A_kanda, dims=:id)) ≈ cov(A_kanda; dims=:id)
+        end
+    end
+end
