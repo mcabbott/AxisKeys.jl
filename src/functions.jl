@@ -124,10 +124,19 @@ for (T, S) in [ (:KeyedArray, :KeyedArray),
         ]
 
     @eval function Base.cat(A::$T, B::$S, Cs::AbstractArray...; dims)
-        # numerical_dims = hasnames(A) || hasnames(B) ? ... todo!
-        data = cat(keyless(A), keyless(B), keyless.(Cs)...; dims=dims)
+        numerical_dims, data = if any(hasnames.((A, B, Cs...)))
+            old_names = NamedDims.unify_names_longest(dimnames(A), dimnames(B), dimnames.(Cs)...)
+            new_names = NamedDims.expand_dimnames(old_names, dims)
+            α = NamedDims.dim(new_names, dims)
+            β = cat(keyless(A), keyless(B), keyless.(Cs)...; dims=dims)
+            α, β
+        else
+            α = val_strip(dims)
+            β = cat(keyless(A), keyless(B), keyless.(Cs)...; dims=numerical_dims)
+            α, β
+        end
         new_keys = ntuple(ndims(data)) do d
-            if d in dims
+            if d in numerical_dims
                 key_vcat(keys_or_axes(A,d), keys_or_axes(B,d), keys_or_axes.(Cs,d)...)
             else
                 unify_one(keys_or_axes(A,d), keys_or_axes(B,d), keys_or_axes.(Cs,d)...)
@@ -137,6 +146,8 @@ for (T, S) in [ (:KeyedArray, :KeyedArray),
     end
 
 end
+val_strip(dims::Val{d}) where {d} = d
+val_strip(dims) = dims
 key_vcat(a::AbstractVector, b::AbstractVector) = vcat(a,b)
 key_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
 key_vcat(a,b,cs...) = key_vcat(key_vcat(a,b),cs...)

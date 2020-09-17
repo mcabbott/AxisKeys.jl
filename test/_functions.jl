@@ -4,6 +4,7 @@ M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
 MN = NamedDimsArray(M.data.data, r='a':'c', c=2:5)
 V = wrapdims(rand(1:99, 10), v=10:10:100)
 VN = NamedDimsArray(V.data.data, v=10:10:100)
+A3 = wrapdims(rand(Int8, 3,4,2), r='a':'c', c=2:5, p=[10.0, 20.0])
 
 @testset "dims" begin
 
@@ -151,7 +152,11 @@ end
     @test axiskeys(cat(MN,MN, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(2))
     @test axiskeys(cat(M,MN, dims=3)) == ('a':1:'c', 2:5, Base.OneTo(2))
 
-    @test_broken axiskeys(cat(M,M, dims=:r)) # maybe fixed in NamedDims now
+    @test axiskeys(cat(M,M, dims=:z)) == ('a':1:'c', 2:5, Base.OneTo(2))
+    @test dimnames(cat(M,M, dims=:z)) == (:r, :c, :z)
+
+    @test axiskeys(cat(A3, A3, dims=:p)) == ('a':1:'c', 2:5, [10.0, 20.0, 10.0, 20.0])
+    @test axiskeys(hcat(A3, A3)) == ('a':1:'c', vcat(2:5,2:5), [10.0, 20.0])
 
 end
 @testset "matmul" begin
