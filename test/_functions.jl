@@ -40,6 +40,9 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
     axiskeys(V2', 2)[1] = :zed
     @test axiskeys(V2,1) == [:zed, :b, :c]
 
+    # eachslice
+    @test axiskeys(first(eachslice(M, dims=:r))) === (2:5,)
+
     # mapslices
     @test axiskeys(mapslices(identity, M, dims=1)) === (Base.OneTo(3), 2:5)
     @test axiskeys(mapslices(sum, M, dims=1)) === (Base.OneTo(1), 2:5)
