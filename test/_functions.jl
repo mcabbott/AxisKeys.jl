@@ -41,7 +41,9 @@ VN = NamedDimsArray(V.data.data, v=10:10:100)
     @test axiskeys(V2,1) == [:zed, :b, :c]
 
     # eachslice
-    @test axiskeys(first(eachslice(M, dims=:r))) === (2:5,)
+    if VERSION >= v"1.1"
+        @test axiskeys(first(eachslice(M, dims=:r))) === (2:5,)
+    end
 
     # mapslices
     @test axiskeys(mapslices(identity, M, dims=1)) === (Base.OneTo(3), 2:5)
