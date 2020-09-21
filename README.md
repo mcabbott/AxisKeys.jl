@@ -1,6 +1,6 @@
 # AxisKeys.jl
 
-[![Build Status](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.org/mcabbott/AxisKeys.jl)
+[![Build Status](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.com/mcabbott/AxisKeys.jl)
 
 <!--<img src="docs/readmefigure.png" alt="block picture" width="400" align="right">-->
 
