@@ -81,6 +81,19 @@ function Base.permutedims(A::KeyedArray, perm)
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
 
+if VERSION >= v"1.1"
+    # This copies the implementation from Base, except with numerical_dims:
+    @inline function Base.eachslice(A::KeyedArray; dims)
+        numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+        length(numerical_dims) == 1 || throw(ArgumentError("only single dimensions are supported"))
+        dim = first(numerical_dims)
+        dim <= ndims(A) || throw(DimensionMismatch("A doesn't have $dim dimensions"))
+        inds_before = ntuple(d->(:), dim-1)
+        inds_after = ntuple(d->(:), ndims(A)-dim)
+        return (view(A, inds_before..., i, inds_after...) for i in axes(A, dim))
+    end
+end
+
 function Base.mapslices(f, A::KeyedArray; dims)
     numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
     data = mapslices(f, parent(A); dims=dims)

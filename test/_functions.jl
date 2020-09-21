@@ -41,6 +41,11 @@ A3 = wrapdims(rand(Int8, 3,4,2), r='a':'c', c=2:5, p=[10.0, 20.0])
     axiskeys(V2', 2)[1] = :zed
     @test axiskeys(V2,1) == [:zed, :b, :c]
 
+    # eachslice
+    if VERSION >= v"1.1"
+        @test axiskeys(first(eachslice(M, dims=:r))) === (2:5,)
+    end
+
     # mapslices
     @test axiskeys(mapslices(identity, M, dims=1)) === (Base.OneTo(3), 2:5)
     @test axiskeys(mapslices(sum, M, dims=1)) === (Base.OneTo(1), 2:5)
