@@ -94,7 +94,6 @@ for (T, S) in [(:KeyedVecOrMat, :KeyedVecOrMat), # KeyedArray gives ambiguities
     (:KeyedVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :KeyedVecOrMat),
     (:NdaKaVoM, :NdaKaVoM),
     (:NdaKaVoM, :KeyedVecOrMat), (:KeyedVecOrMat, :NdaKaVoM),
-    # (:NdaKaV, :KeyedVecOrMat), (:KeyedVecOrMat, :NdaKaV),
     (:NdaKaVoM, :AbstractVecOrMat), (:AbstractVecOrMat, :NdaKaVoM),
     ]
 
