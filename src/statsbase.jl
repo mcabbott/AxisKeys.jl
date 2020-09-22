@@ -14,18 +14,26 @@ function Statistics.mean(A::KeyedArray, wv::AbstractWeights; dims=:, kwargs...)
     return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
 end
 
+function Statistics.mean(A::KeyedArray, wv::KeyedVector; kwargs...)
+    return mean(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
+end
+
 # var and std are separate cause they don't use the dims keyword and we need to set corrected=true
 for fun in [:var, :std]
-    @eval function Statistics.$fun(A::KeyedArray, wv::AbstractWeights; dims=:, corrected=false, kwargs...)
+    @eval function Statistics.$fun(A::KeyedArray, wv::AbstractWeights; dims=:, corrected=true, kwargs...)
         dims === Colon() && return $fun(parent(A), wv; kwargs...)
         numerical_dims = AxisKeys.hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
         data = $fun(parent(A), wv, numerical_dims; corrected=corrected, kwargs...)
         new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
         return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
     end
+
+    @eval function Statistics.$fun(A::KeyedArray, wv::KeyedVector; kwargs...)
+        return $fun(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
+    end
 end
 
-function Statistics.cov(A::KeyedMatrix, wv::AbstractWeights; dims=1, corrected=false, kwargs...)
+function Statistics.cov(A::KeyedMatrix, wv::AbstractWeights; dims=1, corrected=true, kwargs...)
     # A little awkward, but the weighted `cov` method from statsbase only works
     # on dense matrices, so we need to unwrap this twice and completely rebuild the
     # array
@@ -46,6 +54,10 @@ function Statistics.cov(A::KeyedMatrix, wv::AbstractWeights; dims=1, corrected=f
         new_keys = Tuple(copy(axiskeys(A, rem_dim)) for i in 1:2)
         return KeyedArray(data, new_keys)
     end
+end
+
+function Statistics.cov(A::KeyedArray, wv::KeyedVector; kwargs...)
+    return cov(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
 end
 
 function Statistics.cor(A::KeyedMatrix, wv::AbstractWeights; dims=1, kwargs...)
@@ -69,6 +81,10 @@ function Statistics.cor(A::KeyedMatrix, wv::AbstractWeights; dims=1, kwargs...)
         new_keys = Tuple(copy(axiskeys(A, rem_dim)) for i in 1:2)
         return KeyedArray(data, new_keys)
     end
+end
+
+function Statistics.cor(A::KeyedArray, wv::KeyedVector; kwargs...)
+    return cor(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
 end
 
 # Similar to cov and cor, but we aren't extending Statistics
@@ -95,23 +111,36 @@ function StatsBase.scattermat(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dim
     end
 end
 
-function StatsBase.mean_and_std(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=false, kwargs...)
+function StatsBase.scattermat(A::KeyedArray, wv::KeyedVector; kwargs...)
+    return scattermat(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
+end
+
+function StatsBase.mean_and_std(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=true, kwargs...)
     return (
         mean(A, wv...; dims=dims, kwargs...),
         std(A, wv...; dims=dims, corrected=corrected, kwargs...)
     )
 end
+function StatsBase.mean_and_std(A::KeyedArray, wv::KeyedVector; kwargs...)
+    return mean_and_std(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
+end
 
-function StatsBase.mean_and_var(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=false, kwargs...)
+function StatsBase.mean_and_var(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=true, kwargs...)
     return (
         mean(A, wv...; dims=dims, kwargs...),
         var(A, wv...; dims=dims, corrected=corrected, kwargs...)
     )
 end
+function StatsBase.mean_and_var(A::KeyedArray, wv::KeyedVector; kwargs...)
+    return mean_and_var(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
+end
 
-function StatsBase.mean_and_cov(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=false, kwargs...)
+function StatsBase.mean_and_cov(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=true, kwargs...)
     return (
         mean(A, wv...; dims=dims, kwargs...),
         cov(A, wv...; dims=dims, corrected=corrected, kwargs...)
     )
+end
+function StatsBase.mean_and_cov(A::KeyedArray, wv::KeyedVector; kwargs...)
+    return mean_and_cov(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
 end
