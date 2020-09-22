@@ -144,3 +144,43 @@ end
 function StatsBase.mean_and_cov(A::KeyedArray, wv::KeyedVector; kwargs...)
     return mean_and_cov(A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
 end
+
+# Since we get ambiguity errors with specific implementations we need to wrap each supported method
+# A better approach might be to add `NamedDims` support to CovarianceEstimators.jl in the future.
+using CovarianceEstimation
+estimators = [
+    :SimpleCovariance,
+    :LinearShrinkage,
+    :DiagonalUnitVariance,
+    :DiagonalCommonVariance,
+    :DiagonalUnequalVariance,
+    :CommonCovariance,
+    :PerfectPositiveCorrelation,
+    :ConstantCorrelation,
+    :AnalyticalNonlinearShrinkage,
+]
+for estimator in estimators
+    @eval function Statistics.cov(ce::$estimator, A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, kwargs...)
+        if AxisKeys.hasnames(A)
+            numerical_dim = NamedDims.dim(dimnames(A), dims)
+            data = cov(ce, parent(parent(A)), wv...; dims=numerical_dim, kwargs...)
+            rem_dim = first(setdiff(ndims(A), numerical_dim))
+            rem_name = dimnames(A, rem_dim)
+            rem_key = axiskeys(A, rem_dim)
+            return KeyedArray(
+                NamedDimsArray(data, (rem_name, rem_name)),
+                (copy(rem_key), copy(rem_key))
+            )
+        else
+            data = cov(ce, parent(A), wv...; dims=dims, kwargs...)
+            # Use same remaining axis for both dimensions of data
+            rem_dim = first(setdiff(ndims(A), dims))
+            new_keys = Tuple(copy(axiskeys(A, rem_dim)) for i in 1:2)
+            return KeyedArray(data, new_keys)
+        end
+    end
+
+    @eval function Statistics.cov(ce::$estimator, A::KeyedArray, wv::KeyedVector; kwargs...)
+        return cov(ce, A, hasnames(wv) ? parent(parent(wv)) : parent(wv); kwargs...)
+    end
+end

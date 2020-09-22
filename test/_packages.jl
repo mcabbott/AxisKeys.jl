@@ -192,7 +192,7 @@ end
 end
 
 @testset "statsbase" begin
-    using StatsBase
+    using CovarianceEstimation, StatsBase
 
     A = rand(4, 3)
     A_ka = KeyedArray(A, (0:3, [:a, :b, :c]))
@@ -260,6 +260,37 @@ end
             @test cor2cov(cor(A_ka; dims=2), std(A_ka; dims=2)) ≈ cov(A_ka; dims=2)
             @test cor2cov(cor(A_kanda; dims=:time), std(A_kanda; dims=:time)) ≈ cov(A_kanda; dims=:time)
             @test cor2cov(cor(A_kanda; dims=:id), std(A_kanda, dims=:id)) ≈ cov(A_kanda; dims=:id)
+        end
+    end
+
+    @testset "covariance estimation" begin
+        ce = SimpleCovariance()
+
+        @testset "unweighted" begin
+            R = cov(ce, A; dims=1)
+            R_ka = cov(ce, A_ka; dims=1)
+            R_kanda_int = cov(ce, A_kanda; dims=1)
+            R_kanda_sym = cov(ce, A_kanda; dims=:time)
+            expected_keys = ([:a, :b, :c], [:a, :b, :c])
+            expected_names = (:id, :id)
+
+            @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == expected_names
+            @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == expected_keys
+            @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ R
+        end
+
+        @testset "weighted" begin
+            R = cov(ce, A, wv; dims=1)
+            R_ka = cov(ce, A_ka, wv; dims=1)
+            R_kanda_int = cov(ce, A_kanda, wv; dims=1)
+            R_kanda_sym = cov(ce, A_kanda, wv; dims=:time)
+            R_kanda_kwv = cov(ce, A_kanda, kwv; dims=:time)
+            expected_keys = ([:a, :b, :c], [:a, :b, :c])
+            expected_names = (:id, :id)
+
+            @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == dimnames(R_kanda_kwv) == expected_names
+            @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == axiskeys(R_kanda_kwv) == expected_keys
+            @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ parent(parent(R_kanda_kwv)) ≈ R
         end
     end
 end
