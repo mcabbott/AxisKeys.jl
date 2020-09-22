@@ -9,13 +9,13 @@ using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
         AxisKeys.nameouter() = false
     end
 
-    include("_basic.jl")
+    # include("_basic.jl")
 
     include("_functions.jl")
 
-    include("_fast.jl")
+    # include("_fast.jl")
 
-    include("_packages.jl")
+    # include("_packages.jl")
 
 end
 @testset "fast findfirst & findall" begin
@@ -26,6 +26,7 @@ end
 @testset "ambiguities" begin
 
     @test isempty(detect_unbound_args(AxisKeys))
-    @test_broken isempty(detect_ambiguities(AxisKeys, Base))
+    alist = detect_ambiguities(AxisKeys, Base)
+    @test_broken isempty(alist)
 
 end

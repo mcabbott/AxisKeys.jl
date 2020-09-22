@@ -177,12 +177,7 @@ end
     @test (V' * V) isa Int
     @test (V' * VN) isa Int
     @test (V' * rand(Int, 10)) isa Int
-    if VERSION < v"1.5-"
-        @test (rand(Int, 10)' * V) isa Int
-    else
-        # https://github.com/mcabbott/AxisKeys.jl/issues/17
-        @test_broken (rand(Int, 10)' * V) isa Int
-    end
+    @test (rand(Int, 10)' * V) isa Int
     @test axiskeys(V * V') === (10:10:100, 10:10:100)
     @test dimnames(V * V') === (:v, :v)
     @test axiskeys(V * VN') === (10:10:100, 10:10:100)

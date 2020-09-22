@@ -272,12 +272,14 @@ end
 
 Rlist = [:KeyedMatrix, :KeyedVector,
     :(NdaKa{L,T,2} where {L,T}), :(NdaKa{L,T,1} where {L,T}),
-    :(KeyedVector{T} where {T<:Number}), :(NdaKa{L,T,1} where {L,T<:Number}), # ambiguities on 1.5?
+    :(KeyedVector{T} where {T<:Number}), :(NdaKa{L,T,1} where {L,T<:Number}), # ambiguities on 1.5
     ]
+
 Olist = [ :AbstractMatrix, :AbstractVector, :Number,
     :(Adjoint{<:Any,<:AbstractMatrix}), :(Adjoint{<:Any,<:AbstractVector}),
     :(Transpose{<:Any,<:AbstractMatrix}), :(Transpose{<:Any,<:AbstractVector}),
     :(NamedDimsArray{L,T,1} where {L,T}), :(NamedDimsArray{L,T,2} where {L,T}),
+    :(Adjoint{<:Number,<:AbstractVector}), # 1.5 problem...
     ]
 for (Ts, Ss) in [(Rlist, Rlist), (Rlist, Olist), (Olist, Rlist)]
     for T in Ts, S in Ss # some combinations are errors, later, that's ok
