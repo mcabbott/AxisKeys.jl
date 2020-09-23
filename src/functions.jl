@@ -332,7 +332,8 @@ tup_head(t::Tuple) = reverse(Base.tail(reverse(t)))
 
 for fun in [:inv, :pinv,
     :det, :logdet, :logabsdet,
-    :eigen, :eigvecs, :eigvals, :svd
+    :eigen, :eigvecs, :eigvals, :svd,
+    :diag
     ]
     @eval LinearAlgebra.$fun(A::KeyedMatrix) = $fun(parent(A))
 end
