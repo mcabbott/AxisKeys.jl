@@ -238,3 +238,19 @@ end
     @test M ≈ MN
 
 end
+
+@testset "linalg" begin
+    using LinearAlgebra
+
+    @testset "cholesky" begin
+        A = rand(10, 3)
+        ka = KeyedArray(A, (0:9, ["a", "b", "c"]))
+        kanda = KeyedArray(A, time=0:9, id=["a", "b", "c"])
+
+        # These should all be equivalent because we aren't wrapping the U and L matrices in
+        # the Factorization
+        @test cholesky(cor(A)) == cholesky(cor(ka)) == cholesky(cor(kanda))
+        @test cholesky(Hermitian(cor(A))) == cholesky(Hermitian(cor(ka))) == cholesky(Hermitian(cor(kanda)))
+        @test all(isposdef, (cor(A), cor(ka), cor(kanda)))
+    end
+end

@@ -336,3 +336,12 @@ for fun in [:inv, :pinv,
     ]
     @eval LinearAlgebra.$fun(A::KeyedMatrix) = $fun(parent(A))
 end
+
+function LinearAlgebra.cholesky(A::Hermitian{T, <:KeyedArray{T}}; kwargs...) where T
+    return cholesky(parent(A); kwargs...)
+end
+
+function LinearAlgebra.cholesky(A::KeyedMatrix; kwargs...)
+    data = hasnames(A) ? parent(parent(A)) : parent(A)
+    return cholesky(data; kwargs...)
+end
