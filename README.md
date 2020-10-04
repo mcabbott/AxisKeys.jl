@@ -140,6 +140,9 @@ while `A.keys isa Tuple` for matrices & higher. But `axiskeys(A)` always returns
 * Named tuples can be converted to and from keyed vectors,
   with `collect(keys(nt)) == Symbol.(axiskeys(V),1)`
 
+* The [Tables.jl](https://github.com/JuliaData/Tables.jl) interface is supported,
+  with `wrapdims(df, :val, :x, :y)` creating a matrix from 3 columns.
+
 * [FFTW](https://github.com/JuliaMath/FFTW.jl)`.fft` transforms the keys; 
   if these are times such as [Unitful](https://github.com/PainterQubits/Unitful.jl)`.s` 
   then the results are fequency labels. ([PR#15](https://github.com/mcabbott/AxisKeys.jl/pull/15).)
