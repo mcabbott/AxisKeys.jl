@@ -9,13 +9,13 @@ using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
         AxisKeys.nameouter() = false
     end
 
-    # include("_basic.jl")
+    include("_basic.jl")
 
     include("_functions.jl")
 
-    # include("_fast.jl")
+    include("_fast.jl")
 
-    # include("_packages.jl")
+    include("_packages.jl")
 
 end
 @testset "fast findfirst & findall" begin
