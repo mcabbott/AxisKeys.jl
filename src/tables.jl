@@ -153,7 +153,7 @@ end
 
 Construct `KeyedArray(NamedDimsArray(A,names),keys)` from a `table` matching
 the [Tables.jl](https://github.com/JuliaData/Tables.jl) API.
-(This which must support both `Tables.columns` and `Tables.rows`.)
+(It must support both `Tables.columns` and `Tables.rows`.)
 
 The contents of the array is taken from the column `value::Symbol` of the table.
 Each symbol in `names` specifies a column whose unique entries
@@ -181,7 +181,7 @@ Converts at Tables.jl table to a `KeyedArray` + `NamedDimsArray` pair,
 using column `:val` for values, and columns `:x, :y` for names & keys.
 Optional 2nd argument applies this type to all the key-vectors.
 """
-function wrapdims(table, ::Type{KT}, value::Symbol, names::Symbol...; kw...) where {KT}
+function wrapdims(table, KT::Type, value::Symbol, names::Symbol...; kw...)
     if nameouter() == false
         _wrap_table(KeyedArray, KT, table, value, names...; kw...)
     else
@@ -189,7 +189,7 @@ function wrapdims(table, ::Type{KT}, value::Symbol, names::Symbol...; kw...) whe
     end
 end
 
-function _wrap_table(::Type{AT}, KT, table, value::Symbol, names::Symbol...; default=undef, sort::Bool=false, kwargs...) where {AT}
+function _wrap_table(AT::Type, KT, table, value::Symbol, names::Symbol...; default=undef, sort::Bool=false, kwargs...)
     # get columns of the input table source
     cols = Tables.columns(table)
 
@@ -205,15 +205,14 @@ function _wrap_table(::Type{AT}, KT, table, value::Symbol, names::Symbol...; def
 
     # Initialize the KeyedArray
     sz = length.(last.(pairs))
-
-    A = if default === undef
+    if default === undef
         data = similar(vals, sz)
     else
         data = similar(vals, Union{eltype(vals), typeof(default)}, sz)
         fill!(data, default)
     end
-
     A = AT(data; pairs...)
+
     populate!(A, table, value; kwargs...)
     return A
 end
