@@ -29,14 +29,70 @@ end
 @testset "tables" begin
     using Tables
 
-    R = wrapdims(rand(2,3), 11:12, 21:23)
-    N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
+    @testset "source" begin
+        R = wrapdims(rand(2,3), 11:12, 21:23)
+        N = wrapdims(rand(2,3), a=[11, 12], b=[21, 22, 23.0])
 
-    @test keys(first(Tables.rows(R))) == (:dim_1, :dim_2, :value)
-    @test keys(first(Tables.rows(N))) == (:a, :b, :value)
+        @test keys(first(Tables.rows(R))) == (:dim_1, :dim_2, :value)
+        @test keys(first(Tables.rows(N))) == (:a, :b, :value)
 
-    @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
+        @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
+    end
+    @testset "sink" begin
+        A = KeyedArray(rand(24, 11, 3); time = 0:23, loc = -5:5, id = ["a", "b", "c"])
+        table = Tables.columntable(A)
 
+        # Test fully constructing from a table
+        # Common when working with adhoc data
+        B = wrapdims(table, :value, :time, :loc, :id)
+        @test B == A
+
+        # Test wrapping of key vectors, and wrong order:
+        U = wrapdims(table, UniqueVector, :value, :id, :time, :loc)
+        @test axiskeys(U, :time) isa UniqueVector
+        @test U(time=3, id="b") == A(time=3, id="b")
+
+        # Test populating an existing array (e.g., expected data based on calculated targets/offsets)
+        C = KeyedArray(
+            zeros(Float64, size(A));
+            time = unique(table.time),
+            loc = unique(table.loc),
+            id = unique(table.id),
+        )
+        @test C != A
+        AxisKeys.populate!(C, table, :value)
+        @test C == A
+
+        # Constructing a NamedDimsArray with different default value and table type
+        # Partial populating
+        r_table = Tables.rowtable(A)
+        n = length(r_table)
+        idx = rand(Bool, n)
+        D = wrapdims(r_table[idx], :value, :time, :loc, :id; default=missing)
+        # dimnames should still match, but we'll have missing values
+        @test dimnames(D) == dimnames(A)
+        @test any(ismissing, D)
+
+        # BTW, this is why it's a method of wrapdims, not KeyedArray:
+        # @code_warntype wrapdims(table, :value, :time, :loc, :id) # ::Any
+        # @code_warntype wrapdims(r_table[idx], :value, :time, :loc, :id; default=missing)
+
+        # Construction with invalid columns error as expected, but the specific error is
+        # dependent on the table type.
+        # ERROR: ArgumentError: wrong number of names, got (:q, :time, :loc, :id) with ndims(A) == 1
+        @test_throws ArgumentError wrapdims(Tables.rowtable(A), :q, :time, :loc, :id)
+        # ERROR: ArgumentError: wrong number of names, got (:value, :p, :loc, :id) with ndims(A) == 1
+        @test_throws ArgumentError wrapdims(Tables.rowtable(A), :value, :p, :loc, :id)
+        # ERROR: type NamedTuple has no field q
+        @test_throws ErrorException wrapdims(Tables.columntable(A), :q, :time, :loc, :id)
+        # ERROR: type NamedTuple has no field p
+        @test_throws ErrorException wrapdims(Tables.columntable(A), :value, :p, :loc, :id)
+
+        # Construction with duplicates
+        # ERROR: ArgumentError: Key (Date("2019-01-01"), -5) is not unique
+        @test_throws ArgumentError wrapdims(table, :value, :time, :loc)
+        @test wrapdims(r_table, :value, :time, :loc; force=true) == C(:, :, Key("c"))
+    end
 end
 @testset "stack" begin
     using LazyStack

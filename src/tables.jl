@@ -115,3 +115,104 @@ end
 
 #     end
 # end
+
+"""
+    AxisKeys.populate!(A, table, value; force=false)
+
+Populate `A` with the contents of the `value` column in a provided `table`, matching the
+[Tables.jl](https://github.com/JuliaData/Tables.jl) API. The `table` must contain columns
+corresponding to the keys in `A` and implements `Tables.rows`. If the keys in `A` do not
+uniquely identify rows in the `table` then an `ArgumentError` is throw. If `force` is true
+then the duplicate (non-unique) entries will be overwritten.
+"""
+function populate!(A, table, value::Symbol; force=false)
+    # Use a BitArray mask to detect duplicates and error instead of overwriting.
+    mask = force ? falses() : falses(size(A))
+
+    for r in Tables.rows(table)
+        vals = Tuple(Tables.getcolumn(r, c) for c in dimnames(A))
+        inds = map(findindex, vals, axiskeys(A))
+
+        # Handle duplicate error checking if applicable
+        if !force
+            # Error if mask already set.
+            mask[inds...] && throw(ArgumentError("Key $vals is not unique"))
+            # Set mask, marking that we've set this index
+            setindex!(mask, true, inds...)
+        end
+
+        # Insert our value into the data array
+        setindex!(A, Tables.getcolumn(r, value), inds...)
+    end
+
+    return A
+end
+
+"""
+    wrapdims(table, value, names...; default=undef, sort=false, force=false)
+
+Construct `KeyedArray(NamedDimsArray(A,names),keys)` from a `table` matching
+the [Tables.jl](https://github.com/JuliaData/Tables.jl) API.
+(It must support both `Tables.columns` and `Tables.rows`.)
+
+The contents of the array is taken from the column `value::Symbol` of the table.
+Each symbol in `names` specifies a column whose unique entries
+become the keys along a dimenension of the array.
+
+If there is no row in the table matching a possible set of keys,
+then this element of the array is undefined, unless you provide the `default` keyword.
+If several rows share the same set of keys, then by default an `ArgumentError` is thrown.
+Keyword `force=true` will instead cause these non-unique entries to be overwritten.
+
+Setting `AxisKeys.nameouter() = false` will reverse the order of wrappers produced.
+"""
+function wrapdims(table, value::Symbol, names::Symbol...; kw...)
+    if nameouter() == false
+        _wrap_table(KeyedArray, identity, table, value, names...; kw...)
+    else
+        _wrap_table(NamedDimsArray, identity, table, value, names...; kw...)
+    end
+end
+
+"""
+    wrapdims(df, UniqueVector, :val, :x, :y)
+
+Converts at Tables.jl table to a `KeyedArray` + `NamedDimsArray` pair,
+using column `:val` for values, and columns `:x, :y` for names & keys.
+Optional 2nd argument applies this type to all the key-vectors.
+"""
+function wrapdims(table, KT::Type, value::Symbol, names::Symbol...; kw...)
+    if nameouter() == false
+        _wrap_table(KeyedArray, KT, table, value, names...; kw...)
+    else
+        _wrap_table(NamedDimsArray, KT, table, value, names...; kw...)
+    end
+end
+
+function _wrap_table(AT::Type, KT, table, value::Symbol, names::Symbol...; default=undef, sort::Bool=false, kwargs...)
+    # get columns of the input table source
+    cols = Tables.columns(table)
+
+    # Extract key columns
+    pairs = map(names) do k
+        col = unique(Tables.getcolumn(cols, k))
+        sort && Base.sort!(col)
+        return k => KT(col)
+    end
+
+    # Extract data/value column
+    vals = Tables.getcolumn(cols, value)
+
+    # Initialize the KeyedArray
+    sz = length.(last.(pairs))
+    if default === undef
+        data = similar(vals, sz)
+    else
+        data = similar(vals, Union{eltype(vals), typeof(default)}, sz)
+        fill!(data, default)
+    end
+    A = AT(data; pairs...)
+
+    populate!(A, table, value; kwargs...)
+    return A
+end
