@@ -39,13 +39,18 @@ end
         @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
     end
     @testset "sink" begin
-        A = KeyedArray(rand(24, 11, 3); :time => 0:23, :loc => -5:5, :id => ["a", "b", "c"])
+        A = KeyedArray(rand(24, 11, 3); time = 0:23, loc = -5:5, id = ["a", "b", "c"])
         table = Tables.columntable(A)
 
         # Test fully constructing from a table
         # Common when working with adhoc data
         B = wrapdims(table, :value, :time, :loc, :id)
         @test B == A
+
+        # Test wrapping of key vectors, and wrong order:
+        U = wrapdims(table, UniqueVector, :value, :id, :time, :loc)
+        @test axiskeys(U, :time) isa UniqueVector
+        @test U(time=3, id="b") == A(time=3, id="b")
 
         # Test populating an existing array (e.g., expected data based on calculated targets/offsets)
         C = KeyedArray(
@@ -60,13 +65,17 @@ end
 
         # Constructing a NamedDimsArray with different default value and table type
         # Partial populating
-        table = Tables.rowtable(A)
-        n = length(table)
+        r_table = Tables.rowtable(A)
+        n = length(r_table)
         idx = rand(Bool, n)
-        D = wrapdims(table[idx], :value, :time, :loc, :id; default=missing)
+        D = wrapdims(r_table[idx], :value, :time, :loc, :id; default=missing)
         # dimnames should still match, but we'll have missing values
         @test dimnames(D) == dimnames(A)
         @test any(ismissing, D)
+
+        # BTW, this is why it's a method of wrapdims, not KeyedArray:
+        # @code_warntype wrapdims(table, :value, :time, :loc, :id) # ::Any
+        # @code_warntype wrapdims(r_table[idx], :value, :time, :loc, :id; default=missing)
 
         # Construction with invalid columns error as expected, but the specific error is
         # dependent on the table type.
@@ -82,7 +91,7 @@ end
         # Construction with duplicates
         # ERROR: ArgumentError: Key (Date("2019-01-01"), -5) is not unique
         @test_throws ArgumentError wrapdims(table, :value, :time, :loc)
-        @test wrapdims(table, :value, :time, :loc; force=true) == C(:, :, Key("c"))
+        @test wrapdims(r_table, :value, :time, :loc; force=true) == C(:, :, Key("c"))
     end
 end
 @testset "stack" begin
