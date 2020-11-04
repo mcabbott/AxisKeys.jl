@@ -236,9 +236,10 @@ Function `align` permutes dimensions automatically,
 and macro `@named` can introduce this into broadcasting expressions. 
 
 * [DimensionalData](https://github.com/rafaqz/DimensionalData.jl) is another replacement 
-for AxisArrays. It again uses types like `Dim{:name}` to store both name & keys, 
-plus some special ones like `X, Y` of the same abstract type (which must be in scope).
-Named lookup then looks like `DA[X <| At(13.0)]`, roughly like `A(x=13.0)` here.
+for AxisArrays. It again uses types like `Dim{:name}` to store both name & keys, although you
+can use `Symbol` keys that are converted to types internally.
+There are also some special ones like `X, Y` of the same abstract type (which must be in scope).
+Named lookup can use tyeps or symbols, and looks like `DA[x=13.0]`, similar to `A(x=13.0)` here.
 
 * [AxisIndices](https://github.com/Tokazama/AxisIndices.jl) differs mainly by storing 
 the keys with the axes in its own `Axis` type. This is returned by `Base.axes(A)` 
