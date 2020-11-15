@@ -38,6 +38,14 @@ haskeys(A) = false
 keys_or_axes(A) = haskeys(A) ? axiskeys(A) : axes(A)
 keys_or_axes(A, d) = haskeys(A) ? axiskeys(A, d) : axes(A, d)
 
+# Double un-wrappers:
+
+keyless_unname(A::NdaKa) = parent(parent(A))
+keyless_unname(A::KaNda) = parent(parent(A))
+keyless_unname(A::NamedDimsArray) = parent(A)
+keyless_unname(A::KeyedArray) = parent()
+keyless_unname(A) = A
+
 # Re-constructors:
 
 function KeyedArray(A::NdaKa, r2::Tuple)
