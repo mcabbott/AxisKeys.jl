@@ -84,7 +84,7 @@ end
 findindex(a::Colon, r::AbstractArray) = Colon()
 
 findindex(a::Union{AbstractArray, Base.Generator}, r::AbstractArray) =
-    reduce(vcat, [findindex(x, r) for x in a])
+    [findindex(x, r) for x in a]
 
 findindex(f::Function, r::AbstractArray) = findall(f, r)
 

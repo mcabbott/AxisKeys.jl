@@ -31,6 +31,7 @@ using Test, AxisKeys
 
     @test axiskeys(R[[3,1,1], :]) == (['c','a','a'], 10:10:40) # repeated
     @test axiskeys(R(['c','a','a'], :)) == (['c','a','a'], 10:10:40)
+    @test axiskeys(R(['c'])) == (['c'], 10:10:40) # issue #35, don't drop length 1 dim.
 
     @test_throws Exception R(:nope) # ideally ArgumentError
     @test_throws Exception R('z')   # ideally BoundsError?
