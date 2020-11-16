@@ -70,9 +70,8 @@ for fun in [:cov, :cor] # Returned the axes work are different for cov and cor
         numerical_dim = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
         data = $fun(parent(A); dims=numerical_dim, kwargs...)
         # Use same remaining axis for both dimensions of data
-        rem_dim = numerical_dim == 1 ? 2 : 1
-        new_keys = Tuple(copy(axiskeys(A, rem_dim)) for i in 1:2)
-        return KeyedArray(data, new_keys)
+        rem_key = axiskeys(A, 3-numerical_dim)
+        KeyedArray(data, (copy(rem_key), copy(rem_key)))
     end
 end
 
