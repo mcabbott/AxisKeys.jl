@@ -13,6 +13,9 @@ NdaKaVoM{L,T} = Union{NamedDimsArray{L,T,1,<:KeyedArray}, NamedDimsArray{L,T,2,<
 NamedDims.dimnames(A::KaNda{L}) where {L} = L
 NamedDims.dimnames(A::KaNda{L,T,N}, d::Int) where {L,T,N} = d <= N ? L[d] : :_
 
+# Special case `dim` for KeyedArrays around NamedDimsArrays.
+NamedDims.dim(A::KaNda{L}, name) where {L} = NamedDims.dim(L, name)
+
 Base.axes(A::KaNda{L}, s::Symbol) where {L} = axes(A, NamedDims.dim(L,s))
 Base.size(A::KaNda{L,T,N}, s::Symbol) where {T,N,L} = size(A, NamedDims.dim(L,s))
 

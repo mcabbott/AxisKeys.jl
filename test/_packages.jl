@@ -198,7 +198,6 @@ end
     A_ka = KeyedArray(A, (0:3, [:a, :b, :c]))
     A_kanda = KeyedArray(A; time = 0:3, id = [:a, :b, :c])
     wv = aweights(rand(4))
-    kwv = KeyedArray(wv; time = 0:3)
 
     @testset "$f" for f in (mean, std, var)
         R = f == mean ? f(A, wv; dims=1) : f(A, wv, 1; corrected=true)
@@ -206,46 +205,38 @@ end
         R_ka = f(A_ka, wv; dims=1)
         R_kanda_int = f(A_kanda, wv; dims=1)
         R_kanda_sym = f(A_kanda, wv; dims=:time)
-        R_kanda_kwv = f(A_kanda, kwv; dims=:time)
         expected_keys = (Base.OneTo(1), [:a, :b, :c])
         expected_names = (:time, :id)
 
-        @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == dimnames(R_kanda_kwv) == expected_names
-        @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == axiskeys(R_kanda_kwv) == expected_keys
-        @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ parent(parent(R_kanda_kwv)) ≈ R
+        @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == expected_names
+        @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == expected_keys
+        @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ R
     end
 
     @testset "$f" for f in (cov, cor, scattermat)
         # Inconsistent statsbase behaviour
-        R = if f == cov
-            f(A, wv, 1; corrected=true)
-        elseif f == scattermat
-            f(A, wv; dims=1)
-        else
-            f(A, wv, 1)
-        end
+        kwargs = f === cov ? [:corrected => true] : []
+        R = f === scattermat ? f(A, wv; dims=1, kwargs...) : f(A, wv, 1; kwargs...)
 
-        R_ka = f(A_ka, wv; dims=1)
-        R_kanda_int = f(A_kanda, wv; dims=1)
-        R_kanda_sym = f(A_kanda, wv; dims=:time)
-        R_kanda_kwv = f(A_kanda, kwv; dims=:time)
+        R_ka = f(A_ka, wv; dims=1, kwargs...)
+        R_kanda_int = f(A_kanda, wv; dims=1, kwargs...)
+        R_kanda_sym = f(A_kanda, wv; dims=:time, kwargs...)
         expected_keys = ([:a, :b, :c], [:a, :b, :c])
         expected_names = (:id, :id)
 
-        @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == dimnames(R_kanda_kwv) == expected_names
-        @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == axiskeys(R_kanda_kwv) == expected_keys
-        @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ parent(parent(R_kanda_kwv)) ≈ R
+        @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == expected_names
+        @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == expected_keys
+        @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ R
     end
 
     @testset "$f" for f in (mean_and_var, mean_and_std, mean_and_cov)
         R1, R2 = f(A, wv, 1; corrected=true)
-        R1_ka, R2_ka = f(A_ka, wv; dims=1)
-        R1_kanda_int, R2_kanda_int = f(A_kanda, wv; dims=1)
-        R1_kanda_sym, R2_kanda_sym = f(A_kanda, wv; dims=:time)
-        R1_kanda_kwv, R2_kanda_kwv = f(A_kanda, kwv; dims=:time)
+        R1_ka, R2_ka = f(A_ka, wv; dims=1, corrected=true)
+        R1_kanda_int, R2_kanda_int = f(A_kanda, wv; dims=1, corrected=true)
+        R1_kanda_sym, R2_kanda_sym = f(A_kanda, wv; dims=:time, corrected=true)
 
-        @test parent(R1_ka) ≈ parent(parent(R1_kanda_int)) ≈ parent(parent(R1_kanda_sym)) ≈ parent(parent(R1_kanda_kwv)) ≈ R1
-        @test parent(R2_ka) ≈ parent(parent(R2_kanda_int)) ≈ parent(parent(R2_kanda_sym)) ≈ parent(parent(R2_kanda_kwv)) ≈ R2
+        @test parent(R1_ka) ≈ parent(parent(R1_kanda_int)) ≈ parent(parent(R1_kanda_sym)) ≈ R1
+        @test parent(R2_ka) ≈ parent(parent(R2_kanda_int)) ≈ parent(parent(R2_kanda_sym)) ≈ R2
     end
 
     @testset "conversions" begin
@@ -284,13 +275,12 @@ end
             R_ka = cov(ce, A_ka, wv; dims=1)
             R_kanda_int = cov(ce, A_kanda, wv; dims=1)
             R_kanda_sym = cov(ce, A_kanda, wv; dims=:time)
-            R_kanda_kwv = cov(ce, A_kanda, kwv; dims=:time)
             expected_keys = ([:a, :b, :c], [:a, :b, :c])
             expected_names = (:id, :id)
 
-            @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == dimnames(R_kanda_kwv) == expected_names
-            @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == axiskeys(R_kanda_kwv) == expected_keys
-            @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ parent(parent(R_kanda_kwv)) ≈ R
+            @test dimnames(R_kanda_int) == dimnames(R_kanda_sym) == expected_names
+            @test axiskeys(R_ka) == axiskeys(R_kanda_int) == axiskeys(R_kanda_sym) == expected_keys
+            @test parent(R_ka) ≈ parent(parent(R_kanda_int)) ≈ parent(parent(R_kanda_sym)) ≈ R
         end
     end
 end
