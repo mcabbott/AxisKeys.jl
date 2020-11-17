@@ -108,10 +108,10 @@ if VERSION >= v"1.1"
 end
 
 function Base.mapslices(f, A::KeyedArray; dims)
-    data = mapslices(f, parent(A); dims=dims)
     numerical_dims = NamedDims.dim(A, dims)
+    data = mapslices(f, parent(A); dims=numerical_dims)
     new_keys = ntuple(ndims(A)) do d
-        d in dims ? axes(data,d) : copy(axiskeys(A, d))
+        d in numerical_dims ? axes(data,d) : copy(axiskeys(A, d))
     end
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
@@ -351,11 +351,7 @@ for fun in [:inv, :pinv,
     @eval LinearAlgebra.$fun(A::KeyedMatrix) = $fun(parent(A))
 end
 
-function LinearAlgebra.cholesky(A::Hermitian{T, <:KeyedArray{T}}; kwargs...) where T
-    return cholesky(parent(A); kwargs...)
-end
-
-function LinearAlgebra.cholesky(A::KeyedMatrix; kwargs...)
-    data = hasnames(A) ? parent(parent(A)) : parent(A)
-    return cholesky(data; kwargs...)
-end
+LinearAlgebra.cholesky(A::Hermitian{T, <:KeyedArray{T}}; kwargs...) where {T} =
+    cholesky(parent(A); kwargs...)
+LinearAlgebra.cholesky(A::KeyedMatrix; kwargs...) =
+    cholesky(keyless_unname(A); kwargs...)

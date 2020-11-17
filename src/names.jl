@@ -8,12 +8,11 @@ KaNda{L,T,N} = KeyedArray{T,N,<:NamedDimsArray{L,T,N}}
 NdaKaVoM{L,T} = Union{NamedDimsArray{L,T,1,<:KeyedArray}, NamedDimsArray{L,T,2,<:KeyedArray}}
 # NdaKaV{L,T} = NamedDimsArray{L,T,1,<:KeyedArray{T,1}}
 
-# NamedDims now uses dimnames, which behaves like size(A,d), axes(A,d) etc.
+# NamedDims functionality:
 
 NamedDims.dimnames(A::KaNda{L}) where {L} = L
 NamedDims.dimnames(A::KaNda{L,T,N}, d::Int) where {L,T,N} = d <= N ? L[d] : :_
 
-# Special case `dim` for KeyedArrays around NamedDimsArrays.
 NamedDims.dim(A::KaNda{L}, name) where {L} = NamedDims.dim(L, name)
 
 Base.axes(A::KaNda{L}, s::Symbol) where {L} = axes(A, NamedDims.dim(L,s))
@@ -46,7 +45,7 @@ keys_or_axes(A, d) = haskeys(A) ? axiskeys(A, d) : axes(A, d)
 keyless_unname(A::NdaKa) = parent(parent(A))
 keyless_unname(A::KaNda) = parent(parent(A))
 keyless_unname(A::NamedDimsArray) = parent(A)
-keyless_unname(A::KeyedArray) = parent()
+keyless_unname(A::KeyedArray) = parent(A)
 keyless_unname(A) = A
 
 # Re-constructors:

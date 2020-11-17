@@ -1,5 +1,5 @@
-using StatsBase
 
+using StatsBase
 
 # Support some of the weighted statistics function in StatsBase
 # NOTES:
@@ -28,38 +28,37 @@ end
 for fun in [:cov, :cor]
     @eval function Statistics.$fun(A::KeyedMatrix, wv::AbstractWeights; dims=1, kwargs...)
         d = NamedDims.dim(A, dims)
-        data = $fun(unname(keyless(A)), wv, d; kwargs...)
+        data = $fun(keyless_unname(A), wv, d; kwargs...)
         L1 = dimnames(A, 3 - d)
         data2 = hasnames(A) ? NamedDimsArray(data, (L1, L1)) : data
         K1 = axiskeys(A, 3 - d)
-        return KeyedArray(data2, (copy(K1), copy(K1)))
+        KeyedArray(data2, (copy(K1), copy(K1)))
     end
 end
 
 # scattermat is a StatsBase function and takes dims as a kwarg
 function StatsBase.scattermat(A::KeyedMatrix, wv::AbstractWeights; dims=1, kwargs...)
     d = NamedDims.dim(A, dims)
-    data = scattermat(unname(keyless(A)), wv; dims=d, kwargs...)
+    data = scattermat(keyless_unname(A), wv; dims=d, kwargs...)
     L1 = dimnames(A, 3 - d)
     data2 = hasnames(A) ? NamedDimsArray(data, (L1, L1)) : data
     K1 = axiskeys(A, 3 - d)
-    return KeyedArray(data2, (copy(K1), copy(K1)))
+    KeyedArray(data2, (copy(K1), copy(K1)))
 end
 
 for fun in (:std, :var, :cov)
     full_name = Symbol("mean_and_$fun")
-
-    @eval function StatsBase.$full_name(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=true, kwargs...)
-        return (
+    @eval StatsBase.$full_name(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=true, kwargs...) =
+        (
             mean(A, wv...; dims=dims, kwargs...),
             $fun(A, wv...; dims=dims, corrected=corrected, kwargs...)
         )
-    end
 end
 
 # Since we get ambiguity errors with specific implementations we need to wrap each supported method
 # A better approach might be to add `NamedDims` support to CovarianceEstimators.jl in the future.
 using CovarianceEstimation
+
 estimators = [
     :SimpleCovariance,
     :LinearShrinkage,
@@ -74,10 +73,10 @@ estimators = [
 for estimator in estimators
     @eval function Statistics.cov(ce::$estimator, A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=1, kwargs...)
         d = NamedDims.dim(A, dims)
-        data = cov(ce, unname(keyless(A)), wv...; dims=d, kwargs...)
+        data = cov(ce, keyless_unname(A), wv...; dims=d, kwargs...)
         L1 = dimnames(A, 3 - d)
         data2 = hasnames(A) ? NamedDimsArray(data, (L1, L1)) : data
         K1 = axiskeys(A, 3 - d)
-        return KeyedArray(data2, (copy(K1), copy(K1)))
+        KeyedArray(data2, (copy(K1), copy(K1)))
     end
 end
