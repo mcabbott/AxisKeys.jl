@@ -1,6 +1,7 @@
 # AxisKeys.jl
 
-[![Build Status](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.com/mcabbott/AxisKeys.jl)
+[![Travis CI](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.com/mcabbott/AxisKeys.jl)
+[![Github CI](https://github.com/mcabbott/AxisKeys.jl/workflows/CI/badge.svg)](https://github.com/mcabbott/AxisKeys.jl/actions?query=workflow%3ACI+branch%3Amaster)
 
 <!--<img src="docs/readmefigure.png" alt="block picture" width="400" align="right">-->
 
@@ -142,6 +143,10 @@ while `A.keys isa Tuple` for matrices & higher. But `axiskeys(A)` always returns
 
 * The [Tables.jl](https://github.com/JuliaData/Tables.jl) interface is supported,
   with `wrapdims(df, :val, :x, :y)` creating a matrix from 3 columns.
+
+* Some [StatsBase.jl](https://github.com/JuliaStats/StatsBase.jl) and 
+  [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) functions 
+  are supported. ([PR#28](https://github.com/mcabbott/AxisKeys.jl/pull/28).)
 
 * [FFTW](https://github.com/JuliaMath/FFTW.jl)`.fft` transforms the keys; 
   if these are times such as [Unitful](https://github.com/PainterQubits/Unitful.jl)`.s` 
