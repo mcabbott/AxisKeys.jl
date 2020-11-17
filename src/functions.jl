@@ -37,7 +37,7 @@ tuple_flatten() = ()
 
 function Base.mapreduce(f, op, A::KeyedArray; dims=:, kwargs...) # sum, prod, etc
     dims === Colon() && return mapreduce(f, op, parent(A))
-    numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    numerical_dims = NamedDims.dim(A, dims)
     data = mapreduce(f, op, parent(A); dims=numerical_dims, kwargs...)
     new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
     return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
@@ -47,7 +47,7 @@ using Statistics
 for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be handled better?
     @eval function Statistics.$fun(A::KeyedArray; dims=:, kwargs...)
         dims === Colon() && return $fun(parent(A))
-        numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+        numerical_dims = NamedDims.dim(A, dims)
         data = $fun(parent(A); dims=numerical_dims, kwargs...)
         new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
         return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
@@ -58,7 +58,7 @@ end
 if VERSION >= v"1.3"
     @eval function Statistics.mean(f, A::KeyedArray; dims=:, kwargs...)
         dims === Colon() && return mean(f, parent(A))
-        numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+        numerical_dims = NamedDims.dim(A, dims)
         data = mean(f, parent(A); dims=numerical_dims, kwargs...)
         new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
         return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
@@ -67,7 +67,7 @@ end
 
 for fun in [:cov, :cor] # Returned the axes work are different for cov and cor
     @eval function Statistics.$fun(A::KeyedMatrix; dims=1, kwargs...)
-        numerical_dim = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+        numerical_dim = NamedDims.dim(A, dims)
         data = $fun(parent(A); dims=numerical_dim, kwargs...)
         # Use same remaining axis for both dimensions of data
         rem_key = axiskeys(A, 3-numerical_dim)
@@ -76,7 +76,7 @@ for fun in [:cov, :cor] # Returned the axes work are different for cov and cor
 end
 
 function Base.dropdims(A::KeyedArray; dims)
-    numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    numerical_dims = NamedDims.dim(A, dims)
     data = dropdims(parent(A); dims=dims)
     new_keys = key_skip(axiskeys(A), numerical_dims...)
     KeyedArray(data, new_keys)#, A.meta)
@@ -97,7 +97,7 @@ end
 if VERSION >= v"1.1"
     # This copies the implementation from Base, except with numerical_dims:
     @inline function Base.eachslice(A::KeyedArray; dims)
-        numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+        numerical_dims = NamedDims.dim(A, dims)
         length(numerical_dims) == 1 || throw(ArgumentError("only single dimensions are supported"))
         dim = first(numerical_dims)
         dim <= ndims(A) || throw(DimensionMismatch("A doesn't have $dim dimensions"))
@@ -108,8 +108,8 @@ if VERSION >= v"1.1"
 end
 
 function Base.mapslices(f, A::KeyedArray; dims)
-    numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
     data = mapslices(f, parent(A); dims=dims)
+    numerical_dims = NamedDims.dim(A, dims)
     new_keys = ntuple(ndims(A)) do d
         d in dims ? axes(data,d) : copy(axiskeys(A, d))
     end
@@ -178,7 +178,7 @@ key_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
 key_vcat(a,b,cs...) = key_vcat(key_vcat(a,b),cs...)
 
 function Base.sort(A::KeyedArray; dims, kw...)
-    dims′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    dims′ = NamedDims.dim(A, dims)
     data = sort(parent(A); dims=dims′, kw...)
     # sorts each (say) col independently, thus keys along them loses meaning.
     new_keys = ntuple(d -> d==dims′ ? OneTo(size(A,d)) : axiskeys(A,d), ndims(A))
@@ -210,7 +210,7 @@ Works along any number of dimensions, by detault all of them.
 
 @doc sort_doc
 function Base.sortslices(A::KeyedArray; dims, by=vec, kw...)
-    dim′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    dim′ = NamedDims.dim(A, dims)
     perms = ntuple(ndims(A)) do d
         d in dim′ || return Colon()
         sortperm(collect(eachslice(parent(A), dims=dim′)); by=by, kw...)
@@ -232,7 +232,7 @@ end
 
 @doc sort_doc
 function sortkeys(A::Union{KeyedArray, NdaKa}; dims=1:ndims(A), kw...)
-    dims′ = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    dims′ = NamedDims.dim(A, dims)
     perms = ntuple(ndims(A)) do d
         d in dims′ || return Colon()
         axiskeys(A,d) isa AbstractUnitRange && return Colon() # avoids OneTo(n) -> 1:n

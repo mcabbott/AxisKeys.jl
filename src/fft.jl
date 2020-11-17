@@ -11,7 +11,7 @@ using AbstractFFTs
 
 for fun in [:fft, :ifft, :bfft, :rfft]
     @eval function AbstractFFTs.$fun(A::Union{KeyedArray,NdaKa}, dims = ntuple(+,ndims(A)))
-        numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+        numerical_dims = NamedDims.dim(A, dims)
         data = $fun(keyless(A), numerical_dims)
         keys = fft_keys($fun, A, numerical_dims, data)
         KeyedArray(data, keys)
@@ -19,7 +19,7 @@ for fun in [:fft, :ifft, :bfft, :rfft]
 end
 
 function AbstractFFTs.irfft(A::Union{KeyedArray,NdaKa}, len::Integer, dims = ntuple(+,ndims(A)))
-    numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+    numerical_dims = NamedDims.dim(A, dims)
     data = irfft(keyless(A), len, numerical_dims)
     keys = fft_keys(irfft, A, numerical_dims, data)
     KeyedArray(data, keys)
@@ -27,7 +27,7 @@ end
 
 for shift in [:fftshift, :ifftshift]
     @eval function AbstractFFTs.$shift(A::Union{KeyedArray,NdaKa}, dims = ntuple(+,ndims(A)))
-        numerical_dims = hasnames(A) ? NamedDims.dim(dimnames(A), dims) : dims
+        numerical_dims = NamedDims.dim(A, dims)
         data = $shift(keyless(A), numerical_dims)
         keys = ntuple(ndims(A)) do d
             k = axiskeys(A,d)
