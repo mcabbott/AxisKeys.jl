@@ -8,7 +8,7 @@ using StatsBase
 #   https://github.com/JuliaLang/Statistics.jl/pull/2
 function Statistics.mean(A::KeyedArray, wv::AbstractWeights; dims=:, kwargs...)
     dims === Colon() && return mean(parent(A), wv; kwargs...)
-    numerical_dims = AxisKeys.NamedDims.dim(A, dims)
+    numerical_dims = NamedDims.dim(A, dims)
     data = mean(parent(A), wv; dims=numerical_dims, kwargs...)
     new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
     return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
@@ -18,7 +18,7 @@ end
 for fun in [:var, :std]
     @eval function Statistics.$fun(A::KeyedArray, wv::AbstractWeights; dims=:, corrected=true, kwargs...)
         dims === Colon() && return $fun(parent(A), wv; kwargs...)
-        numerical_dims = AxisKeys.NamedDims.dim(A, dims)
+        numerical_dims = NamedDims.dim(A, dims)
         data = $fun(parent(A), wv, numerical_dims; corrected=corrected, kwargs...)
         new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
         return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
