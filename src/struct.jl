@@ -50,26 +50,6 @@ axiskeys(x::KeyedVector) = tuple(getindex(getfield(x, :keys)))
 axiskeys(x::KeyedArray, d::Int) = d<=ndims(x) ? getindex(axiskeys(x), d) : OneTo(1)
 axiskeys(x::KeyedVector, d::Int) = d==1 ? getindex(getfield(x, :keys)) : OneTo(1)
 
-"""
-    named_axiskeys(arr)::NamedTuple
-
-Return the [`axiskeys`](@ref) along with their names.
-If there are duplicate names or unnamed axes, an error is thrown.
-
-```jldoctest
-julia> using AxisKeys
-
-julia> arr = KeyedArray([1 2], x=[1], y=[2,3]);
-
-julia> named_axiskeys(arr)
-(x = [1], y = [2, 3])
-```
-"""
-function named_axiskeys(arr)::NamedTuple
-    NT = NamedTuple{dimnames(arr)}
-    return NT(axiskeys(arr))
-end
-
 Base.IndexStyle(A::KeyedArray) = IndexStyle(parent(A))
 
 Base.eachindex(A::KeyedArray) = eachindex(parent(A))

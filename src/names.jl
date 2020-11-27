@@ -130,3 +130,23 @@ function NamedDims.NamedDimsArray(A::AbstractArray; kw...)
     map(x -> axes(x, 1), R) == axes(A) || throw(ArgumentError("axes of keys must match axes of array"))
     NamedDimsArray(KeyedArray(A, R), L)
 end
+
+"""
+    named_axiskeys(arr)::NamedTuple
+
+Return the [`axiskeys`](@ref) along with their names.
+If there are duplicate names or unnamed axes, an error is thrown.
+
+```jldoctest
+julia> using AxisKeys
+
+julia> arr = KeyedArray([1 2], x=[1], y=[2,3]);
+
+julia> named_axiskeys(arr)
+(x = [1], y = [2, 3])
+```
+"""
+function named_axiskeys(arr)::NamedTuple
+    NT = NamedTuple{dimnames(arr)}
+    return NT(axiskeys(arr))
+end

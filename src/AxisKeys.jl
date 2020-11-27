@@ -1,12 +1,12 @@
 module AxisKeys
 
 include("struct.jl")
-export KeyedArray, axiskeys, named_axiskeys
+export KeyedArray, axiskeys
 
 include("lookup.jl")
 
 include("names.jl")
-export NamedDimsArray, dimnames
+export NamedDimsArray, dimnames, named_axiskeys
 
 include("wrap.jl")
 export wrapdims
