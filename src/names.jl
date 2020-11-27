@@ -63,9 +63,9 @@ end
 # getproperty: it's useful to say for `(i,t) in enumerate(A.time)` etc.
 # This will make saying ".data" slow (by 30ns), fixed in NamedDims.jl#78
 
-Base.propertynames(A::NdaKa{L}, private=false) where {L} =
+Base.propertynames(A::NdaKa{L}, private::Bool=false) where {L} =
     private ? (L..., fieldnames(typeof(A))...) : L
-Base.propertynames(A::KaNda{L}, private=false) where {L} =
+Base.propertynames(A::KaNda{L}, private::Bool=false) where {L} =
     private ? (L..., fieldnames(typeof(A))...) : L
 
 Base.getproperty(A::NdaKa{L}, s::Symbol) where {L} =
