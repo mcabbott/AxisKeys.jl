@@ -1,7 +1,7 @@
 module AxisKeys
 
 include("struct.jl")
-export KeyedArray, axiskeys
+export KeyedArray, axiskeys, named_axiskeys
 
 include("lookup.jl")
 

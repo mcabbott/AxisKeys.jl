@@ -63,7 +63,21 @@ using Test, AxisKeys
     @test_throws Exception wrapdims(rand(5), ['a','b','c'])
     @test_throws Exception KeyedArray(rand(5), ['a','b','c'])
 
+    @testset "named_axiskeys" begin
+        arr = KeyedArray(randn(2,3), a=1:2, b=1:3)
+        @inferred named_axiskeys(arr)
+        @test named_axiskeys(arr) === (a=1:2, b=1:3)
+        @test Tuple(named_axiskeys(arr)) === axiskeys(arr)
+
+        nonames = KeyedArray(randn(2,3), (1:2, 1:3))
+        @test_throws ErrorException named_axiskeys(nonames)
+
+        v = KeyedArray(randn(3), x=1:3)
+        dupnames = v .+ v'
+        @test_throws ErrorException named_axiskeys(dupnames)
+    end
 end
+
 @testset "selectors" begin
 
     V = wrapdims(rand(Int8, 11), 0:0.1:1)
