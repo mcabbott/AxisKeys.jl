@@ -140,13 +140,13 @@ If there are duplicate names or unnamed axes, an error is thrown.
 ```jldoctest
 julia> using AxisKeys
 
-julia> arr = KeyedArray([1 2], x=[1], y=[2,3]);
+julia> arr = KeyedArray(rand(1,3), x=[1], y=[2,3,4]);
 
 julia> named_axiskeys(arr)
-(x = [1], y = [2, 3])
+(x = [1], y = [2, 3, 4])
 ```
 """
-function named_axiskeys(arr)::NamedTuple
-    NT = NamedTuple{dimnames(arr)}
-    return NT(axiskeys(arr))
+function named_axiskeys(A::AbstractArray)
+    NT = NamedTuple{dimnames(A)}
+    NT(axiskeys(A))
 end
