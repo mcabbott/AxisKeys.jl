@@ -14,7 +14,7 @@ function LazyStack.rewrap_like(A, a::NamedTuple)
 end
 
 # tuple of arrays
-function LazyStack.stack(x::AT) where {AT <: Tuple{Vararg{KeyedArray{T,IN}}}} where {T,IN}
+function LazyStack.stack(x::Tuple{Vararg{<:KeyedArray}})
     KeyedArray(LazyStack.stack(map(parent, x)), stack_keys(x))
 end
 
