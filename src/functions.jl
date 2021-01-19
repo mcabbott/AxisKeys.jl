@@ -116,6 +116,10 @@ function Base.mapslices(f, A::KeyedArray; dims)
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
 
+function Base.selectdim(A::KeyedArray, s::Symbol, i)
+    return selectdim(A, NamedDims.dim(dimnames(A), s), i)
+end
+
 for (T, S) in [(:KeyedVecOrMat, :KeyedVecOrMat), # KeyedArray gives ambiguities
     (:KeyedVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :KeyedVecOrMat),
     (:NdaKaVoM, :NdaKaVoM),
