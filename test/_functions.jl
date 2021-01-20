@@ -46,6 +46,8 @@ A3 = wrapdims(rand(Int8, 3,4,2), r='a':'c', c=2:5, p=[10.0, 20.0])
         @test axiskeys(first(eachslice(M, dims=:r))) === (2:5,)
     end
 
+    @test axiskeys(selectdim(M, :r, [true, false, true])) == (['a', 'c'], 2:5)
+
     # mapslices
     @test axiskeys(mapslices(identity, M, dims=1)) === (Base.OneTo(3), 2:5)
     @test axiskeys(mapslices(sum, M, dims=1)) === (Base.OneTo(1), 2:5)
