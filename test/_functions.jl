@@ -60,8 +60,12 @@ A3 = wrapdims(rand(Int8, 3,4,2), r='a':'c', c=2:5, p=[10.0, 20.0])
         @test reshape(M, (4,3)) isa Array
         @test reshape(M, (2,:)) isa Array
     end
-
 end
+@testset "Regression test against https://github.com/mcabbott/AxisKeys.jl/issues/43" begin
+    z = KeyedArray(zeros(3); foo=[:a, :b, :c])
+    @test mapreduce(identity, +, z; init=10) == 10
+end
+
 @testset "sort" begin
 
     @test sort(V)(20) == V(20)
