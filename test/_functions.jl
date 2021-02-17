@@ -64,6 +64,11 @@ end
 @testset "Regression test against https://github.com/mcabbott/AxisKeys.jl/issues/43" begin
     z = KeyedArray(zeros(3); foo=[:a, :b, :c])
     @test mapreduce(identity, +, z; init=10) == 10
+
+    m = KeyedArray([1, 2, 3]; foo=[:a, :b, :c])
+    @test std(m; corrected=false) == std([1, 2, 3]; corrected=false)
+
+
 end
 
 @testset "sort" begin
