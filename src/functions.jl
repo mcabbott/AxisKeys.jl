@@ -46,7 +46,7 @@ end
 using Statistics
 for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be handled better?
     @eval function Statistics.$fun(A::KeyedArray; dims=:, kwargs...)
-        dims === Colon() && return $fun(parent(A))
+        dims === Colon() && return $fun(parent(A); kwargs...)
         numerical_dims = NamedDims.dim(A, dims)
         data = $fun(parent(A); dims=numerical_dims, kwargs...)
         new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
@@ -57,7 +57,7 @@ end
 # Handle function interface for `mean` only
 if VERSION >= v"1.3"
     @eval function Statistics.mean(f, A::KeyedArray; dims=:, kwargs...)
-        dims === Colon() && return mean(f, parent(A))
+        dims === Colon() && return mean(f, parent(A); kwargs...)
         numerical_dims = NamedDims.dim(A, dims)
         data = mean(f, parent(A); dims=numerical_dims, kwargs...)
         new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
