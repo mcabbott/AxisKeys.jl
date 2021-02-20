@@ -87,9 +87,10 @@ for (get_or_view, key_get, maybe_copy) in [
             KeyedArray(data, new_keys)
         end
 
-        # drop all, for A[:] and A[A .> 0] with ndims>=2
+        # drop all, for A[:] or A[A .> 0] or A[1:2], with ndims>=2
         @inline $key_get(keys::Tuple{Any, Any, Vararg{Any}}, inds::Tuple{Base.LogicalIndex}) = ()
         @inline $key_get(keys::Tuple{Any, Any, Vararg{Any}}, inds::Tuple{Base.Slice}) = ()
+        @inline $key_get(keys::Tuple{Any, Any, Vararg{Any}}, inds::Tuple{AbstractVector{<:Integer}}) = ()
 
         # drop one, for integer index
         @inline $key_get(keys::Tuple, inds::Tuple{Integer, Vararg{Any}}) =

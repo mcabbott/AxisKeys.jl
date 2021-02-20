@@ -22,7 +22,8 @@ using Test, AxisKeys
     @test (R[2,:] .= 1:4) isa SubArray # dotview
     @test R[2,:] == KeyedArray(1:4, (10:10:40,))
 
-    @test R[:] == vec(R.data)
+    @test R[1:end] == R[:] == vec(R.data)
+    @test R[1:end] isa Vector  # issue #48
     @test R[1:2, 1, 1] == R.data[1:2, 1, 1]
     @test axiskeys(R[:, [0.9,0.1,0.9,0.1] .> 0.5],2) == [10,30]
     @test ndims(R[R .> 0.5]) == 1
