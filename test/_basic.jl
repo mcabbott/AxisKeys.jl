@@ -175,6 +175,9 @@ end
         @test named_axiskeys(arr) === (a=1:2, b='a':'c')
         @test Tuple(named_axiskeys(arr)) === axiskeys(arr)
 
+        @test named_axiskeys(rename(arr, :a=>:x)) == (x=1:2, b='a':'c')
+        @test named_axiskeys(rename(arr, (:y, :z))) == (y=1:2, z='a':'c')
+
         nonames = KeyedArray(randn(2,3), (1:2, 'a':'c'))
         @test_throws ErrorException named_axiskeys(nonames)
 
