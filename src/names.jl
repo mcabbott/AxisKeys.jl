@@ -18,6 +18,8 @@ NamedDims.dim(A::KaNda{L}, name) where {L} = NamedDims.dim(L, name)
 Base.axes(A::KaNda{L}, s::Symbol) where {L} = axes(A, NamedDims.dim(L,s))
 Base.size(A::KaNda{L,T,N}, s::Symbol) where {T,N,L} = size(A, NamedDims.dim(L,s))
 
+NamedDims.rename(A::KaNda, names...) = KeyedArray(rename(parent(A), names...), axiskeys(A))
+
 # Extra complication to make wrappers commutative:
 
 hasnames(A::KaNda) = true
