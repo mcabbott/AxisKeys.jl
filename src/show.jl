@@ -78,29 +78,40 @@ function keyed_print_matrix(io::IO, A, reduce_size::Bool=false)
     end
 
     h, w = displaysize(io)
-    # If the matrix has millions of rows, avoid making huge ::Any array
-    ind1 = size(A,1) < h ? Colon() : vcat(1:(h÷2), size(A,1)-(h÷2):size(A,1))
     wn = w÷3 # integers take 3 columns each when printed, floats more
-    ind2 = size(A,2) < wn ? Colon() : vcat(1:(wn÷2), (wn÷2)+1:size(A,2))
 
     fakearray = if ndims(A) == 1
-        hcat(
-            ShowWith.(no_offset(axiskeys(A,1))[ind1]; color=colour(A,1)),
-            # showvec(A, 1, ind1),
-            getindex(no_offset(unname(keyless(A))), ind1) # avoid trailing index
-            )
+        top =    size(A,1) < h ? Colon() : (1:(h÷2))
+        bottom = size(A,1) < h ? (1:0)   : size(A,1)-(h÷2):size(A,1)
+        hcat(vcat(ShowWith.(no_offset(axiskeys(A,1))[top]; color=colour(A,1)),
+                  ShowWith.(no_offset(axiskeys(A,1))[bottom]; color=colour(A,1))),
+             vcat(getindex(no_offset(unname(keyless(A))), top),
+                  getindex(no_offset(unname(keyless(A))), bottom)))
     else
-        fakearray = hcat(
-            ShowWith.(no_offset(axiskeys(A,1))[ind1]; color=colour(A,1)),
-            # showvec(A, 1, ind1),
-            getindex(no_offset(unname(keyless(A))), ind1, ind2)
-            )
-        toprow = vcat(
-            ShowWith(0, hide=true),
-            ShowWith.(no_offset(axiskeys(A,2))[ind2]; color=colour(A,2)),
-            # showvec(A, 2, ind2),
-            )
-        fakearray = vcat(permutedims(toprow), fakearray)
+        top    = size(A,1) < h  ? Colon() : (1:(h÷2))
+        bottom = size(A,1) < h  ? (1:0)   : size(A,1)-(h÷2):size(A,1)
+        left   = size(A,2) < wn ? Colon() : (1:(wn÷2))
+        right  = size(A,2) < wn ? (1:0)   : size(A,2)-(wn÷2)+1:size(A,2)
+
+        topleft = hcat(ShowWith.(no_offset(axiskeys(A,1))[top]; color=colour(A,1)),
+                       getindex(no_offset(unname(keyless(A))), top, left))
+
+        bottomleft = hcat(ShowWith.(no_offset(axiskeys(A,1))[bottom]; color=colour(A,1)),
+                          getindex(no_offset(unname(keyless(A))), bottom, left))
+
+        leftblock = vcat(topleft, bottomleft)
+
+        bottomblock = hcat(leftblock,
+                           # right block
+                           vcat(getindex(no_offset(unname(keyless(A))), top, right),
+                                getindex(no_offset(unname(keyless(A))), bottom, right)))
+
+        # permute it so it becomes a row
+        toprow = permutedims(vcat(ShowWith(0, hide=true),
+                                  ShowWith.(no_offset(axiskeys(A,2))[left]; color=colour(A,2)),
+                                  ShowWith.(no_offset(axiskeys(A,2))[right]; color=colour(A,2))))
+
+        vcat(toprow, bottomblock)
     end
     Base.print_matrix(io, fakearray)
 end
