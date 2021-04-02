@@ -12,7 +12,8 @@ function _summary(io, x)
         hasnames(x) && printstyled(io, dimnames(x,d), " ∈ ", color=c)
         printstyled(io, length(axiskeys(x,d)), "-element ", shorttype(axiskeys(x,d)), "\n", color=c)
     end
-    print(io, "And data, ", summary(keyless(unname(x))))
+    print(io, "And data, ")
+    summary(io, keyless(unname(x)))
     if ndims(x)==1 && length(keys_or_axes(x, 1)) != length(x)
         throw(ArgumentError("length of keys, $(length(keys_or_axes(x, 1))), must match length of vector, $(length(x))! "))
     end
