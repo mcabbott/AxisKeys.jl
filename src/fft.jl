@@ -39,7 +39,7 @@ for shift in [:fftshift, :ifftshift]
 end
 
 # copy(fftfreq(10, 1)) isa Vector # perhaps that needs a method:
-Base.copy(x::Frequencies{<:Number}) = x
+# Base.copy(x::Frequencies{<:Number}) = x  # fixed in AbstractFFts 1.0
 
 fft_keys(f, A, dims, B) = ntuple(ndims(A)) do d
         k = axiskeys(A,d)
