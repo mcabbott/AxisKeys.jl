@@ -279,8 +279,7 @@ for fun in [:(==), :isequal, :isapprox]
     for (T, S) in [ (:KeyedArray, :KeyedArray), (:KeyedArray, :NdaKa), (:NdaKa, :KeyedArray) ]
         @eval function Base.$fun(A::$T, B::$S; kw...)
             # Ideally you would pass isapprox(, atol) into unifiable_keys?
-            unifiable_keys(axiskeys(A), axiskeys(B)) || return false
-            return $fun(keyless(A), keyless(B); kw...)
+            return $fun(keyless(A), keyless(B); kw...) && unifiable_keys(axiskeys(A), axiskeys(B))
         end
     end
 end
