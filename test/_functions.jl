@@ -248,6 +248,20 @@ end
     @test isequal(M, MN)
     @test M ≈ MN
 
+    # Arrays of different sizes
+    V = wrapdims(vec(data), r='a':'l')  # vectorised
+    A = wrapdims(reshape(data, 2, 2, 3), r=['a','b'], c=[1, 2], l=[:x, :y, :z])  # cube
+
+    @test M != V
+    @test M != A
+    @test V != A
+    @test !isequal(M, V)
+    @test !isequal(M, A)
+    @test !isequal(V, A)
+    @test !isapprox(M, V)
+    @test !isapprox(M, A)
+    @test !isapprox(V, A)
+
 end
 
 @testset "linalg" begin
