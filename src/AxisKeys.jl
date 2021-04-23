@@ -6,7 +6,7 @@ export KeyedArray, axiskeys
 include("lookup.jl")
 
 include("names.jl")
-export named_axiskeys
+export named_axiskeys, rekey
 export NamedDimsArray, dimnames, rename  # Reexport key NamedDimsArrays things
 
 include("wrap.jl")
