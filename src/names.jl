@@ -185,28 +185,22 @@ Rekey a KeyedArray via `Tuple`s, `dim => newkey`. If `A` also has named dimensio
 can also pass `dimname => newkey`, or even `oldname => newname => newkey` to both `rename`
 and `rekey` the specified dimension.
 """
-rekey(x::AbstractArray, k2::Tuple) = KeyedArray(keyless(x), k2)
-function rekey(x::AbstractArray, k2::Pair{<:Integer, <:AbstractVector}...)
+rekey(A::Union{KeyedArray, NdaKa}, k2::Tuple) = KeyedArray(keyless(A), k2)
+function rekey(A::Union{KeyedArray, NdaKa}, k2::Pair{<:Integer, <:AbstractVector}...)
     dims, vals = first.(k2), last.(k2)
-    new_key = map(enumerate(axiskeys(x))) do (i, k)
-        idx = findfirst(==(i), dims)
-        idx === nothing ? k : vals[idx]
+    new_key = ntuple(ndims(A)) do d
+        idx = findfirst(==(d), dims)
+        idx === nothing ? axiskeys(A, d) : vals[idx]
     end
-    return rekey(x, Tuple(new_key))
+    return rekey(A, new_key)
 end
 
-function rekey(
-    A::Union{NdaKa{L,T,N}, KaNda{L,T,N}},
-    k2::Pair{Symbol, <:AbstractVector}...
-) where {L,T,N}
-    dims = (NamedDims.dim(A, name) for name in first.(k2))
-    return rekey(A, Pair.(dims, last.(k2))...)
+function rekey(A::Union{KaNda, NdaKa}, k2::Pair{Symbol, <:AbstractVector}...)
+    pairs = map(p -> NamedDims.dim(A, p[1]) => p[2], k2)
+    return rekey(A, pairs...)
 end
 
-function rekey(
-    A::Union{NdaKa{L,T,N}, KaNda{L,T,N}},
-    k2::Pair{Symbol, <:Pair}...
-) where {L,T,N}
+function rekey(A::Union{KaNda, NdaKa}, k2::Pair{Symbol, <:Pair}...)
     # Extract rekey pairs from k2
     rekey_pairs = last.(k2)
     # Extract the current dimname and desired dimname into pairs
