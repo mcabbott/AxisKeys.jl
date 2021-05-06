@@ -9,6 +9,10 @@ if VERSION >= v"1.2" # <(3) doesn't exist on 1.1, but Base.Fix2 is fine
 @testset "unit ranges" begin
 
     for r in (Base.OneTo(5), 2:5)
+        x = 2:4
+        @test r[AxisKeys.findindex(x, r)] == x
+        @test @inferred(AxisKeys.findindex(x, r)) isa AbstractUnitRange
+
         for x in -2:7
 
             @test AxisKeys.findindex(x, r) == findfirst(==(x), collect(r))
