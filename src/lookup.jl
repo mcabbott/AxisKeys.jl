@@ -95,7 +95,7 @@ findindex(i::Int, r::Base.OneTo{Int}) = 1 <= i <= r.stop ? i : nothing
 
 findindex(i::Int, r::AbstractUnitRange) = first(r) <= i <= last(r) ? 1+Int(i - first(r)) : nothing
 
-findindex(i::AbstractUnitRange, r::AbstractUnitRange) = intersect(i, r)
+findindex(i::AbstractUnitRange{T}, r::AbstractUnitRange{T}) where {T} = findall(∈(i), r)
 
 # Faster than Base.findall(==(i), 1:10) etc,
 # but returning a range not an Array:
