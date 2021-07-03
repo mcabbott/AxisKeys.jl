@@ -99,8 +99,8 @@ end
 
 @inline @propagate_inbounds function getkey(A; kw...)
     list = dimnames(A)
-    issubset(kw.itr, list) || error("some keywords not in list of names!")
-    args = map(s -> Base.sym_in(s, kw.itr) ? getfield(kw.data, s) : Colon(), list)
+    issubset(keys(kw), list) || error("some keywords not in list of names!")
+    args = map(s -> Base.sym_in(s, kw.itr) ? getfield(values(kw), s) : Colon(), list)
     A(args...)
 end
 
