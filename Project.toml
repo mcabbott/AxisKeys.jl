@@ -1,7 +1,7 @@
 name = "AxisKeys"
 uuid = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 license = "MIT"
-version = "0.1.17"
+version = "0.1.18"
 
 [deps]
 AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
@@ -33,9 +33,10 @@ julia = "1"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+NamedArrays = "86f7a689-2022-50b4-a561-43c23ac3c673"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UniqueVectors = "2fbcfb34-fd0c-5fbb-b5d7-e826d8f5b0a9"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
-test = ["BenchmarkTools", "Dates", "FFTW", "Test", "UniqueVectors", "Unitful"]
+test = ["BenchmarkTools", "Dates", "FFTW", "NamedArrays", "Test", "UniqueVectors", "Unitful"]
