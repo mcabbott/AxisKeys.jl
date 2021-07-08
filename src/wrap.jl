@@ -141,9 +141,9 @@ function wrapdims_import(A::AbstractArray)
             v
         end
         if nameouter() == false
-            return KeyedArray(NamedDimsArray(A.array, A.dimnames), keys)
+            return KeyedArray(NamedDimsArray(A.array, Symbol.(A.dimnames)), keys)
         else
-            return NamedDimsArray(KeyedArray(A.array, keys), A.dimnames)
+            return NamedDimsArray(KeyedArray(A.array, keys), Symbol.(A.dimnames))
         end
 
     elseif fields == (:data, :axes) # then it's an AxisArray

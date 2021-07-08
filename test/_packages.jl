@@ -26,6 +26,18 @@ end
     @test n(y=k) == n[:,7]
 
 end
+@testset "namedarrays" begin
+    using NamedArrays
+
+    # NamedArrays lets us have strings as well as symbols for dimension names. Make sure
+    # we can handle both.
+    for dimension_name in (:aa, "aa")
+        x = NamedArray([1])
+        setdimnames!(x, dimension_name, 1)
+        k = wrapdims(x)
+        @test dimnames(k) == (:aa,)
+    end
+end
 @testset "tables" begin
     using Tables
 
