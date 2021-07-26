@@ -137,7 +137,7 @@ struct ShowWith{T,NT} <: AbstractString
     hide::Bool
     nt::NT
     ShowWith(val; hide::Bool=false, kw...) =
-        new{typeof(val),typeof(kw.data)}(val, hide, kw.data)
+        new{typeof(val),typeof(values(kw))}(val, hide, values(kw))
 end
 function Base.show(io::IO, x::ShowWith; kw...)
     # ioc = IOContext(io, :compact => true) # using this really breaks spacing!
