@@ -89,7 +89,7 @@ append!!(r::AbstractVector, s::AbstractVector) = (extend_by!!(r, length(s)); vca
 This pushes `val` into `A.data`, and pushes `key` to `axiskeys(A,1)`.
 Both of these must be legal operations, e.g. `A = wrapdims([1], ["a"]); push!(A, b=2)`.
 """
-Base.push!(A::KeyedArray; kw...) = push!(A, map(Pair, keys(kw), values(kw.data))...)
+Base.push!(A::KeyedArray; kw...) = push!(A, map(Pair, keys(kw), values(values(kw)))...)
 
 function Base.push!(A::KeyedArray, pairs::Pair...)
     axiskeys(A,1) isa AbstractRange && error("can't use push!(A, key => val) when axiskeys(A,1) isa AbstractRange")
