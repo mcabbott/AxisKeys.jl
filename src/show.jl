@@ -156,6 +156,7 @@ function Base.show(io::IO, x::ShowWith; kw...)
 end
 Base.alignment(io::IO, x::ShowWith) =  alignment(io, x.val) .+ (2,0) # extra brackets
 Base.length(x::ShowWith) = length(string(x.val))
+Base.ncodeunits(x::ShowWith) = ncodeunits(string(x.val))
 Base.print(io::IO, x::ShowWith) = printstyled(io, string(x.val); x.nt...)
 
 # For higher-dim printing, I just want change the [:, :, 1] things, add name/key,
