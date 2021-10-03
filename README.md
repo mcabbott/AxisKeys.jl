@@ -1,5 +1,6 @@
 # AxisKeys.jl
 
+[![Docstrings](https://img.shields.io/badge/j_hub-docstrings-blue)](https://juliahub.com/docs/AxisKeys/)
 [![Github CI](https://github.com/mcabbott/AxisKeys.jl/workflows/CI/badge.svg)](https://github.com/mcabbott/AxisKeys.jl/actions?query=workflow%3ACI+branch%3Amaster)
 
 <!--<img src="docs/readmefigure.png" alt="block picture" width="400" align="right">-->
