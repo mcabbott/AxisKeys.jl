@@ -178,13 +178,13 @@ end
 
     # reduce(*cat, a_of_as)
     vs = [KeyedArray(i.*[1,2,3], foo=[:a,:b,:c]) for i in 1:4];
-    @test axiskeys(reduce(hcat, vs)) == ([:a, :b, :c], Base.OneTo(4))
-    @test axiskeys(reduce(hcat, vs')) == (Base.OneTo(1), [:a, :b, :c, :a, :b, :c, :a, :b, :c, :a, :b, :c])
-    @test axiskeys(reduce(vcat, vs)) == ([:a, :b, :c, :a, :b, :c, :a, :b, :c, :a, :b, :c],)
+    @test axiskeys(reduce(hcat, vs)) == ([:a,:b,:c], Base.OneTo(4))
+    @test axiskeys(reduce(hcat, vs')) == (Base.OneTo(1), [:a,:b,:c,  :a,:b,:c,  :a,:b,:c,  :a,:b,:c])
+    @test axiskeys(reduce(vcat, vs)) == ([:a,:b,:c,  :a,:b,:c,  :a,:b,:c,  :a,:b,:c],)
 
     kvs = wrapdims(vs, bar='a':'d') # add an outer name & keys
-    @test axiskeys(reduce(hcat, kvs)) == ([:a, :b, :c], 'a':'d')
-    @test axiskeys(reduce(vcat, unname(kvs))) == ([:a, :b, :c, :a, :b, :c, :a, :b, :c, :a, :b, :c],)
+    @test axiskeys(reduce(hcat, kvs)) == ([:a,:b,:c], 'a':'d')
+    @test axiskeys(reduce(vcat, unname(kvs))) == ([:a,:b,:c,  :a,:b,:c,  :a,:b,:c,  :a,:b,:c],)
 
     twomats = [wrapdims(rand(2,2), x=10:11, y='a':'b'), wrapdims(rand(2,2), x=10:11, y='c':'d')]
     @test axiskeys(reduce(hcat, twomats)) == (10:11, ['a', 'b', 'c', 'd'])

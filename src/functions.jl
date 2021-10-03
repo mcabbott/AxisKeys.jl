@@ -180,8 +180,11 @@ key_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
 key_vcat(a,b,cs...) = key_vcat(key_vcat(a,b),cs...)
 
 for T in [ :(AbstractVector{<:KeyedVecOrMat}),
+        :(AbstractVector{<:NdaKaVoM}),
         :(KeyedVector{<:AbstractVecOrMat}),
-        :(KeyedVector{<:KeyedVecOrMat})
+        :(KeyedVector{<:KeyedVecOrMat}),
+        :(NdaKa{<:AbstractVecOrMat}),
+        :(NdaKa{<:KeyedVecOrMat}),
         ]
     @eval function Base.reduce(::typeof(hcat), As::$T)
         data = reduce(hcat, map(keyless, keyless(As)))
@@ -197,18 +200,23 @@ for T in [ :(AbstractVector{<:KeyedVecOrMat}),
         KeyedArray(data, (new_1, new_2))
     end
 end
-function Base.reduce(::typeof(vcat), As::AbstractVector{<:KeyedVecOrMat})
-    data = reduce(vcat, map(keyless, keyless(As)))
-    # Unlike reduce_hcat, it's very unlikely that the outer array's keys matter, so ignore them:
-    new_1 = reduce(vcat, map(first∘keys_or_axes, As))
-    new_keys = if ndims(eltype(As)) == 1
-        (new_1,)
-    else
-        new_2 = unify_one(keys_or_axes(first(As),2), keys_or_axes(last(As),2))
-        (new_1, new_2)
+for T in [ :(AbstractVector{<:KeyedVecOrMat}),
+        :(AbstractVector{<:NdaKaVoM}),
+        ]
+    @eval function Base.reduce(::typeof(vcat), As::$T)
+        data = reduce(vcat, map(keyless, keyless(As)))
+        # Unlike reduce_hcat, it's very unlikely that the outer array's keys matter, so ignore them:
+        new_1 = reduce(vcat, map(first∘keys_or_axes, As))
+        new_keys = if ndims(eltype(As)) == 1
+            (new_1,)
+        else
+            new_2 = unify_one(keys_or_axes(first(As),2), keys_or_axes(last(As),2))
+            (new_1, new_2)
+        end
+        KeyedArray(data, new_keys)
     end
-    KeyedArray(data, new_keys)
 end
+
 function Base.sort(A::KeyedArray; dims, kw...)
     dims′ = NamedDims.dim(A, dims)
     data = sort(parent(A); dims=dims′, kw...)
