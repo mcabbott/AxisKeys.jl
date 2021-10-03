@@ -1,6 +1,5 @@
 # AxisKeys.jl
 
-[![Travis CI](https://travis-ci.org/mcabbott/AxisKeys.jl.svg?branch=master)](https://travis-ci.com/mcabbott/AxisKeys.jl)
 [![Github CI](https://github.com/mcabbott/AxisKeys.jl/workflows/CI/badge.svg)](https://github.com/mcabbott/AxisKeys.jl/actions?query=workflow%3ACI+branch%3Amaster)
 
 <!--<img src="docs/readmefigure.png" alt="block picture" width="400" align="right">-->
