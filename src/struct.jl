@@ -75,7 +75,7 @@ for (get_or_view, key_get, maybe_copy) in [
             inds = to_indices(A, raw_inds)
             @boundscheck checkbounds(parent(A), inds...)
             data = @inbounds $get_or_view(parent(A), inds...)
-            data isa AbstractArray || return data # scalar output
+            inds isa Tuple{Vararg{Integer}} && return data # scalar output
 
             raw_keys = $key_get(axiskeys(A), inds)
             raw_keys === () && return data # things like A[A .> 0]

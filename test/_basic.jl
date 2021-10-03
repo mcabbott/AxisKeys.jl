@@ -64,6 +64,10 @@ using Test, AxisKeys
     @test_throws Exception wrapdims(rand(5), ['a','b','c'])
     @test_throws Exception KeyedArray(rand(5), ['a','b','c'])
 
+    G = KeyedArray([[1,2], [3,4], [5,6]], 'α':'γ')  # array of arrays, issue 83
+    @test G[end] == [5,6]
+    @test axiskeys(G') == (1:1, 'α':'γ')
+    @test begin G('α',:) .= Ref([7,8]); G[1] == [7,8] end  # trailing colon still OK here
 end
 @testset "selectors" begin
 
