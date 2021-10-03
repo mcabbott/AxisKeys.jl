@@ -32,4 +32,6 @@ include("fft.jl") # AbstractFFTs.jl
 
 include("statsbase.jl") # StatsBase.jl
 
+include("interface.jl") # ArrayInterface.jl
+
 end
