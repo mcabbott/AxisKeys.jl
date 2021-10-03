@@ -26,6 +26,14 @@ A = KeyedArray(data; channel=[:left, :right], time=range(13, step=2.5, length=10
 <img src="docs/readmeterminal.png" alt="terminal pretty printing" width="550" align="center">
 </p>
 
+The package aims not to be opinionated about what you store in these "key vectors":
+they can be arbitrary `AbstractVectors`, and need not be sorted nor have unique elements.
+Integer "keys" are allowed, and should have no surprising interactions with indices.
+While it is further from zero-cost than [NamedDims.jl](https://github.com/invenia/NamedDims.jl), it aims to be light-weight,
+leaving as much functionality as possible to other packages.
+
+See <a href="#elsewhere">§ eleswhere</a> below for other packages doing similar things.
+
 ### Selections
 
 Indexing still works directly on the underlying array, 
@@ -43,6 +51,11 @@ When using dimension names, fixing only some of them will return a slice,
 such as `B = A[channel=1]`.
 You may also give just one key, provided its type matches those of just one dimension,
 such as `B = A(:left)` where the key is a Symbol.
+
+Note that indexing is the primary way to access the data. Lookup calls for example
+`i = findfirst(axiskeys(A,1), :left)` to convert keys to indices, thus will always be slower.
+If you want this to be the primary mode of access, then you may want a dictionary,
+possibly [Dictionaries.jl](https://github.com/andyferris/Dictionaries.jl).
 
 There are also a numer of special selectors, which work like this:
 
@@ -89,9 +102,9 @@ NamedDimsArray(rand(Int8, 2,10), row=[:a, :b], col=10:10:100) # NamedDimsArray(K
 Calling `AxisKeys.keyless(A)` removes the `KeyedArray` wrapper, if any, 
 and `NamedDims.unname(A)` similarly removes the names (regardless of which is outermost).
 
-The function `wrapdims` does a bit more checking and fixing, but is not type-stable. 
-It will adjust the length of ranges of keys if it can, 
-and will fix indexing offsets if needed to match the array. 
+There is another more "casual" constructor, via the function `wrapdims`.
+This does a bit more checking of inputs, and will adjust the length of ranges of keys if it can, 
+and will fix indexing offsets if needed to match the array.
 The resulting order of wrappers is controlled by `AxisKeys.nameouter()=false`.
 
 ```julia
@@ -208,7 +221,7 @@ with several smaller packages. The complaints are:
   (They were called axes before `Base.axes()` was added, hence (3) the confusing terminology.)
 (4) Broadcasting is not supported, as this changed dramatically in Julia 1.0.
 (5) There are lots of assorted functions, special categorical vector types, etc. 
-  which aren't part of the core.
+  which aren't part of the core, and are poorly documented.
 
 Other older packages (pre-Julia-1.0):
 
@@ -240,28 +253,21 @@ And presently only one-dimensional.
 Function `align` permutes dimensions automatically, 
 and macro `@named` can introduce this into broadcasting expressions. 
 
+* [AxisSets](https://github.com/invenia/AxisSets.jl) builds on this package to handle groups of arrays as a `KeyedDataset`.
+
 * [DimensionalData](https://github.com/rafaqz/DimensionalData.jl) is another replacement 
 for AxisArrays. It again uses types like `Dim{:name}` to store both name & keys, although you
 can use `Symbol` keys that are converted to types internally.
 There are also some special ones like `X, Y` of the same abstract type (which must be in scope).
-Named lookup can use tyeps or symbols, and looks like `DA[x=13.0]`, similar to `A(x=13.0)` here.
+Named lookup can use these types `DA[X(At(:a))]`, or use the corresponding symbols `DA[X=At(:a)]`, for what this package would write `A(x=:a)` or `A[x=Key(:a)]`.
 
 * [AxisIndices](https://github.com/Tokazama/AxisIndices.jl) differs mainly by storing 
 the keys with the axes in its own `Axis` type. This is returned by `Base.axes(A)` 
 (instead of `Base.OneTo` etc.) like [PR#6](https://github.com/mcabbott/AxisKeys.jl/pull/6).
-Does not handle dimension names. (Grew out of the same [discussion thread](https://github.com/JuliaCollections/AxisArraysFuture/issues/1)!)
-
-* [IndexedDims](https://github.com/invenia/IndexedDims.jl) [in progress?] 
-like this package adds keys on top of the names from NamedDims.
-These key vectors must always be [AcceleratedArrays](https://github.com/andyferris/AcceleratedArrays.jl). 
-Like AxisArrays, it tries to guess whether to do indexing or lookup based on type. 
 
 See also [docs/speed.jl](docs/speed.jl) for some checks on this package, 
 and comparisons to other ones.
 And see [docs/repl.jl](docs/repl.jl) for some usage examples, showing pretty printing. 
-For discussion, see [AxisArraysFuture](https://github.com/JuliaCollections/AxisArraysFuture/issues/1),
-and [AxisArrays#84](https://github.com/JuliaArrays/AxisArrays.jl/issues/84).
-
 
 In 🐍-land:
 
