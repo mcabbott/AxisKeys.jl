@@ -182,7 +182,7 @@ end
     @test axiskeys(reduce(hcat, vs')) == (Base.OneTo(1), [:a, :b, :c, :a, :b, :c, :a, :b, :c, :a, :b, :c])
     @test axiskeys(reduce(vcat, vs)) == ([:a, :b, :c, :a, :b, :c, :a, :b, :c, :a, :b, :c],)
 
-    kvs = wrapdims(xs, bar='a':'d') # add an outer name & keys
+    kvs = wrapdims(vs, bar='a':'d') # add an outer name & keys
     @test axiskeys(reduce(hcat, kvs)) == ([:a, :b, :c], 'a':'d')
     @test axiskeys(reduce(vcat, unname(kvs))) == ([:a, :b, :c, :a, :b, :c, :a, :b, :c, :a, :b, :c],)
 
