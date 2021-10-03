@@ -1,4 +1,5 @@
 using Test, AxisKeys, Statistics
+using NamedDims: unname
 
 M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
 MN = NamedDimsArray(M.data.data, r='a':'c', c=2:5)
@@ -266,6 +267,21 @@ end
 
 @testset "linalg" begin
     using LinearAlgebra
+
+    # more wrappers -- https://github.com/mcabbott/AxisKeys.jl/issues/69
+    @testset "wrappers" begin
+        D3 = Diagonal(randn(3))
+        U3 = UpperTriangular(rand(3,3))
+        U4 = UpperTriangular(rand(4,4) .+ im)
+
+        @test axiskeys(D3 * unname(M), 2) == 2:5
+        @test_skip U3 * M # *(::UpperTriangular, ::NamedDimsArray) is ambiguous
+        @test axiskeys(U4 * unname(M'), 2) == 'a':'c'
+
+        @test axiskeys(D3 \ M, 2) == 2:5
+        @test axiskeys(U3 \ M, 2) == 2:5
+        @test_skip U4 / M  # no method matching ldiv!(::NamedDims.NamedFactorization, ::Matrix{ComplexF64})
+    end
 
     @testset "cholesky" begin
         A = rand(10, 3)

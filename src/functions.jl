@@ -294,6 +294,7 @@ Olist = [ :AbstractMatrix, :AbstractVector, :Number,
     :(Transpose{<:Any,<:AbstractMatrix}), :(Transpose{<:Any,<:AbstractVector}),
     :(NamedDimsArray{L,T,1} where {L,T}), :(NamedDimsArray{L,T,2} where {L,T}),
     :(Adjoint{<:Number,<:AbstractVector}), # 1.5 problem...
+    :(Diagonal), :(Union{LowerTriangular, UpperTriangular}),
     ]
 for (Ts, Ss) in [(Rlist, Rlist), (Rlist, Olist), (Olist, Rlist)]
     for T in Ts, S in Ss # some combinations are errors, later, that's ok
