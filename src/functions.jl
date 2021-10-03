@@ -179,6 +179,36 @@ key_vcat(a::AbstractVector, b::AbstractVector) = vcat(a,b)
 key_vcat(a::Base.OneTo, b::Base.OneTo) = Base.OneTo(a.stop + b.stop)
 key_vcat(a,b,cs...) = key_vcat(key_vcat(a,b),cs...)
 
+for T in [ :(AbstractVector{<:KeyedVecOrMat}),
+        :(KeyedVector{<:AbstractVecOrMat}),
+        :(KeyedVector{<:KeyedVecOrMat})
+        ]
+    @eval function Base.reduce(::typeof(hcat), As::$T)
+        data = reduce(hcat, map(keyless, keyless(As)))
+        # Compromise between checking all elements & trusting the first:
+        new_1 = unify_one(keys_or_axes(first(As),1), keys_or_axes(last(As),1))
+        new_2 = if eltype(As) <: AbstractVector  # then elements cannot have keyvectors
+            copy(keys_or_axes(As,1))
+        elseif !(keys_or_axes(first(As),2) isa Base.OneTo)
+            reduce(vcat, map(last∘keys_or_axes, As))
+        else
+            axes(data,2)
+        end
+        KeyedArray(data, (new_1, new_2))
+    end
+end
+function Base.reduce(::typeof(vcat), As::AbstractVector{<:KeyedVecOrMat})
+    data = reduce(vcat, map(keyless, keyless(As)))
+    # Unlike reduce_hcat, it's very unlikely that the outer array's keys matter, so ignore them:
+    new_1 = reduce(vcat, map(first∘keys_or_axes, As))
+    new_keys = if ndims(eltype(As)) == 1
+        (new_1,)
+    else
+        new_2 = unify_one(keys_or_axes(first(As),2), keys_or_axes(last(As),2))
+        (new_1, new_2)
+    end
+    KeyedArray(data, new_keys)
+end
 function Base.sort(A::KeyedArray; dims, kw...)
     dims′ = NamedDims.dim(A, dims)
     data = sort(parent(A); dims=dims′, kw...)
