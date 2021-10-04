@@ -49,4 +49,4 @@ jobs:
             # Mistakenly introducing a breaking change, as we have intentionally made one
             @info "Not compatible with this release. No problem." exception=err
             exit(0)  # Exit immediately, as a success
-          en
+          end
