@@ -16,6 +16,28 @@ Performs some sanity checks which are skipped by `KeyedArray` constructor:
 
 By default it wraps in this order: `KeyedArray{...,NamedDimsArray{...}}`,
 which you can change by re-defining `AxisKeys.nameouter() == true`.
+
+# Examples
+```jldoctest
+julia> wrapdims([1,10,100], pow=0:99)
+┌ Warning: range 0:99 replaced by 0:2, to match size(A, 1) == 3
+└ @ AxisKeys ~/.julia/dev/AxisKeys/src/wrap.jl:50
+1-dimensional KeyedArray(NamedDimsArray(...)) with keys:
+↓   pow ∈ 3-element UnitRange{Int64}
+And data, 3-element Vector{Int64}:
+ (0)    1
+ (1)   10
+ (2)  100
+
+julia> push!(ans, 1000)
+1-dimensional KeyedArray(NamedDimsArray(...)) with keys:
+↓   pow ∈ 4-element UnitRange{Int64}
+And data, 4-element Vector{Int64}:
+ (0)     1
+ (1)    10
+ (2)   100
+ (3)  1000
+```
 """
 wrapdims(A::AbstractArray, r::Union{AbstractVector,Nothing}, keys::Union{AbstractVector,Nothing}...) =
     KeyedArray(A, check_keys(A, (r, keys...)))
@@ -93,6 +115,24 @@ end
 
 Converts the `NamedTuple`'s keys into those of a one-dimensional `KeyedArray`.
 If a dimension name is provided, the this adds a `NamedDimsArray` wrapper too.
+
+# Examples
+```jldoctest
+julia> wrapdims((alpha=1, beta=20))
+1-dimensional KeyedArray(...) with keys:
+↓   2-element Vector{Symbol}
+And data, 2-element Vector{Int64}:
+ (:alpha)   1
+ (:beta)   20
+
+julia> push!(ans, :gamma => 300)
+1-dimensional KeyedArray(...) with keys:
+↓   3-element Vector{Symbol}
+And data, 3-element Vector{Int64}:
+ (:alpha)    1
+ (:beta)    20
+ (:gamma)  300
+```
 """
 wrapdims(nt::NamedTuple) = KeyedArray(nt)
 KeyedArray(nt::NamedTuple) = KeyedArray(collect(values(nt)), tuple(collect(keys(nt))))
@@ -123,6 +163,33 @@ Base.convert(::Type{NamedTuple}, A::NamedDimsArray{L,T,1,<:KeyedVector}) where {
 
 Converts the wrapper from packages NamedArrays.jl or AxisArrays.jl.
 (Really it just guesses based on field names, since these packages are not loaded.)
+
+# Examples
+```
+julia> using FreqTables, AxisKeys
+
+julia> xs = vcat(repeat([1,2,3],4), [2,2,2,3]);
+
+julia> ys = repeat('a':'d', 4);
+
+julia> freqtable(xs, ys)
+3×4 Named Matrix{Int64}
+Dim1 ╲ Dim2 │ 'a'  'b'  'c'  'd'
+────────────┼───────────────────
+1           │   1    1    1    1
+2           │   2    2    2    1
+3           │   1    1    1    2
+
+julia> wrapdims(ans)
+2-dimensional KeyedArray(NamedDimsArray(...)) with keys:
+↓   Dim1 ∈ 3-element Vector{Int64}
+→   Dim2 ∈ 4-element Vector{Char}
+And data, 3×4 Matrix{Int64}:
+      ('a')  ('b')  ('c')  ('d')
+ (1)   1      1      1      1
+ (2)   2      2      2      1
+ (3)   1      1      1      2
+```
 """
 function wrapdims end
 
