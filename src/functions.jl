@@ -183,8 +183,8 @@ for T in [ :(AbstractVector{<:KeyedVecOrMat}),
         :(AbstractVector{<:NdaKaVoM}),
         :(KeyedVector{<:AbstractVecOrMat}),
         :(KeyedVector{<:KeyedVecOrMat}),
-        :(NdaKa{<:AbstractVecOrMat}),
-        :(NdaKa{<:KeyedVecOrMat}),
+        :(NdaKaV{<:Any, <:AbstractVecOrMat}),
+        :(NdaKaV{<:Any, <:KeyedVecOrMat}),
         ]
     @eval function Base.reduce(::typeof(hcat), As::$T)
         data = reduce(hcat, map(keyless, keyless(As)))
