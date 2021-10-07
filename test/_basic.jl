@@ -309,3 +309,13 @@ end
     @test axiskeys(W,1) == ["a", "b", "c", "d", "e"]
 
 end
+@testset "axes" begin
+    M = wrapdims(rand(Int8, 3,11), [:a, :b, :c], 0:0.1:1)
+    @test Base.axes(M) isa NTuple{2,AxisKeys.KeyedUnitRange}
+
+    # similar
+    @test axiskeys(similar(0:1, axes(M))) == axiskeys(M)
+    @test axiskeys(similar(0:1, ComplexF32, reverse(axes(M)))) == reverse(axiskeys(M))
+    @test_broken axiskeys(similar(rand(3), Base.OneTo(3), axes(M,2))) == (1:3, 0:0.1:1)
+
+end
