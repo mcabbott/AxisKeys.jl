@@ -343,6 +343,11 @@ for (Ts, Ss) in [(Rlist, Rlist), (Rlist, Olist), (Olist, Rlist)]
 
     end
 end
+
+# Specific methods to resolve ambiguities in 1.6
+Base.:*(x::Adjoint{<:Any, <:AbstractMatrix{T}}, y::KeyedVector{S}) where {T, S<:Number} = matmul(x,y)
+Base.:*(x::Transpose{<:Any, <:AbstractMatrix{T}}, y::KeyedVector{S}) where {T, S<:Number} = matmul(x, unname(y))
+
 for (fun, op) in [(:matmul, :*), (:ldiv, :\), (:rdiv, :/)]
     @eval $fun(x::AbstractVecOrMat, y::Number) = KeyedArray($op(keyless(x), y), axiskeys(x))
     @eval $fun(x::Number, y::AbstractVecOrMat) = KeyedArray($op(x, keyless(y)), axiskeys(y))
