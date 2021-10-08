@@ -73,7 +73,7 @@ end
     @test std(m; corrected=false) == std([1, 2, 3]; corrected=false)
 
 end
-@testset "sort" begin
+@testset "sort & reverse" begin
 
     @test sort(V)(20) == V(20)
 
@@ -102,6 +102,16 @@ end
     @test B′ == B[:,p]
     @test issorted(reverse(B′.🏛))
 
+    # reverse
+    @test parent(parent(reverse(V))) == reverse(parent(parent(V)))
+    @test axiskeys(reverse(V),1) == 100:-10:10
+    if VERSION > v"1.6-"
+        @test parent(parent(reverse(B))) == reverse(parent(parent(B)))
+    else
+        @test_throws Exception reverse(parent(parent(B)))
+    end
+    @test parent(parent(reverse(B, dims=:🏛))) == reverse(parent(parent(B)), dims=2)
+    @test axiskeys(reverse(B, dims=:🏛)) == (axiskeys(B,1), reverse(axiskeys(B,2)))
 end
 @testset "map & collect" begin
 
