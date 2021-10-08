@@ -13,7 +13,11 @@ function _summary(io, x)
         printstyled(io, length(axiskeys(x,d)), "-element ", shorttype(axiskeys(x,d)), "\n", color=c)
     end
     print(io, "And data, ")
-    summary(io, keyless(unname(x)))
+    _s1, _srest = Iterators.peel(split(summary(keyless(unname(x))), " with "))
+    printstyled(io, _s1, bold=true)
+    for _s in _srest
+        print(io, " with ", _s)
+    end
     if ndims(x)==1 && length(keys_or_axes(x, 1)) != length(x)
         throw(ArgumentError("length of keys, $(length(keys_or_axes(x, 1))), must match length of vector, $(length(x))! "))
     end
@@ -30,11 +34,11 @@ function shorttype(r)
 end
 
 showtype(io::IO, ::KeyedArray) =
-    print(io, "KeyedArray(...)")
+    printstyled(io, "KeyedArray(...)", color=:bold)
 showtype(io::IO, ::KeyedArray{T,N,<:NamedDimsArray}) where {T,N} =
-    print(io, "KeyedArray(NamedDimsArray(...))")
+    printstyled(io, "KeyedArray(NamedDimsArray(...))", color=:bold)
 showtype(io::IO, ::NamedDimsArray{L,T,N,<:KeyedArray}) where {L,T,N} =
-    print(io, "NamedDimsArray(KeyedArray(...))")
+    printstyled(io, "NamedDimsArray(KeyedArray(...))", color=:bold)
 
 function colour(A::AbstractArray, d::Int)
     keys_or_axes(A,d) === OneTo(1) && return :light_black
