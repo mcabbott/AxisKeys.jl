@@ -290,14 +290,22 @@ end
         D3 = Diagonal(randn(3))
         U3 = UpperTriangular(rand(3,3))
         U4 = UpperTriangular(rand(4,4) .+ im)
+        A3 = rand(10, 3)'
+        A10 = rand(3, 10)'
+        T3 = transpose(rand(10, 3))
+        T10 = transpose(rand(3, 10))
 
         @test axiskeys(D3 * unname(M), 2) == 2:5
         @test_skip U3 * M # *(::UpperTriangular, ::NamedDimsArray) is ambiguous
         @test axiskeys(U4 * unname(M'), 2) == 'a':'c'
+        @test axiskeys(A3 * V, 1) == Base.OneTo(3)
+        @test axiskeys(T3 * V, 1) == Base.OneTo(3)
 
         @test axiskeys(D3 \ M, 2) == 2:5
         @test axiskeys(U3 \ M, 2) == 2:5
         @test_skip U4 / M  # no method matching ldiv!(::NamedDims.NamedFactorization, ::Matrix{ComplexF64})
+        @test axiskeys(A10 \ V, 1) == 1:3
+        @test axiskeys(T10 \ V, 1) == 1:3
     end
 
     @testset "cholesky" begin
