@@ -91,7 +91,7 @@ function keyed_print_matrix(io::IO, A, reduce_size::Bool=false)
         hcat(vcat(ShowWith.(no_offset(axiskeys(A,1))[top]; color=colour(A,1)),
                   ShowWith.(no_offset(axiskeys(A,1))[bottom]; color=colour(A,1))),
              vcat(getindex(no_offset(unname(keyless(A))), top),
-                  getindex(no_offset(unname(keyless(A))), bottom)))
+                  getindex(no_offset(unname(keyless(A))), bottom)) |> full)
     else
         top    = size(A,1) < h  ? Colon() : (1:(h÷2))
         bottom = size(A,1) < h  ? (1:0)   : size(A,1)-(h÷2):size(A,1)
@@ -99,17 +99,17 @@ function keyed_print_matrix(io::IO, A, reduce_size::Bool=false)
         right  = size(A,2) < wn ? (1:0)   : size(A,2)-(wn÷2)+1:size(A,2)
 
         topleft = hcat(ShowWith.(no_offset(axiskeys(A,1))[top]; color=colour(A,1)),
-                       getindex(no_offset(unname(keyless(A))), top, left))
+                       getindex(no_offset(unname(keyless(A))), top, left) |> full)
 
         bottomleft = hcat(ShowWith.(no_offset(axiskeys(A,1))[bottom]; color=colour(A,1)),
-                          getindex(no_offset(unname(keyless(A))), bottom, left))
+                          getindex(no_offset(unname(keyless(A))), bottom, left) |> full)
 
         leftblock = vcat(topleft, bottomleft)
 
         bottomblock = hcat(leftblock,
                            # right block
                            vcat(getindex(no_offset(unname(keyless(A))), top, right),
-                                getindex(no_offset(unname(keyless(A))), bottom, right)))
+                                getindex(no_offset(unname(keyless(A))), bottom, right)) |> full)
 
         # permute it so it becomes a row
         toprow = permutedims(vcat(ShowWith(0, hide=true),
@@ -123,6 +123,9 @@ end
 
 no_offset(x) = x
 no_offset(x::OffsetArray) = parent(x)
+
+full(x::DenseArray) = x
+full(x::AbstractArray) = collect(x)  # deal with sparse
 
 # function showvec(A, d, ind) # doesn't work so well, spacing, string...
 #     # ShowWith.(no_offset(axiskeys(A,1))[ind1]; color=colour(A,1))
