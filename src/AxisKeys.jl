@@ -32,4 +32,5 @@ include("fft.jl") # AbstractFFTs.jl
 
 include("statsbase.jl") # StatsBase.jl
 
+include("chainrules.jl")
 end
