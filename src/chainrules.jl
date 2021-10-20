@@ -1,6 +1,6 @@
 using ChainRulesCore
 
-_KeyedArray_pullback(ȳ::AbstractArray) =  (NoTangent(), ȳ)
+_KeyedArray_pullback(ȳ) =  (NoTangent(), ȳ)
 _KeyedArray_pullback(ȳ::Tangent) = _KeyedArray_pullback(ȳ.data)
 _KeyedArray_pullback(ȳ::AbstractThunk) = _KeyedArray_pullback(unthunk(ȳ))
 
@@ -11,6 +11,6 @@ function ChainRulesCore.rrule(::typeof(keyless_unname), x::KeyedArray)
 end
 
 function ChainRulesCore.rrule(::typeof(keyless_unname), x)
-    keyless_unname_pb(y) = (NoTangent(), y)
+    keyless_unname_pb(y) = _KeyedArray_pullback(y)
     return keyless_unname(x), keyless_unname_pb
 end
