@@ -1,22 +1,20 @@
 using ChainRulesCore
 
-_KeyedArray_pullback(ȳ::AbstractArray, keys) =  (NoTangent(), wrapdims(ȳ, keys...))
-_KeyedArray_pullback(ȳ::Tangent, keys) = _KeyedArray_pullback(ȳ.data, keys)
-_KeyedArray_pullback(ȳ::AbstractThunk, keys) = _KeyedArray_pullback(unthunk(ȳ), keys)
-
-function ChainRulesCore.rrule(::typeof(keyless_unname), x::KaNda)
-    project_x = ProjectTo(x.data)
-    pb(y) = _KeyedArray_pullback(project_x(y), named_axiskeys(x))
-    return keyless_unname(x), pb
+function ChainRulesCore.ProjectTo(x::Union{KaNda, NdaKa})
+    return ProjectTo{KeyedArray}(;data=ProjectTo(keyless_unname(x)), keys=named_axiskeys(x))
 end
 
-function ChainRulesCore.rrule(::typeof(keyless_unname), x::KeyedArray)
-    project_x = ProjectTo(x.data)
-    pb(y) = _KeyedArray_pullback(project_x(y), axiskeys(x))
-    return keyless_unname(x), pb
+function ChainRulesCore.ProjectTo(x::KeyedArray)
+    return ProjectTo{KeyedArray}(;data=ProjectTo(keyless(x)), keys=axiskeys(x))
 end
+
+(project::ProjectTo{KeyedArray})(dx) = wrapdims(project.data(dx), project.keys...)
+
+_KeyedArray_pullback(ȳ, project) = (NoTangent(), project(ȳ))
+_KeyedArray_pullback(ȳ::Tangent, project) = _KeyedArray_pullback(ȳ.data, project)
+_KeyedArray_pullback(ȳ::AbstractThunk, project) = _KeyedArray_pullback(unthunk(ȳ), project)
 
 function ChainRulesCore.rrule(::typeof(keyless_unname), x)
-    pb(y) = (NoTangent(), y)
+    pb(y) = _KeyedArray_pullback(y, ProjectTo(x))
     return keyless_unname(x), pb
 end
