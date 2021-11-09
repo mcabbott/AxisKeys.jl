@@ -217,7 +217,7 @@ for T in [ :(AbstractVector{<:KeyedVecOrMat}),
     end
 end
 
-function Base.reverse(A::KeyedArray; dims=ntuple(identity, ndims(A)))
+function Base.reverse(A::KeyedArray; dims = VERSION<v"1.6" ? 1 : ntuple(identity, ndims(A)))
     dims′ = NamedDims.dim(A, dims)
     data = reverse(parent(A); dims=dims′)
     new_keys = ntuple(d -> d in dims′ ? reverse(axiskeys(A,d)) : copy(axiskeys(A,d)), ndims(A))
