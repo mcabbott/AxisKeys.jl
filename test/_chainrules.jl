@@ -12,6 +12,18 @@
         return v, back
     end
 
+    @testset "ProjectTo" begin
+        data = rand(3)
+        ka = wrapdims(data, a=1:3)
+        p = ProjectTo(ka)
+        @test p(data) == ka
+
+        data = rand(3, 4)
+        ka = wrapdims(data, a=1:3, b='a':'d')
+        p = ProjectTo(ka)
+        @test p(data) == ka
+    end
+
     @testset "KeyedVector" begin
         data = rand(3)
         test_rrule(AxisKeys.keyless_unname, wrapdims(data, a=1:3); check_inferred=false)

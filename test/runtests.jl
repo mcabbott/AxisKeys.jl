@@ -1,5 +1,6 @@
 using Test, AxisKeys, NamedDims
 using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
+using ChainRulesCore: ProjectTo
 using ChainRulesTestUtils: test_rrule
 using FiniteDifferences
 
