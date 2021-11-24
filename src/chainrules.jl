@@ -8,7 +8,7 @@ function ChainRulesCore.ProjectTo(x::KeyedArray)
     return ProjectTo{KeyedArray}(;data=ProjectTo(keyless(x)), keys=axiskeys(x))
 end
 
-(project::ProjectTo{KeyedArray})(dx) = wrapdims(project.data(dx), project.keys...)
+(project::ProjectTo{KeyedArray})(dx) = wrapdims(project.data(parent(dx)), project.keys...)
 
 _KeyedArray_pullback(ȳ, project) = (NoTangent(), project(ȳ))
 _KeyedArray_pullback(ȳ::Tangent, project) = _KeyedArray_pullback(ȳ.data, project)
