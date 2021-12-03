@@ -1,5 +1,8 @@
 using Test, AxisKeys, NamedDims
 using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
+using ChainRulesCore: ProjectTo
+using ChainRulesTestUtils: test_rrule
+using FiniteDifferences
 
 @testset "wrapdims with $outside outside" for outside in [:NamedDimsArray, :KeyedArray]
 
@@ -16,6 +19,8 @@ using Statistics, OffsetArrays, Tables, UniqueVectors, LazyStack
     include("_fast.jl")
 
     include("_packages.jl")
+
+    include("_chainrules.jl")
 
 end
 @testset "fast findfirst & findall" begin
