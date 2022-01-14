@@ -245,25 +245,6 @@ function limited_show_nd(io::IO, a::AbstractArray, print_matrix::Function, label
     end
 end
 
-# Piracy to make NamedDimsArrays equally pretty
-# showarg(..., false) shortens the printing for this:
-# NamedDimsArray(OffsetArray(rand(2,3), 10,20), (:row, :col))
-
-function Base.summary(io::IO, A::NamedDimsArray)
-    print(io, Base.dims2string(size(A)), " NamedDimsArray(")
-    Base.showarg(io, parent(A), false)
-    print(io, ", ", dimnames(A), ")")
-end
-
-function Base.print_matrix(io::IO, A::NamedDimsArray)
-    s1 = string("↓ ", dimnames(A,1)) * "  "
-    if ndims(A)==2
-        s2 = string(" "^length(s1), "→ ", dimnames(A,2), "\n")
-        printstyled(io, s2, color=:magenta)
-    end
-    ioc = IOContext(io, :displaysize => displaysize(io) .- (2, 0))
-    Base.print_matrix(ioc, parent(A), ShowWith(s1, color=:magenta))
-end
 
 #=
 # A hack to avoid big messy function?

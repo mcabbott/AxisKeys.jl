@@ -1,7 +1,7 @@
 name = "AxisKeys"
 uuid = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 license = "MIT"
-version = "0.1.24"
+version = "0.1.25"
 
 [deps]
 AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
@@ -27,7 +27,7 @@ FiniteDifferences = "0.12"
 IntervalSets = "0.5.1"
 InvertedIndices = "1.0"
 LazyStack = "0.0.7, 0.0.8"
-NamedDims = "0.2.39"
+NamedDims = "0.2.45"
 OffsetArrays = "0.10, 0.11, 1.0"
 StatsBase = "0.32, 0.33"
 Tables = "0.2, 1"
