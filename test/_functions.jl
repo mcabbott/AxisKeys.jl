@@ -104,11 +104,7 @@ end
 
     # reverse
     @test parent(parent(reverse(V))) == reverse(parent(parent(V)))
-    if VERSION > v"1.6-"
-        @test parent(parent(reverse(B))) == reverse(parent(parent(B)))
-    else
-        @test_throws Exception reverse(parent(parent(B)))
-    end
+    @test parent(parent(reverse(B))) == reverse(parent(parent(B)))
     if AxisKeys.nameouter()
         @test_broken axiskeys(reverse(V),1) == 100:-10:10
         @test_broken parent(parent(reverse(B, dims=:🏛))) == reverse(parent(parent(B)), dims=2)

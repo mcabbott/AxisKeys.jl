@@ -217,17 +217,12 @@ for T in [ :(AbstractVector{<:KeyedVecOrMat}),
     end
 end
 
-function Base.reverse(A::KeyedArray; dims = VERSION<v"1.6" ? 1 : ntuple(identity, ndims(A)))
+function Base.reverse(A::KeyedArray; dims = ntuple(identity, ndims(A)))
     dims′ = NamedDims.dim(A, dims)
     data = reverse(parent(A); dims=dims′)
     new_keys = ntuple(d -> d in dims′ ? reverse(axiskeys(A,d)) : copy(axiskeys(A,d)), ndims(A))
     KeyedArray(data, new_keys) # , copy(A.meta))
 end
-# function Base.reverse(A::KeyedVector; dims=1)
-#     dims′ = NamedDims.dim(A, dims)
-#     dims == 1 || throw(ArgumentError("invalid dimensions for reverse of a vector: $dims"))
-#     KeyedArray(reverse(parent(A)), reverse(axiskeys(A,1))) # , copy(A.meta))
-# end
 
 function Base.sort(A::KeyedArray; dims, kw...)
     dims′ = NamedDims.dim(A, dims)
