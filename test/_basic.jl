@@ -107,8 +107,7 @@ end
     # ... and with decreasing keys:
     V4 = wrapdims(rand(Int8,10), 1:-0.1:0.1)
     V5 = wrapdims(parent(V4), collect(axiskeys(V4,1)))
-    @test_skip [V4[Near(x)] for x in xs] == [V5[Near(x)] for x in xs]  # not broken on 1.3
-
+    @test [V4[Near(x)] for x in xs] == [V5[Near(x)] for x in xs]
 end
 @testset "reverse selectors" begin # https://github.com/mcabbott/AxisKeys.jl/pull/5
 
