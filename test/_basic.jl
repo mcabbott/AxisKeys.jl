@@ -102,7 +102,7 @@ end
 
     # faster Near using searchsortedfirst
     V3 = wrapdims(parent(V), collect(axiskeys(V,1)))
-    xs = 0.3:0.001:0.5
+    xs = -0.3:0.001:0.5
     @test [V(Near(x)) for x in xs] == [V3(Near(x)) for x in xs]
     # ... and with decreasing keys:
     V4 = wrapdims(rand(Int8,10), 1:-0.1:0.1)

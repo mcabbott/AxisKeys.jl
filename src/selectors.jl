@@ -106,6 +106,8 @@ findindex(sel::Near, range::AbstractArray) = argmin(map(x -> abs(x-sel.val), ran
 function findindex(sel::Near, range::AbstractRange)
     iplus = searchsortedfirst(range, sel.val; rev=step(range) < zero(step(range)))
     # "index of the first value in a greater than or equal to x"
+    iplus == firstindex(range) && return 1
+    iplus > lastindex(range) && return lastindex(range)
     if abs(range[iplus]-sel.val) < abs(range[iplus-1]-sel.val)
         return iplus
     else
