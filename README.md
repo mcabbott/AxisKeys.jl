@@ -137,8 +137,9 @@ The following things should work:
 * Reductions like `sum(A; dims=:channel)` can use dimension names. 
   Likewise `prod`, `mean` etc., and `dropdims`.
 
-* Sorting: `sortslices` permutes keys & data by the array, 
-  while `sortkeys` goes by the keys.
+* Sorting: `sort` and `sortslices` permute keys & data by the array, 
+  while a new function `sortkeys` goes by the keys.
+  `reverse` similarly re-orders keys to match data.
 
 * Some linear algebra functions like `*` and `\` will work. 
 

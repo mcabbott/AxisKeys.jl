@@ -217,6 +217,13 @@ for T in [ :(AbstractVector{<:KeyedVecOrMat}),
     end
 end
 
+function Base.reverse(A::KeyedArray; dims = ntuple(identity, ndims(A)))
+    dims′ = NamedDims.dim(A, dims)
+    data = reverse(parent(A); dims=dims′)
+    new_keys = ntuple(d -> d in dims′ ? reverse(axiskeys(A,d)) : copy(axiskeys(A,d)), ndims(A))
+    KeyedArray(data, new_keys) # , copy(A.meta))
+end
+
 function Base.sort(A::KeyedArray; dims, kw...)
     dims′ = NamedDims.dim(A, dims)
     data = sort(parent(A); dims=dims′, kw...)

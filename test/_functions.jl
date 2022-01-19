@@ -73,7 +73,7 @@ end
     @test std(m; corrected=false) == std([1, 2, 3]; corrected=false)
 
 end
-@testset "sort" begin
+@testset "sort & reverse" begin
 
     @test sort(V)(20) == V(20)
 
@@ -102,6 +102,19 @@ end
     @test B′ == B[:,p]
     @test issorted(reverse(B′.🏛))
 
+    # reverse
+    @test parent(parent(reverse(V))) == reverse(parent(parent(V)))
+    @test parent(parent(reverse(B))) == reverse(parent(parent(B)))
+    if AxisKeys.nameouter()
+        @test_broken axiskeys(reverse(V),1) == 100:-10:10
+        @test_broken parent(parent(reverse(B, dims=:🏛))) == reverse(parent(parent(B)), dims=2)
+    else
+        # Handled by Base's fallback, doesn't touch key vector:
+        @test axiskeys(reverse(V),1) == 100:-10:10
+        # This throws: reverse(NamedDimsArray(rand(3), a=[1,10,100]), dims=:a)
+        @test parent(parent(reverse(B, dims=:🏛))) == reverse(parent(parent(B)), dims=2)
+        @test axiskeys(reverse(B, dims=:🏛)) == (axiskeys(B,1), reverse(axiskeys(B,2)))
+    end
 end
 @testset "map & collect" begin
 
