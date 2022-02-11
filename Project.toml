@@ -1,7 +1,7 @@
 name = "AxisKeys"
 uuid = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 license = "MIT"
-version = "0.1.26"
+version = "0.2.0"
 
 [deps]
 AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
