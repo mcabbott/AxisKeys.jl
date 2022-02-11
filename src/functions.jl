@@ -412,6 +412,6 @@ LinearAlgebra.cholesky(A::KeyedMatrix; kwargs...) =
 
 function Base.deleteat!(v::KeyedVector, inds)
     deleteat!(v.data, inds)
-    deleteat!(v.keys, inds)
+    deleteat!(axiskeys(v, 1), inds)
     return v
 end
