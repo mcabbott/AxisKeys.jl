@@ -257,6 +257,14 @@ end
     @test AxisKeys.hasnames(similar(M, 2,2,2)) == false
 
 end
+@testset "deleteat!" begin
+    kv = KeyedArray([1, 2, 3, 4, 5, 6.0], a=[:a, :b, :c, :d, :e, :f])
+
+    @test deleteat!(kv, 1) == KeyedArray([2, 3, 4, 5, 6.0], a=[:b, :c, :d, :e, :f])
+    @test deleteat!(kv, 1:2) == KeyedArray([4, 5, 6.0], a=[:d, :e, :f])
+    @test deleteat!(kv, (1, 3)) == KeyedArray([5.0], a=[:e])
+end
+
 @testset "equality" begin
 
     data = parent(parent(M))

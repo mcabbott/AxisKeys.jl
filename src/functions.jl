@@ -409,3 +409,9 @@ LinearAlgebra.cholesky(A::Hermitian{T, <:KeyedArray{T}}; kwargs...) where {T} =
     cholesky(parent(A); kwargs...)
 LinearAlgebra.cholesky(A::KeyedMatrix; kwargs...) =
     cholesky(keyless_unname(A); kwargs...)
+
+function Base.deleteat!(v::KeyedVector, inds)
+    deleteat!(v.data, inds)
+    deleteat!(v.keys, inds)
+    return v
+end
