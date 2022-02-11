@@ -260,9 +260,9 @@ end
 @testset "deleteat!" begin
     kv = KeyedArray([1, 2, 3, 4, 5, 6.0], a=[:a, :b, :c, :d, :e, :f])
 
-    @test deleteat!(kv, 1) == KeyedArray([2, 3, 4, 5, 6.0], a=[:b, :c, :d, :e, :f])
-    @test deleteat!(kv, 1:2) == KeyedArray([4, 5, 6.0], a=[:d, :e, :f])
-    @test deleteat!(kv, (1, 3)) == KeyedArray([5.0], a=[:e])
+    @test kv == deleteat!(kv, 1) == KeyedArray([2, 3, 4, 5, 6.0], a=[:b, :c, :d, :e, :f])
+    @test kv == deleteat!(kv, 1:2) == KeyedArray([4, 5, 6.0], a=[:d, :e, :f])
+    @test kv == deleteat!(kv, (1, 3)) == KeyedArray([5.0], a=[:e])
 
     # make sure array is not in an invalid state if the deleteat for indices fails
     ka = KeyedArray([4, 5, 6.0], a=1:3)
