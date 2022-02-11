@@ -411,7 +411,7 @@ LinearAlgebra.cholesky(A::KeyedMatrix; kwargs...) =
     cholesky(keyless_unname(A); kwargs...)
 
 function Base.deleteat!(v::KeyedVector, inds)
-    deleteat!(v.data, inds)
     deleteat!(axiskeys(v, 1), inds)
+    deleteat!(v.data, inds)
     return v
 end
