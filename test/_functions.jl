@@ -257,6 +257,19 @@ end
     @test AxisKeys.hasnames(similar(M, 2,2,2)) == false
 
 end
+@testset "deleteat!" begin
+    kv = wrapdims([1, 2, 3, 4, 5, 6.0], a=[:a, :b, :c, :d, :e, :f])
+
+    @test kv == deleteat!(kv, 1) == KeyedArray([2, 3, 4, 5, 6.0], a=[:b, :c, :d, :e, :f])
+    @test kv == deleteat!(kv, 1:2) == KeyedArray([4, 5, 6.0], a=[:d, :e, :f])
+    @test kv == deleteat!(kv, (1, 3)) == KeyedArray([5.0], a=[:e])
+
+    # make sure array is not in an invalid state if the deleteat for indices fails
+    ka = wrapdims([4, 5, 6.0], a=1:3)
+    @test_throws MethodError deleteat!(ka, 2)
+    @test ka == KeyedArray([4, 5, 6.0], a=1:3)
+end
+
 @testset "equality" begin
 
     data = parent(parent(M))
