@@ -148,6 +148,10 @@ end
 
     @test axiskeys(filter(isodd, V2),1) isa Vector{Int}
     @test dimnames(filter(isodd, V2)) == (:v,)
+    
+    V4 = wrapdims(rand(1:99, 10), collect(2:11))
+    V4c = copy(V4)
+    @test filter!(isodd, V4c) === V4c == filter(isodd, V4)
 
     @test filter(isodd, M) isa Array
 

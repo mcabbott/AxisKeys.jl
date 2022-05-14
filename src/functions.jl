@@ -415,3 +415,15 @@ function Base.deleteat!(v::KeyedVector, inds)
     deleteat!(v.data, inds)
     return v
 end
+
+function Base.filter!(f, a::KeyedVector)
+    j = firstindex(a)
+    @inbounds for i in eachindex(a)
+        a[j] = a[i]
+        axiskeys(a, 1)[j] = axiskeys(a, 1)[i]
+        j = ifelse(f(a[i]), j + 1, j)
+    end
+    deleteat!(a, j:lastindex(a))
+    return a
+end
+                                                                
