@@ -18,10 +18,14 @@
         p = ProjectTo(ka)
         @test p(data) == ka
 
+        @test p(NoTangent()) == NoTangent()
+
         data = rand(3, 4)
         ka = wrapdims(data, a=1:3, b='a':'d')
         p = ProjectTo(ka)
         @test p(data) == ka
+
+        @test p(NoTangent()) == NoTangent()
     end
 
     @testset "KeyedVector" begin

@@ -9,6 +9,7 @@ function ChainRulesCore.ProjectTo(x::KeyedArray)
 end
 
 (project::ProjectTo{KeyedArray})(dx) = wrapdims(project.data(parent(dx)), project.keys...)
+(project::ProjectTo{KeyedArray})(dx::AbstractZero) = dx
 
 _KeyedArray_pullback(ȳ, project) = (NoTangent(), project(ȳ))
 _KeyedArray_pullback(ȳ::Tangent, project) = _KeyedArray_pullback(ȳ.data, project)
