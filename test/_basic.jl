@@ -170,6 +170,10 @@ end
 
         @test_throws Exception N(obs=55)  # ideally ArgumentError
         @test_throws Exception N(obs='z') # ideally BoundsError
+
+        Nc = copy(N)
+        Nc(obs='a', iter=20, :) .= 1000
+        @test Nc(obs='a', iter=20) == 1000
     end
 
     @testset "named_axiskeys" begin

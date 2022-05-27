@@ -94,14 +94,14 @@ end
 
 @inline @propagate_inbounds (A::NdaKa)(args...) = getkey(A, args...)
 
-@inline @propagate_inbounds (A::KaNda)(;kw...) = getkey(A; kw...)
-@inline @propagate_inbounds (A::NdaKa)(;kw...) = getkey(A; kw...)
+@inline @propagate_inbounds (A::KaNda)(c=nothing; kw...) = getkey(A, c; kw...)
+@inline @propagate_inbounds (A::NdaKa)(c=nothing; kw...) = getkey(A, c; kw...)
 
-@inline @propagate_inbounds function getkey(A; kw...)
+@inline @propagate_inbounds function getkey(A, c::Union{Nothing, Colon}; kw...)
     list = dimnames(A)
     issubset(keys(kw), list) || error("some keywords not in list of names!")
     args = map(s -> Base.sym_in(s, keys(kw)) ? getfield(values(kw), s) : Colon(), list)
-    A(args...)
+    isnothing(c) ? A(args...) : A(args..., c)
 end
 
 # Constructors, including pirate method (A; kw...)
