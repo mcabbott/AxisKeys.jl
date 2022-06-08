@@ -1,1 +1,1 @@
-docs/speed.jl
+../docs/speed.jl
