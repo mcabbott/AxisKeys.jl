@@ -210,10 +210,10 @@ end
     @test_throws ArgumentError axiskeys(reduce(vcat, twomats))
 
     # single argument
-    @test dimnames(vcat(V)) == dimnames(cat(V; dims=1)) == (:v,)
-    @test axiskeys(vcat(V)) == axiskeys(cat(V; dims=1)) == (10:10:100,)
-    @test dimnames(hcat(V)) == dimnames(cat(V; dims=2)) == (:v, :_)
-    @test axiskeys(hcat(V)) == axiskeys(cat(V; dims=2)) == (10:10:100, Base.OneTo(1))
+    @test dimnames(vcat(V)) == dimnames(cat(V; dims=1)) == (:r,)
+    @test axiskeys(vcat(V)) == axiskeys(cat(V; dims=1)) == (['a', 'b', 'c'],)
+    @test dimnames(hcat(V)) == dimnames(cat(V; dims=2)) == (:r, :_)
+    @test axiskeys(hcat(V)) == axiskeys(cat(V; dims=2)) == (['a', 'b', 'c'], Base.OneTo(1))
 
     @test dimnames(vcat(M)) == dimnames(cat(M; dims=1)) == (:r, :c)
     @test axiskeys(vcat(M)) == axiskeys(cat(M; dims=1)) == ('a':1:'c', 2:5)
