@@ -177,9 +177,8 @@ end
 Base.vcat(A::KeyedArray) = A
 function Base.hcat(A::KeyedArray)
     data = hcat(keyless(A))
-    new_1 = keys_or_axes(A,1)
-    new_2 = ndims(A) == 1 ? axes(data,2) : keys_or_axes(A,2)
-    KeyedArray(data, map(copy, (new_1, new_2)))
+    akeys = map(copy, (keys_or_axes(A, 1), keys_or_axes(A, 2)))
+    KeyedArray(data, akeys)
 end
 function Base.cat(A::KeyedArray; dims)
     new_names = NamedDims.expand_dimnames(dimnames(A), dims)
