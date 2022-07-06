@@ -209,6 +209,20 @@ end
     @test_throws ArgumentError axiskeys(reduce(hcat, twomats'))
     @test_throws ArgumentError axiskeys(reduce(vcat, twomats))
 
+    # single argument
+    @test dimnames(vcat(V)) == dimnames(cat(V; dims=1)) == (:r,)
+    @test axiskeys(vcat(V)) == axiskeys(cat(V; dims=1)) == (['a', 'b', 'c'],)
+    @test dimnames(hcat(V)) == dimnames(cat(V; dims=2)) == (:r, :_)
+    @test axiskeys(hcat(V)) == axiskeys(cat(V; dims=2)) == (['a', 'b', 'c'], Base.OneTo(1))
+
+    @test dimnames(vcat(M)) == dimnames(cat(M; dims=1)) == (:r, :c)
+    @test axiskeys(vcat(M)) == axiskeys(cat(M; dims=1)) == ('a':1:'c', 2:5)
+
+    @test dimnames(hcat(M)) == dimnames(cat(M, dims=2)) == (:r, :c)
+    @test axiskeys(hcat(M)) == axiskeys(cat(M, dims=2)) == ('a':1:'c', 2:5)
+
+    @test dimnames(cat(M; dims=3)) == (:r, :c, :_)
+    @test axiskeys(cat(M; dims=3)) == ('a':1:'c', 2:5, Base.OneTo(1))
 end
 @testset "matmul" begin
 

@@ -173,6 +173,21 @@ for (T, S) in [ (:KeyedArray, :KeyedArray),
     end
 
 end
+# single argument
+Base.vcat(A::KeyedArray) = A
+function Base.hcat(A::KeyedArray)
+    data = hcat(keyless(A))
+    akeys = map(copy, (keys_or_axes(A, 1), keys_or_axes(A, 2)))
+    KeyedArray(data, akeys)
+end
+function Base.cat(A::KeyedArray; dims)
+    new_names = NamedDims.expand_dimnames(dimnames(A), dims)
+    numerical_dims = NamedDims.dim(new_names, dims)
+    data = cat(keyless(A); dims=dims)
+    new_keys = ntuple(d -> keys_or_axes(A, d), ndims(data))
+    KeyedArray(data, map(copy, new_keys)) # , copy(A.meta))
+end
+
 val_strip(dims::Val{d}) where {d} = d
 val_strip(dims) = dims
 key_vcat(a::AbstractVector, b::AbstractVector) = vcat(a,b)
