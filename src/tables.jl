@@ -144,7 +144,7 @@ function populate!(A, table, value::Symbol; force=false)
 
     # Ugly logic for reporting duplicates
     if !(force || allunique(indices))
-        seen = Dict{eltype(indices), nothing}()
+        seen = Dict{eltype(indices), Nothing}()
 
         for idx in indices
             if haskey(seen, idx)
@@ -158,7 +158,7 @@ function populate!(A, table, value::Symbol; force=false)
 
     A[indices] = Tables.getcolumn(cols, value)
 
-    return
+    return A
 end
 
 """
