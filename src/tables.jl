@@ -126,26 +126,39 @@ uniquely identify rows in the `table` then an `ArgumentError` is throw. If `forc
 then the duplicate (non-unique) entries will be overwritten.
 """
 function populate!(A, table, value::Symbol; force=false)
-    # Use a BitArray mask to detect duplicates and error instead of overwriting.
-    mask = force ? falses() : falses(size(A))
+    cols = Tables.columns(table)
 
-    for r in Tables.rows(table)
-        vals = Tuple(Tables.getcolumn(r, c) for c in dimnames(A))
-        inds = map(findindex, vals, axiskeys(A))
+    indices = CartesianIndex.(
+        map(dimnames(A)) do nm
+            col = Tables.getcolumn(cols, nm)
+            inds = axiskeys(A, nm)
+            result = zeros(Int, length(col))
 
-        # Handle duplicate error checking if applicable
-        if !force
-            # Error if mask already set.
-            mask[inds...] && throw(ArgumentError("Key $vals is not unique"))
-            # Set mask, marking that we've set this index
-            setindex!(mask, true, inds...)
+            for idx in pairs(inds)
+                result[last(idx) .== col] .= first(idx)
+            end
+
+            return result
+        end...
+    )
+
+    # Ugly logic for reporting duplicates
+    if !(force || allunique(indices))
+        seen = Dict{eltype(indices), nothing}()
+
+        for idx in indices
+            if haskey(seen, idx)
+                vals = ntuple(i -> axiskeys(A, i)[idx[i]], length(idx))
+                throw(ArgumentError("Key $vals is not unique"))
+            else
+                seen[idx] = nothing
+            end
         end
-
-        # Insert our value into the data array
-        setindex!(A, Tables.getcolumn(r, value), inds...)
     end
 
-    return A
+    A[indices] = Tables.getcolumn(cols, value)
+
+    return
 end
 
 """
@@ -174,8 +187,8 @@ julia> using DataFrames, AxisKeys
 
 julia> df = DataFrame("a" => 1:3, "b" => 10:12.0, "c" => ["cat", "dog", "cat"])
 3×3 DataFrame
- Row │ a      b        c      
-     │ Int64  Float64  String 
+ Row │ a      b        c
+     │ Int64  Float64  String
 ─────┼────────────────────────
    1 │     1     10.0  cat
    2 │     2     11.0  dog
