@@ -38,27 +38,11 @@ function Tables.columns(A::Union{KeyedArray, NdaKa})
     L = hasnames(A) ? (dimnames(A)..., :value) :
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
     R = keys_or_axes(A)
-    # R_inds = ntuple(d -> eachindex(R[i]), length(R))
     R_inds = map(eachindex, R)
-
-    # Add function barrier and dispatch on column number for local type stability.
-    _get_col(R, ::Val{d}) where {d} = vec([rs[d] for rs in Iterators.product(R...)])
-
-    inds = ntuple(identity, length(R))
     G = map(
         (r, d) -> vec([r[rs[d]] for rs in Iterators.product(R_inds...)]),
-        R, inds,
+        R, ntuple(identity, length(R)),
     )
-
-    # G = map(enumerate(R)) do (d, r)
-    #     @show d, typeof(r)
-    #     vec([r[rs[d]] for rs in Iterators.product(R_inds...)])
-    # end
-    # G = ntuple(ndims(A)) do d
-    #     # _get_col(R, Val(d))
-    #     vec([R[d][rs[d]] for rs in Iterators.product(R_inds...)])
-    #     # _vec(rs[d] for rs in Iterators.product(R...))
-    # end
     C = (G..., vec(parent(A)))
     NamedTuple{L}(C)
 end
