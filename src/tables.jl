@@ -38,8 +38,12 @@ function Tables.columns(A::Union{KeyedArray, NdaKa})
     L = hasnames(A) ? (dimnames(A)..., :value) :
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
     R = keys_or_axes(A)
+
+    _get_col(R, ::Val{d}) where {d} = vec([rs[d] for rs in Iterators.product(R...)])
+
     G = ntuple(ndims(A)) do d
-        vec([rs[d] for rs in Iterators.product(R...)])
+        _get_col(R, Val(d))
+        # vec([rs[d] for rs in Iterators.product(R...)])
         # _vec(rs[d] for rs in Iterators.product(R...))
     end
     C = (G..., vec(parent(A)))
