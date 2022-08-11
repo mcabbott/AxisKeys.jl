@@ -37,7 +37,7 @@ Tables.columnaccess(::Type{<:KeyedArray{T,N,AT}}) where {T,N,AT} =
 function Tables.columns(A::Union{KeyedArray, NdaKa})
     L = hasnames(A) ? (dimnames(A)..., :value) :
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
-    G = _get_keys_columns(A)
+    G = _get_keys_columns(keys_or_axes(A))
     C = (G..., vec(parent(A)))
     NamedTuple{L}(C)
 end
@@ -48,8 +48,7 @@ end
 # of R, so is presumably able to unroll the call to map.
 # The previous implementation called `Iterators.product` on `R` and pulled out
 # the dth element of `indices`, whose type it could not infer.
-function _get_keys_columns(A)
-    R = keys_or_axes(A)
+function _get_keys_columns(R)
     R_inds = map(eachindex, R)
     return map(
         (r, d) -> vec([r[indices[d]] for indices in Iterators.product(R_inds...)]),
