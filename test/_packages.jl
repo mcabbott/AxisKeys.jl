@@ -49,6 +49,15 @@ end
         @test keys(first(Tables.rows(N))) == (:a, :b, :value)
 
         @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
+
+        # Regression test: https://github.com/mcabbott/AxisKeys.jl/pull/123
+        @testset "Tables.columns(::AxisKeys) type stability" begin
+            a = randn(5)
+            b = randn(Float32, 4)
+            @inferred AxisKeys._get_keys_columns((a, b))
+            X = wrapdims(randn(5, 4); a, b)
+            @inferred Tables.columns(X)
+        end
     end
     @testset "sink" begin
         A = KeyedArray(rand(24, 11, 3); time = 0:23, loc = -5:5, id = ["a", "b", "c"])

@@ -37,13 +37,22 @@ Tables.columnaccess(::Type{<:KeyedArray{T,N,AT}}) where {T,N,AT} =
 function Tables.columns(A::Union{KeyedArray, NdaKa})
     L = hasnames(A) ? (dimnames(A)..., :value) :
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
-    R = keys_or_axes(A)
-    G = ntuple(ndims(A)) do d
-        vec([rs[d] for rs in Iterators.product(R...)])
-        # _vec(rs[d] for rs in Iterators.product(R...))
-    end
+    G = _get_keys_columns(keys_or_axes(A))
     C = (G..., vec(parent(A)))
     NamedTuple{L}(C)
+end
+
+# indices is a tuple, the dth element of which is an index for the dth column of R.
+# By using these indices, and mapping over the columns of R, the compiler seems to
+# successfully infer the types in G, because it knows the element types of each column
+# of R, so is presumably able to unroll the call to map.
+# The previous implementation called `Iterators.product` on `R` and pulled out
+# the dth element of `indices`, whose type it could not infer.
+function _get_keys_columns(R)
+    R_inds = map(eachindex, R)
+    return map(R, ntuple(identity, length(R))) do r, d
+        vec([r[indices[d]] for indices in Iterators.product(R_inds...)])
+    end
 end
 
 function Tables.Schema(nt::NamedTuple) # 🏴‍☠️
