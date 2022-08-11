@@ -50,10 +50,9 @@ end
 # the dth element of `indices`, whose type it could not infer.
 function _get_keys_columns(R)
     R_inds = map(eachindex, R)
-    return map(
-        (r, d) -> vec([r[indices[d]] for indices in Iterators.product(R_inds...)]),
-        R, ntuple(identity, length(R)),
-    )
+    return map(R, ntuple(identity, length(R))) do r, d
+        vec([r[indices[d]] for indices in Iterators.product(R_inds...)])
+    end
 end
 
 function Tables.Schema(nt::NamedTuple) # 🏴‍☠️
