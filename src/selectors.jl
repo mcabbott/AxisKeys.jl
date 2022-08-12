@@ -208,8 +208,8 @@ end
 @inline Base.to_indices(A::Union{KeyedArray,NdaKa}, ax, inds::Tuple{Function, Vararg}) =
     select_to_indices(A, ax, inds)
 
-using Base: to_indices, tail, _maybetail, uncolon
+using Base: to_indices, tail, safe_tail, uncolon
 
 @inline Base.to_indices(A::Union{KeyedArray,NdaKa}, inds, I::Tuple{Colon, Vararg{Any}}) =
-    (uncolon(inds, I), to_indices(A, _maybetail(inds), tail(I))...)
+    (uncolon(inds, I), to_indices(A, safe_tail(inds), tail(I))...)
 
