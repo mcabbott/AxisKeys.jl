@@ -44,7 +44,7 @@ end
     end
 end
 @testset "DataFrames" begin
-    using DataFrames
+    using DataFrames: DataFrame
 
     X = KeyedArray(randn(1000, 1500), a=1:1000, b=1:1500)
     df = DataFrame(X)
