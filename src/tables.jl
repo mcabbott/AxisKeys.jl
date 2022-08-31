@@ -165,7 +165,6 @@ function populate_function_barrier!(A, value_column, axis_key_columns, mask, for
     return A
 end
 
-
 """
     wrapdims(table, value, names...; default=undef, sort=false, force=false)
 
