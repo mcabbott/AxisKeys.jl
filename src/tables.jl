@@ -138,22 +138,30 @@ function populate!(A, table, value::Symbol; force=false)
     # Use a BitArray mask to detect duplicates and error instead of overwriting.
     mask = force ? falses() : falses(size(A))
 
-    for r in Tables.rows(table)
-        vals = Tuple(Tables.getcolumn(r, c) for c in dimnames(A))
-        inds = map(findindex, vals, axiskeys(A))
+    cols = Tables.columns(table)
+    value_column = Tables.getcolumn(cols, value)
+    axis_key_columns = Tuple(Tables.getcolumn(cols, c) for c in dimnames(A))
+    return populate_function_barrier!(A, value_column, axis_key_columns, mask, force)
+end
+
+# eltypes of value and axis_key_columns aren't inferable in `populate!` if the `table`
+# doesn't have typed columns, as is the case for DataFrames. By passing them into
+# `populate_function_barrier!` once they've been pulled out of a DataFrame ensures
+# inference is possible for the loop.
+function populate_function_barrier!(A, value_column, axis_key_columns, mask, force)
+    for (val, keys...) in zip(value_column, axis_key_columns...)
+        inds = map(AxisKeys.findindex, keys, axiskeys(A))
 
         # Handle duplicate error checking if applicable
         if !force
             # Error if mask already set.
-            mask[inds...] && throw(ArgumentError("Key $vals is not unique"))
+            mask[inds...] && throw(ArgumentError("Key $keys is not unique"))
             # Set mask, marking that we've set this index
             setindex!(mask, true, inds...)
         end
 
-        # Insert our value into the data array
-        setindex!(A, Tables.getcolumn(r, value), inds...)
+        setindex!(A, val, inds...)
     end
-
     return A
 end
 
