@@ -134,29 +134,6 @@ corresponding to the keys in `A` and implements `Tables.rows`. If the keys in `A
 uniquely identify rows in the `table` then an `ArgumentError` is throw. If `force` is true
 then the duplicate (non-unique) entries will be overwritten.
 """
-# function populate!(A, table, value::Symbol; force=false)
-#     # Use a BitArray mask to detect duplicates and error instead of overwriting.
-#     mask = force ? falses() : falses(size(A))
-
-#     for r in Tables.rows(table)
-#         vals = Tuple(Tables.getcolumn(r, c) for c in dimnames(A))
-#         inds = map(findindex, vals, axiskeys(A))
-
-#         # Handle duplicate error checking if applicable
-#         if !force
-#             # Error if mask already set.
-#             mask[inds...] && throw(ArgumentError("Key $vals is not unique"))
-#             # Set mask, marking that we've set this index
-#             setindex!(mask, true, inds...)
-#         end
-
-#         # Insert our value into the data array
-#         setindex!(A, Tables.getcolumn(r, value), inds...)
-#     end
-
-#     return A
-# end
-
 function populate!(A, table, value::Symbol; force=false)
     # Use a BitArray mask to detect duplicates and error instead of overwriting.
     mask = force ? falses() : falses(size(A))
