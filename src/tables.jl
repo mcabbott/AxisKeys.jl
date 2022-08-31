@@ -144,6 +144,10 @@ function populate!(A, table, value::Symbol; force=false)
     return populate_function_barrier!(A, value_column, axis_key_columns, mask, force)
 end
 
+# eltypes of value and axis_key_columns aren't inferable in `populate!` if the `table`
+# doesn't have typed columns, as is the case for DataFrames. By passing them into
+# `populate_function_barrier!` once they've been pulled out of a DataFrame ensures
+# inference is possible for the loop.
 function populate_function_barrier!(A, value_column, axis_key_columns, mask, force)
     for (val, keys...) in zip(value_column, axis_key_columns...)
         inds = map(AxisKeys.findindex, keys, axiskeys(A))
