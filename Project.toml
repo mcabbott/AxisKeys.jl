@@ -23,6 +23,7 @@ BenchmarkTools = "0.5, 1.0"
 ChainRulesCore = "1"
 ChainRulesTestUtils = "1"
 CovarianceEstimation = "0.2"
+DataFrames = "1"
 FiniteDifferences = "0.12"
 IntervalSets = "0.5.1, 0.6, 0.7"
 InvertedIndices = "1.0"
@@ -36,6 +37,7 @@ julia = "1.6"
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
@@ -45,4 +47,4 @@ UniqueVectors = "2fbcfb34-fd0c-5fbb-b5d7-e826d8f5b0a9"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
-test = ["BenchmarkTools", "ChainRulesTestUtils", "Dates", "FiniteDifferences", "FFTW", "NamedArrays", "Test", "UniqueVectors", "Unitful"]
+test = ["BenchmarkTools", "ChainRulesTestUtils", "DataFrames", "Dates", "FiniteDifferences", "FFTW", "NamedArrays", "Test", "UniqueVectors", "Unitful"]

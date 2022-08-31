@@ -1,5 +1,10 @@
 using Test, AxisKeys
 
+function count_allocs(f, args...)
+    stats = @timed f(args...)
+    return Base.gc_alloc_count(stats.gcstats)
+end
+
 @testset "offset" begin
     using OffsetArrays
 
@@ -37,6 +42,14 @@ end
         k = wrapdims(x)
         @test dimnames(k) == (:aa,)
     end
+end
+@testset "DataFrames" begin
+    using DataFrames
+
+    X = KeyedArray(randn(1000, 1500), a=1:1000, b=1:1500)
+    df = DataFrame(X)
+    wrapdims(df, :value, :a, :b) # compile
+    @test count_allocs(wrapdims, df, :value, :a, :b) < 1_000
 end
 @testset "tables" begin
     using Tables
