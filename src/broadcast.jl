@@ -21,17 +21,28 @@ Base.BroadcastStyle(::Type{<:KeyedArray{T,N,AT}}) where {T,N,AT} =
 Base.BroadcastStyle(::KeyedStyle{A}, ::KeyedStyle{B}) where {A, B} = KeyedStyle(A(), B())
 Base.BroadcastStyle(::KeyedStyle{A}, b::B) where {A, B} = KeyedStyle(A(), b)
 Base.BroadcastStyle(a::A, ::KeyedStyle{B}) where {A, B} = KeyedStyle(a, B())
-Base.BroadcastStyle(::KeyedStyle{A}, b::DefaultArrayStyle) where {A} = KeyedStyle(A(), b)
-Base.BroadcastStyle(a::AbstractArrayStyle{M}, ::KeyedStyle{B}) where {B,M} = KeyedStyle(a, B())
 
 using NamedDims: NamedDimsStyle
 # this resolves in favour of KeyedArray(NamedDimsArray())
 Base.BroadcastStyle(a::NamedDimsStyle, ::KeyedStyle{B}) where {B} = KeyedStyle(a, B())
 Base.BroadcastStyle(::KeyedStyle{A}, b::NamedDimsStyle) where {A} = KeyedStyle(A(), b)
 
+# Resolve ambiguities
+# for all these cases, we define that we win to be the outer style regardless of order
+for B in (
+    :BroadcastStyle, :DefaultArrayStyle, :AbstractArrayStyle, :(Broadcast.Style{Tuple}),
+)
+    @eval function Base.BroadcastStyle(::KeyedStyle{A}, b::$B) where A
+        return KeyedStyle(A(), b)
+    end
+    @eval function Base.BroadcastStyle(b::$B, ::KeyedStyle{A}) where A
+        return KeyedStyle(b, A())
+    end
+end
+
 function unwrap_broadcasted(bc::Broadcasted{KeyedStyle{S}}) where {S}
     inner_args = map(unwrap_broadcasted, bc.args)
-    Broadcasted{S}(bc.f, inner_args)
+    Broadcasted{S}(bc.f, inner_args, axes(bc))
 end
 unwrap_broadcasted(x) = x
 unwrap_broadcasted(x::KeyedArray) = parent(x)

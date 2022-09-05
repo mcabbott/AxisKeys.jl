@@ -259,6 +259,17 @@ end
         @test_throws Exception unify_keys((1:2,), ([3,4],))
 
     end
+    @testset "https://github.com/mcabbott/AxisKeys.jl/issues/128" begin
+        using LinearAlgebra
+
+        # Really simple test that broadcasting with linalg array types works.
+        v = rand(10)
+        σ = wrapdims(v; time=-4:5)
+        L = LowerTriangular(reshape(1.0:1.0:100, (10, 10)))
+        σ .* L
+        v .* L
+        @test σ .* L ≈ v .* L
+    end
 end
 @testset "bitarray" begin
 
