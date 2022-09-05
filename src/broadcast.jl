@@ -42,7 +42,7 @@ end
 
 function unwrap_broadcasted(bc::Broadcasted{KeyedStyle{S}}) where {S}
     inner_args = map(unwrap_broadcasted, bc.args)
-    Broadcasted{S}(bc.f, inner_args)
+    Broadcasted{S}(bc.f, inner_args, axes(bc))
 end
 unwrap_broadcasted(x) = x
 unwrap_broadcasted(x::KeyedArray) = parent(x)
