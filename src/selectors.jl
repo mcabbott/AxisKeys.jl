@@ -210,6 +210,10 @@ end
 
 using Base: to_indices, tail, safe_tail, uncolon
 
+if VERSION > v"1.9-DEV"
+    Base.uncolon(inds, I) = Base.uncolon(inds)
+end
+
 @inline Base.to_indices(A::Union{KeyedArray,NdaKa}, inds, I::Tuple{Colon, Vararg{Any}}) =
     (uncolon(inds, I), to_indices(A, safe_tail(inds), tail(I))...)
 
