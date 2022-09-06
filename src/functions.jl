@@ -113,6 +113,17 @@ elseif VERSION >= v"1.1"
     end
 end
 
+@static if VERSION > v"1.9-DEV"
+    function Base.stack(A::KeyedArray; dims::Colon=:)
+        data = @invoke Base.stack(A::AbstractArray; dims)
+        if !allequal(named_axiskeys(a) for a in A)
+            throw(DimensionMismatch("stack expects uniform axiskeys for all arrays"))
+        end
+        akeys = (; named_axiskeys(first(A))..., named_axiskeys(A)...)
+        KeyedArray(data; akeys...)
+    end
+end
+
 function Base.mapslices(f, A::KeyedArray; dims)
     numerical_dims = NamedDims.dim(A, dims)
     data = mapslices(f, parent(A); dims=numerical_dims)
