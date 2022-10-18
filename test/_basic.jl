@@ -151,7 +151,7 @@ end
     N2 = NamedDimsArray(KeyedArray(data, axiskeys(N1)), dimnames(N1))
     N3 = KeyedArray(NamedDimsArray(data, dimnames(N1)), axiskeys(N1))
 
-    @testset "with $(typeof(N).name) outside" for N in [N2, N3]
+    @testset "with $(typeof(N).name) outside" for N in (N2, N3)
         @test axiskeys(N) == (['a', 'b', 'c'], 10:10:40)
         @test axiskeys(N, :iter) == 10:10:40
         @test dimnames(N) == (:obs, :iter)
