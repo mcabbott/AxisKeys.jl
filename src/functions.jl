@@ -114,6 +114,7 @@ elseif VERSION >= v"1.1"
 end
 
 @static if VERSION > v"1.9-DEV"
+    # TODO: only supports dims=: for now
     function Base.stack(A::KeyedArray; dims::Colon=:)
         data = @invoke Base.stack(A::AbstractArray; dims)
         if !allequal(named_axiskeys(a) for a in A)
