@@ -1,5 +1,5 @@
 
-using LazyStack
+import LazyStack
 
 # for stack_iter
 LazyStack.no_wraps(a::KeyedArray) = LazyStack.no_wraps(NamedDims.unname(parent(a)))
@@ -23,14 +23,14 @@ stack_keys(xs::Tuple{Vararg{KeyedArray}}) =
 
 # array of arrays: first strip off outer containers...
 function LazyStack.stack(xs::KeyedArray{<:AbstractArray})
-    KeyedArray(stack(parent(xs)), stack_keys(xs))
+    KeyedArray(LazyStack.stack(parent(xs)), stack_keys(xs))
 end
 function LazyStack.stack(xs::KeyedArray{<:AbstractArray,N,<:NamedDimsArray{L}}) where {L,N}
-    data = stack(parent(parent(xs)))
+    data = LazyStack.stack(parent(parent(xs)))
     KeyedArray(LazyStack.ensure_named(data, LazyStack.getnames(xs)), stack_keys(xs))
 end
 function LazyStack.stack(xs::NamedDimsArray{L,<:AbstractArray,N,<:KeyedArray}) where {L,N}
-    data = stack(parent(parent(xs)))
+    data = LazyStack.stack(parent(parent(xs)))
     LazyStack.ensure_named(KeyedArray(data, stack_keys(xs)), LazyStack.getnames(xs))
 end
 

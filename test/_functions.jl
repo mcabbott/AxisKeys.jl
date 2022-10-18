@@ -53,7 +53,7 @@ A3 = wrapdims(rand(Int8, 3,4,2), r='a':'c', c=2:5, p=[10.0, 20.0])
             KeyedArray([5, 6], a=[:x, :y]),
         ], b=10:12)
 
-        sk = Base.stack(arr)::KeyedArray
+        sk = stack(arr)::KeyedArray
         @test sk == [1 3 5; 2 4 6]
         @test named_axiskeys(sk) == (a=[:x, :y], b=10:12)
     end
