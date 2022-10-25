@@ -170,6 +170,16 @@ end
 
         @test_throws Exception N(obs=55)  # ideally ArgumentError
         @test_throws Exception N(obs='z') # ideally BoundsError
+
+        new_obs = [:x, :y, :z]
+        new_iter = 1:4
+
+        # Rekey with Tuple
+        @test axiskeys(rekey(N, ([:x, :y, :z], 1:4))) == ([:x, :y, :z], 1:4)
+        # Rekey with dim => axiskey pair
+        @test axiskeys(rekey(N, 2 => 1:4)) == (['a', 'b', 'c'], 1:4)
+        # Rekey with dimname => axiskey pair
+        @test axiskeys(rekey(N, :iter => 1:4)) == (['a', 'b', 'c'], 1:4)
     end
 
     @testset "named_axiskeys" begin
