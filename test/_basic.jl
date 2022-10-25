@@ -180,8 +180,6 @@ end
         @test axiskeys(rekey(N, 2 => 1:4)) == (['a', 'b', 'c'], 1:4)
         # Rekey with dimname => axiskey pair
         @test axiskeys(rekey(N, :iter => 1:4)) == (['a', 'b', 'c'], 1:4)
-        # Rekey and rename
-        @test named_axiskeys(rekey(N, :obs => :label => [:x, :y, :z])) == (label=[:x, :y, :z], iter=10:10:40)
     end
 
     @testset "named_axiskeys" begin

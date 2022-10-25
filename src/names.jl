@@ -179,11 +179,9 @@ end
     rekey(A, (1:10, [:a, :b]))
     rekey(A, 2 => [:a, :b])
     rekey(A, :y => [:a, :b])
-    rekey(A, :y => q => [:a, :b])
 
-Rekey a KeyedArray via `Tuple`s, `dim => newkey`. If `A` also has named dimensions then you
-can also pass `dimname => newkey`, or even `oldname => newname => newkey` to both `rename`
-and `rekey` the specified dimension.
+Rekey a KeyedArray via `Tuple`s or `Pair`s, `dim => newkey`. If `A` also has named
+dimensions then you can also pass `dimname => newkey`.
 """
 rekey(A::Union{KeyedArray, NdaKa}, k2::Tuple) = KeyedArray(keyless(A), k2)
 function rekey(A::Union{KeyedArray, NdaKa}, k2::Pair{<:Integer, <:AbstractVector}...)
@@ -198,12 +196,4 @@ end
 function rekey(A::Union{KaNda, NdaKa}, k2::Pair{Symbol, <:AbstractVector}...)
     pairs = map(p -> NamedDims.dim(A, p[1]) => p[2], k2)
     return rekey(A, pairs...)
-end
-
-function rekey(A::Union{KaNda, NdaKa}, k2::Pair{Symbol, <:Pair}...)
-    # Extract rekey pairs from k2
-    rekey_pairs = last.(k2)
-    # Extract the current dimname and desired dimname into pairs
-    rename_pairs = Pair.(first.(k2), first.(rekey_pairs))
-    return rekey(rename(A, rename_pairs...), rekey_pairs...)
 end
