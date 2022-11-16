@@ -148,7 +148,7 @@ end
 
     @test axiskeys(filter(isodd, V2),1) isa Vector{Int}
     @test dimnames(filter(isodd, V2)) == (:v,)
-    
+
     V4 = wrapdims(rand(1:99, 10), collect(2:11))
     V4c = copy(V4)
     @test filter!(isodd, V4c) === V4c == filter(isodd, V4)
@@ -351,6 +351,10 @@ end
         @test axiskeys(A10 \ V, 1) == 1:3
         @test axiskeys(T10 \ V, 1) == 1:3
     end
+
+    # Catch issue #133
+    S =  wrapdims(Symmetric(rand(Int8,3,3)), 'a':'c', 10:10:30)
+    @test LinearAlgebra.copy_oftype(S, eltype(S)) == S
 
     @testset "cholesky" begin
         A = rand(10, 3)
