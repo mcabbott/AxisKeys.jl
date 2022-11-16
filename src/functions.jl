@@ -425,6 +425,11 @@ LinearAlgebra.cholesky(A::Hermitian{T, <:KeyedArray{T}}; kwargs...) where {T} =
 LinearAlgebra.cholesky(A::KeyedMatrix; kwargs...) =
     cholesky(keyless_unname(A); kwargs...)
 
+# Defer to LinearAlgebra.copy_oftype for parent Array - see issue #133
+function LinearAlgebra.copy_oftype(A::KeyedArray, ::Type{T}) where {T}
+    return KeyedArray(LinearAlgebra.copy_oftype(parent(A), T), axiskeys(A))
+end
+
 function Base.deleteat!(v::KeyedVector, inds)
     deleteat!(axiskeys(v, 1), inds)
     deleteat!(v.data, inds)
@@ -441,4 +446,3 @@ function Base.filter!(f, a::KeyedVector)
     deleteat!(a, j:lastindex(a))
     return a
 end
-                                                                
