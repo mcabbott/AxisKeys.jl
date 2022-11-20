@@ -208,12 +208,14 @@ end
 @inline Base.to_indices(A::Union{KeyedArray,NdaKa}, ax, inds::Tuple{Function, Vararg}) =
     select_to_indices(A, ax, inds)
 
-using Base: to_indices, tail, safe_tail, uncolon
+using Base: to_indices, tail, safe_tail
 
 if VERSION > v"1.9-DEV"
-    Base.uncolon(inds, I) = Base.uncolon(inds)
+    const uncolon = Base.uncolon
+else
+    uncolon(inds) = Base.uncolon(inds, (:,))
 end
 
 @inline Base.to_indices(A::Union{KeyedArray,NdaKa}, inds, I::Tuple{Colon, Vararg{Any}}) =
-    (uncolon(inds, I), to_indices(A, safe_tail(inds), tail(I))...)
+    (uncolon(inds), to_indices(A, safe_tail(inds), tail(I))...)
 
