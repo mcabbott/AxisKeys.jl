@@ -14,11 +14,11 @@ function LazyStack.rewrap_like(A, a::NamedTuple)
 end
 
 # tuple of arrays
-function LazyStack.stack(x::Tuple{Vararg{<:KeyedArray}})
+function LazyStack.stack(x::Tuple{Vararg{KeyedArray}})
     KeyedArray(LazyStack.stack(map(parent, x)), stack_keys(x))
 end
 
-stack_keys(xs::Tuple{Vararg{<:KeyedArray}}) =
+stack_keys(xs::Tuple{Vararg{KeyedArray}}) =
     (keys_or_axes(first(xs))..., Base.OneTo(length(xs)))
 
 # array of arrays: first strip off outer containers...
