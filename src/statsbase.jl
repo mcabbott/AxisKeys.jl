@@ -48,7 +48,7 @@ end
 
 for fun in (:std, :var, :cov)
     full_name = Symbol("mean_and_$fun")
-    @eval StatsBase.$full_name(A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=:, corrected::Bool=true, kwargs...) =
+    @eval StatsBase.$full_name(A::KeyedMatrix, wv::Vararg{AbstractWeights}; dims=:, corrected::Bool=true, kwargs...) =
         (
             mean(A, wv...; dims=dims, kwargs...),
             $fun(A, wv...; dims=dims, corrected=corrected, kwargs...)
