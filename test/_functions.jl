@@ -148,7 +148,7 @@ end
 
     @test axiskeys(filter(isodd, V2),1) isa Vector{Int}
     @test dimnames(filter(isodd, V2)) == (:v,)
-    
+
     V4 = wrapdims(rand(1:99, 10), collect(2:11))
     V4c = copy(V4)
     @test filter!(isodd, V4c) === V4c == filter(isodd, V4)
@@ -285,6 +285,17 @@ end
     # make sure array is not in an invalid state if the deleteat for indices fails
     ka = wrapdims([4, 5, 6.0], a=1:3)
     @test_throws MethodError deleteat!(ka, 2)
+    @test ka == KeyedArray([4, 5, 6.0], a=1:3)
+end
+
+@testset "empty!" begin
+    kv = wrapdims([1, 2, 3, 4, 5, 6.0], a=[:a, :b, :c, :d, :e, :f])
+    @test kv == empty!(kv)
+    @test isempty(kv)
+
+    # make sure array is not in an invalid state if the emtpy for indices fails
+    ka = wrapdims([4, 5, 6.0], a=1:3)
+    @test_throws MethodError empty!(ka)
     @test ka == KeyedArray([4, 5, 6.0], a=1:3)
 end
 

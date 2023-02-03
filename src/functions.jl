@@ -441,4 +441,9 @@ function Base.filter!(f, a::KeyedVector)
     deleteat!(a, j:lastindex(a))
     return a
 end
-                                                                
+
+function Base.empty!(v::KeyedVector)
+    empty!(axiskeys(v, 1))
+    empty!(v.data)
+    return v
+end
