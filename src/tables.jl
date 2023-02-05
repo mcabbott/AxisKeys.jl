@@ -130,7 +130,7 @@ end
 
 Populate `A` with the contents of the `value` column in a provided `table`, matching the
 [Tables.jl](https://github.com/JuliaData/Tables.jl) API. The `table` must contain columns
-corresponding to the keys in `A` and implements `Tables.rows`. If the keys in `A` do not
+corresponding to the keys in `A` and implement `Tables.columns`. If the keys in `A` do not
 uniquely identify rows in the `table` then an `ArgumentError` is throw. If `force` is true
 then the duplicate (non-unique) entries will be overwritten.
 """
