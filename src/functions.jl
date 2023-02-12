@@ -114,7 +114,8 @@ elseif VERSION >= v"1.1"
 end
 
 @static if VERSION > v"1.9-DEV"
-    # TODO: only supports dims=: for now
+    # TODO: this will ERROR if given dims, instead of falling back to Base
+    # TODO: ideally it would dispatch on the element type, for e.g. a generator of KeyedArrays
     function Base.stack(A::KeyedArray; dims::Colon=:)
         data = @invoke stack(A::AbstractArray; dims)
         if !allequal(named_axiskeys(a) for a in A)
