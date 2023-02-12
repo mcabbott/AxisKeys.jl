@@ -46,6 +46,17 @@ A3 = wrapdims(rand(Int8, 3,4,2), r='a':'c', c=2:5, p=[10.0, 20.0])
     if VERSION >= v"1.1"
         @test axiskeys(first(eachslice(M, dims=:r))) === (2:5,)
     end
+    if VERSION >= v"1.9-DEV"
+        arr = KeyedArray([
+            KeyedArray([1, 2], a=[:x, :y]),
+            KeyedArray([3, 4], a=[:x, :y]),
+            KeyedArray([5, 6], a=[:x, :y]),
+        ], b=10:12)
+
+        sk = stack(arr)::KeyedArray
+        @test sk == [1 3 5; 2 4 6]
+        @test named_axiskeys(sk) == (a=[:x, :y], b=10:12)
+    end
 
     @test axiskeys(selectdim(M, :r, [true, false, true])) == (['a', 'c'], 2:5)
 

@@ -94,7 +94,13 @@ function Base.permutedims(A::KeyedArray, perm)
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
 
-if VERSION >= v"1.1"
+@static if VERSION > v"1.9-DEV"
+    function Base.eachslice(A::KeyedArray; dims)
+        dims_ix = AxisKeys.dim(A, dims) |> Tuple
+        data = @invoke eachslice(A::AbstractArray; dims=dims_ix)
+        return KeyedArray(NamedDimsArray(data, map(d -> dimnames(A, d), dims_ix)), map(d -> axiskeys(A, d), dims_ix))
+    end
+elseif VERSION >= v"1.1"
     # This copies the implementation from Base, except with numerical_dims:
     @inline function Base.eachslice(A::KeyedArray; dims)
         numerical_dims = NamedDims.dim(A, dims)
@@ -104,6 +110,19 @@ if VERSION >= v"1.1"
         inds_before = ntuple(d->(:), dim-1)
         inds_after = ntuple(d->(:), ndims(A)-dim)
         return (view(A, inds_before..., i, inds_after...) for i in axes(A, dim))
+    end
+end
+
+@static if VERSION > v"1.9-DEV"
+    # TODO: this will ERROR if given dims, instead of falling back to Base
+    # TODO: ideally it would dispatch on the element type, for e.g. a generator of KeyedArrays
+    function Base.stack(A::KeyedArray; dims::Colon=:)
+        data = @invoke stack(A::AbstractArray; dims)
+        if !allequal(named_axiskeys(a) for a in A)
+            throw(DimensionMismatch("stack expects uniform axiskeys for all arrays"))
+        end
+        akeys = (; named_axiskeys(first(A))..., named_axiskeys(A)...)
+        KeyedArray(data; akeys...)
     end
 end
 

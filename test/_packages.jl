@@ -129,25 +129,25 @@ end
     end
 end
 @testset "stack" begin
-    using LazyStack
+    using LazyStack: stack as lstack
 
     rin = [wrapdims(1:3, a='a':'c') for i=1:4]
 
-    @test axiskeys(stack(rin), :a) == 'a':'c'
-    @test axiskeys(stack(:b, rin...), :a) == 'a':'c' # tuple
-    @test axiskeys(stack(z for z in rin), :a) == 'a':'c' # generator
+    @test axiskeys(lstack(rin), :a) == 'a':'c'
+    @test axiskeys(lstack(:b, rin...), :a) == 'a':'c' # tuple
+    @test axiskeys(lstack(z for z in rin), :a) == 'a':'c' # generator
 
     rout = wrapdims([[1,2], [3,4]], b=10:11)
-    @test axiskeys(stack(rout), :b) == 10:11
+    @test axiskeys(lstack(rout), :b) == 10:11
 
     rboth = wrapdims(rin, b=10:13)
-    @test axiskeys(stack(rboth), :a) == 'a':'c'
-    @test axiskeys(stack(rboth), :b) == 10:13
+    @test axiskeys(lstack(rboth), :a) == 'a':'c'
+    @test axiskeys(lstack(rboth), :b) == 10:13
 
     nts = [(i=i, j="j", k=33) for i=1:3]
-    @test axiskeys(stack(nts), 1) == [:i, :j, :k]
-    @test axiskeys(stack(:z, nts...), 1) == [:i, :j, :k]
-    @test axiskeys(stack(n for n in nts), 1) == [:i, :j, :k]
+    @test axiskeys(lstack(nts), 1) == [:i, :j, :k]
+    @test axiskeys(lstack(:z, nts...), 1) == [:i, :j, :k]
+    @test axiskeys(lstack(n for n in nts), 1) == [:i, :j, :k]
 
 end
 @testset "dates" begin
