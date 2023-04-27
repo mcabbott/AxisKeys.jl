@@ -71,7 +71,7 @@ estimators = [
     :AnalyticalNonlinearShrinkage,
 ]
 for estimator in estimators
-    @eval function Statistics.cov(ce::$estimator, A::KeyedMatrix, wv::Vararg{<:AbstractWeights}; dims=1, kwargs...)
+    @eval function Statistics.cov(ce::$estimator, A::KeyedMatrix, wv::Vararg{AbstractWeights}; dims=1, kwargs...)
         d = NamedDims.dim(A, dims)
         data = cov(ce, keyless_unname(A), wv...; dims=d, kwargs...)
         L1 = dimnames(A, 3 - d)
