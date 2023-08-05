@@ -1,6 +1,6 @@
 theme:
   name: material
-  #logo: assets/AxisKeys_logo.png
+  logo: assets/readmefigure.png
   features:
     # - announce.dismiss
     #- content.code.annotate

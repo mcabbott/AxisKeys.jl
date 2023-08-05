@@ -14,4 +14,10 @@ Start by adding the package:
 add AxisKeys
 ```
 
+The package aims not to be opinionated about what you store in these "key vectors":
+they can be arbitrary `AbstractVectors`, and need not be sorted nor have unique elements.
+Integer "keys" are allowed, and should have no surprising interactions with indices.
+While it is further from zero-cost than [`NamedDims.jl`](https://github.com/invenia/NamedDims.jl),
+it aims to be light-weight, leaving as much functionality as possible to other packages.
+
 Now, let's go to the next section for a quick intro.
