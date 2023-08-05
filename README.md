@@ -2,10 +2,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/mcabbott/AxisKeys.jl/blob/main/LICENSE)
 [![Docs: Latest](https://img.shields.io/badge/Docs-Latest-blue.svg)](https://github.com/mcabbott/AxisKeys.jl/dev)
-[![Build Status](https://github.com/mcabbott/AxisKeys.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/mcabbott/AxisKeys.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Build Status](https://github.com/mcabbott/AxisKeys.jl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mcabbott/AxisKeys.jl/actions/workflows/ci.yml?query=branch%3Amaster)
 [![Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/AxisKeys&label=Downloads)](https://pkgs.genieframework.com?packages=AxisKeys)
 
-<img src="/docs/src/assets/reamefigure.png" align="right" style="padding-left:10px;" width="150"/>
+<img src="/docs/src/assets/readmefigure.png" align="right" style="padding-left:10px;" width="150"/>
 
 This package defines a thin wrapper which, alongside any array, stores a vector of "keys" 
 for each dimension. This may be useful to store perhaps actual times of measurements, 
