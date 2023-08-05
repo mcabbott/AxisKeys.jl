@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/mcabbott/AxisKeys.jl/blob/main/LICENSE)
 [![Docs: Latest](https://img.shields.io/badge/Docs-Latest-blue.svg)](https://github.com/mcabbott/AxisKeys.jl/dev)
-[![Build Status](https://github.com/mcabbott/AxisKeys.jl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mcabbott/AxisKeys.jl/actions/workflows/ci.yml?query=branch%3Amaster)
+[![Build Status](https://github.com/mcabbott/AxisKeys.jl/workflows/CI/badge.svg)](https://github.com/mcabbott/AxisKeys.jl/actions?query=workflow%3ACI+branch%3Amaster)
 [![Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/AxisKeys&label=Downloads)](https://pkgs.genieframework.com?packages=AxisKeys)
 
 <img src="/docs/src/assets/readmefigure.png" align="right" style="padding-left:10px;" width="150"/>
