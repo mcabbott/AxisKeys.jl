@@ -23,7 +23,7 @@ A = KeyedArray(data; channel=[:left, :right], time=range(13, step=2.5, length=10
 ```
 
 <p align="center">
-<img src="docs/readmeterminal.png" alt="terminal pretty printing" width="550" align="center">
+<img src="docs/src/assets/readmeterminal.png" alt="terminal pretty printing" width="550" align="center">
 </p>
 
 The package aims not to be opinionated about what you store in these "key vectors":
