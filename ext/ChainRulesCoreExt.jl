@@ -1,3 +1,6 @@
+module ChainRulesCoreExt
+
+using AxisKeys: KeyedArray, KaNda, NdaKa, keyless, keyless_unname, axiskeys, named_axiskeys, wrapdims
 using ChainRulesCore
 
 function ChainRulesCore.ProjectTo(x::Union{KaNda, NdaKa})
@@ -18,4 +21,6 @@ _KeyedArray_pullback(ȳ::AbstractThunk, project) = _KeyedArray_pullback(unthunk
 function ChainRulesCore.rrule(::typeof(keyless_unname), x)
     pb(y) = _KeyedArray_pullback(y, ProjectTo(x))
     return keyless_unname(x), pb
+end
+
 end

@@ -1,4 +1,6 @@
+module LazyStackExt
 
+using AxisKeys: KeyedArray, NamedDims, NamedDimsArray, axiskeys, hasnames, dimnames, keys_or_axes
 import LazyStack
 
 # for stack_iter
@@ -56,4 +58,6 @@ end
 function LazyStack.getnames(xs::AbstractArray{<:KeyedArray{T,N,IT}}) where {T,N,IT}
     out_names = hasnames(xs) ? dimnames(xs) : NamedDims.dimnames(xs)
     (NamedDims.dimnames(IT)..., out_names...)
+end
+
 end
