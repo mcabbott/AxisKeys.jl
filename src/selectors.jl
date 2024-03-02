@@ -1,10 +1,3 @@
-
-using InvertedIndices
-# needs only Base.to_indices in struct.jl to work,
-# plus this to work when used in round brackets:
-
-findindex(not::InvertedIndex, r::AbstractVector) = Base.unalias(r, not)
-
 using IntervalSets
 
 findindex(int::Interval, r::AbstractVector) =

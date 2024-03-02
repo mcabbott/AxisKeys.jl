@@ -26,7 +26,6 @@ end
 shorttype(r::Vector{T}) where {T} = "Vector{$T}"
 shorttype(r::OneTo) = "OneTo{Int}"
 shorttype(r::SubArray) = "view(::" * shorttype(parent(r)) * ",...)"
-shorttype(r::OffsetArray) = "OffsetArray(::" * shorttype(parent(r)) * ",...)"
 function shorttype(r)
     bits = split(string(typeof(r)),',')
     length(bits) == 1 && return bits[1]
@@ -122,7 +121,6 @@ function keyed_print_matrix(io::IO, A, reduce_size::Bool=false)
 end
 
 no_offset(x) = x
-no_offset(x::OffsetArray) = parent(x)
 
 full(x::DenseArray) = x
 full(x::AbstractArray) = collect(x)  # deal with sparse
