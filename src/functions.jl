@@ -239,7 +239,11 @@ function Base.sort(A::KeyedVector; kw...)
 end
 
 function Base.sort!(A::KeyedVector; kw...)
-    perm = sortperm(parent(A); kw...)
+    @static if VERSION >= v"1.9"
+        perm = sortperm(parent(A); kw..., scratch=Vector{Int}(undef, length(A)))
+    else
+        perm = sortperm(parent(A); kw...)
+    end
     permute!(axiskeys(A,1), perm) # error if keys cannot be sorted, could treat like push!
     permute!(parent(A), perm)
     A
