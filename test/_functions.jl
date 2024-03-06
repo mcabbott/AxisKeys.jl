@@ -4,6 +4,7 @@ using NamedDims: unname
 M = wrapdims(rand(Int8, 3,4), r='a':'c', c=2:5)
 MN = NamedDimsArray(M.data.data, r='a':'c', c=2:5)
 V = wrapdims(rand(1:99, 10), v=10:10:100)
+
 VN = NamedDimsArray(V.data.data, v=10:10:100)
 A3 = wrapdims(rand(Int8, 3,4,2), r='a':'c', c=2:5, p=[10.0, 20.0])
 
@@ -87,6 +88,9 @@ end
 @testset "sort & reverse" begin
 
     @test sort(V)(20) == V(20)
+    # need to test with non integer eltypes:
+    @test sort!(float.(V))(20) == V(20)
+    @test first(sort!(float.(A3); dims=1)) == first(sort(A3; dims=1))
 
     @test axiskeys(sort(M, dims=:c), :c) isa Base.OneTo
     @test axiskeys(sort(M, dims=:c), :r) == 'a':'c'
