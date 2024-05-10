@@ -37,13 +37,22 @@ Tables.columnaccess(::Type{<:KeyedArray{T,N,AT}}) where {T,N,AT} =
 function Tables.columns(A::Union{KeyedArray, NdaKa})
     L = hasnames(A) ? (dimnames(A)..., :value) :
         (ntuple(d -> Symbol(:dim_,d), ndims(A))..., :value)
-    R = keys_or_axes(A)
-    G = ntuple(ndims(A)) do d
-        vec([rs[d] for rs in Iterators.product(R...)])
-        # _vec(rs[d] for rs in Iterators.product(R...))
-    end
+    G = _get_keys_columns(keys_or_axes(A))
     C = (G..., vec(parent(A)))
     NamedTuple{L}(C)
+end
+
+# indices is a tuple, the dth element of which is an index for the dth column of R.
+# By using these indices, and mapping over the columns of R, the compiler seems to
+# successfully infer the types in G, because it knows the element types of each column
+# of R, so is presumably able to unroll the call to map.
+# The previous implementation called `Iterators.product` on `R` and pulled out
+# the dth element of `indices`, whose type it could not infer.
+function _get_keys_columns(R)
+    R_inds = map(eachindex, R)
+    return map(R, ntuple(identity, length(R))) do r, d
+        vec([r[indices[d]] for indices in Iterators.product(R_inds...)])
+    end
 end
 
 function Tables.Schema(nt::NamedTuple) # 🏴‍☠️
@@ -121,7 +130,7 @@ end
 
 Populate `A` with the contents of the `value` column in a provided `table`, matching the
 [Tables.jl](https://github.com/JuliaData/Tables.jl) API. The `table` must contain columns
-corresponding to the keys in `A` and implements `Tables.rows`. If the keys in `A` do not
+corresponding to the keys in `A` and implement `Tables.columns`. If the keys in `A` do not
 uniquely identify rows in the `table` then an `ArgumentError` is throw. If `force` is true
 then the duplicate (non-unique) entries will be overwritten.
 """
@@ -129,22 +138,30 @@ function populate!(A, table, value::Symbol; force=false)
     # Use a BitArray mask to detect duplicates and error instead of overwriting.
     mask = force ? falses() : falses(size(A))
 
-    for r in Tables.rows(table)
-        vals = Tuple(Tables.getcolumn(r, c) for c in dimnames(A))
-        inds = map(findindex, vals, axiskeys(A))
+    cols = Tables.columns(table)
+    value_column = Tables.getcolumn(cols, value)
+    axis_key_columns = Tuple(Tables.getcolumn(cols, c) for c in dimnames(A))
+    return populate_function_barrier!(A, value_column, axis_key_columns, mask, force)
+end
+
+# eltypes of value and axis_key_columns aren't inferable in `populate!` if the `table`
+# doesn't have typed columns, as is the case for DataFrames. By passing them into
+# `populate_function_barrier!` once they've been pulled out of a DataFrame ensures
+# inference is possible for the loop.
+function populate_function_barrier!(A, value_column, axis_key_columns, mask, force)
+    for (val, keys...) in zip(value_column, axis_key_columns...)
+        inds = map(AxisKeys.findindex, keys, axiskeys(A))
 
         # Handle duplicate error checking if applicable
         if !force
             # Error if mask already set.
-            mask[inds...] && throw(ArgumentError("Key $vals is not unique"))
+            mask[inds...] && throw(ArgumentError("Key $keys is not unique"))
             # Set mask, marking that we've set this index
             setindex!(mask, true, inds...)
         end
 
-        # Insert our value into the data array
-        setindex!(A, Tables.getcolumn(r, value), inds...)
+        setindex!(A, val, inds...)
     end
-
     return A
 end
 

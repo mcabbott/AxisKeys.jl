@@ -173,3 +173,27 @@ function named_axiskeys(A::AbstractArray)
     NT = NamedTuple{dimnames(A)}
     NT(axiskeys(A))
 end
+
+
+"""
+    rekey(A, (1:10, [:a, :b]))
+    rekey(A, 2 => [:a, :b])
+    rekey(A, :y => [:a, :b])
+
+Rekey a KeyedArray via `Tuple`s or `Pair`s, `dim => newkey`. If `A` also has named
+dimensions then you can also pass `dimname => newkey`.
+"""
+rekey(A::Union{KeyedArray, NdaKa}, k2::Tuple) = KeyedArray(keyless(A), k2)
+function rekey(A::Union{KeyedArray, NdaKa}, k2::Pair{<:Integer, <:AbstractVector}...)
+    dims, vals = first.(k2), last.(k2)
+    new_key = ntuple(ndims(A)) do d
+        idx = findfirst(==(d), dims)
+        idx === nothing ? axiskeys(A, d) : vals[idx]
+    end
+    return rekey(A, new_key)
+end
+
+function rekey(A::Union{KaNda, NdaKa}, k2::Pair{Symbol, <:AbstractVector}...)
+    pairs = map(p -> NamedDims.dim(A, p[1]) => p[2], k2)
+    return rekey(A, pairs...)
+end

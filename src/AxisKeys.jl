@@ -6,7 +6,7 @@ export KeyedArray, axiskeys
 include("lookup.jl")
 
 include("names.jl")
-export named_axiskeys
+export named_axiskeys, rekey
 export NamedDimsArray, dimnames, rename  # Reexport key NamedDimsArrays things
 
 include("wrap.jl")
@@ -26,11 +26,15 @@ include("show.jl")
 
 include("tables.jl") # Tables.jl
 
-include("stack.jl") # LazyStack.jl
+if !isdefined(Base, :get_extension)
+    include("../ext/AbstractFFTsExt.jl")
+    include("../ext/ChainRulesCoreExt.jl")
+    include("../ext/CovarianceEstimationExt.jl")
+    include("../ext/InvertedIndicesExt.jl")
+    include("../ext/LazyStackExt.jl")
+    include("../ext/OffsetArraysExt.jl")
+    include("../ext/StatisticsExt.jl")
+    include("../ext/StatsBaseExt.jl")
+end
 
-include("fft.jl") # AbstractFFTs.jl
-
-include("statsbase.jl") # StatsBase.jl
-
-include("chainrules.jl")
 end

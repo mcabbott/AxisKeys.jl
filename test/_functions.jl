@@ -46,6 +46,17 @@ A3 = wrapdims(rand(Int8, 3,4,2), r='a':'c', c=2:5, p=[10.0, 20.0])
     if VERSION >= v"1.1"
         @test axiskeys(first(eachslice(M, dims=:r))) === (2:5,)
     end
+    if VERSION >= v"1.9-DEV"
+        arr = KeyedArray([
+            KeyedArray([1, 2], a=[:x, :y]),
+            KeyedArray([3, 4], a=[:x, :y]),
+            KeyedArray([5, 6], a=[:x, :y]),
+        ], b=10:12)
+
+        sk = stack(arr)::KeyedArray
+        @test sk == [1 3 5; 2 4 6]
+        @test named_axiskeys(sk) == (a=[:x, :y], b=10:12)
+    end
 
     @test axiskeys(selectdim(M, :r, [true, false, true])) == (['a', 'c'], 2:5)
 
@@ -148,7 +159,7 @@ end
 
     @test axiskeys(filter(isodd, V2),1) isa Vector{Int}
     @test dimnames(filter(isodd, V2)) == (:v,)
-    
+
     V4 = wrapdims(rand(1:99, 10), collect(2:11))
     V4c = copy(V4)
     @test filter!(isodd, V4c) === V4c == filter(isodd, V4)
@@ -209,6 +220,20 @@ end
     @test_throws ArgumentError axiskeys(reduce(hcat, twomats'))
     @test_throws ArgumentError axiskeys(reduce(vcat, twomats))
 
+    # single argument
+    @test dimnames(vcat(V)) == dimnames(cat(V; dims=1)) == (:r,)
+    @test axiskeys(vcat(V)) == axiskeys(cat(V; dims=1)) == (['a', 'b', 'c'],)
+    @test dimnames(hcat(V)) == dimnames(cat(V; dims=2)) == (:r, :_)
+    @test axiskeys(hcat(V)) == axiskeys(cat(V; dims=2)) == (['a', 'b', 'c'], Base.OneTo(1))
+
+    @test dimnames(vcat(M)) == dimnames(cat(M; dims=1)) == (:r, :c)
+    @test axiskeys(vcat(M)) == axiskeys(cat(M; dims=1)) == ('a':1:'c', 2:5)
+
+    @test dimnames(hcat(M)) == dimnames(cat(M, dims=2)) == (:r, :c)
+    @test axiskeys(hcat(M)) == axiskeys(cat(M, dims=2)) == ('a':1:'c', 2:5)
+
+    @test dimnames(cat(M; dims=3)) == (:r, :c, :_)
+    @test axiskeys(cat(M; dims=3)) == ('a':1:'c', 2:5, Base.OneTo(1))
 end
 @testset "matmul" begin
 
@@ -271,6 +296,17 @@ end
     # make sure array is not in an invalid state if the deleteat for indices fails
     ka = wrapdims([4, 5, 6.0], a=1:3)
     @test_throws MethodError deleteat!(ka, 2)
+    @test ka == KeyedArray([4, 5, 6.0], a=1:3)
+end
+
+@testset "empty!" begin
+    kv = wrapdims([1, 2, 3, 4, 5, 6.0], a=[:a, :b, :c, :d, :e, :f])
+    @test kv == empty!(kv)
+    @test isempty(kv)
+
+    # make sure array is not in an invalid state if the emtpy for indices fails
+    ka = wrapdims([4, 5, 6.0], a=1:3)
+    @test_throws MethodError empty!(ka)
     @test ka == KeyedArray([4, 5, 6.0], a=1:3)
 end
 

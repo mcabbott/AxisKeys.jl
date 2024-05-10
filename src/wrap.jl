@@ -53,8 +53,6 @@ for fast lookup.
 wrapdims(A::AbstractArray, T::Type, r::Union{AbstractVector,Nothing}, keys::Union{AbstractVector,Nothing}...) =
     KeyedArray(A, map(T, check_keys(A, (r, keys...))))
 
-using OffsetArrays
-
 function check_keys(A, keys)
     ndims(A) == length(keys) || throw(ArgumentError(
         "wrong number of key vectors, got $(length(keys)) with ndims(A) == $(ndims(A))"))
@@ -65,7 +63,7 @@ function check_keys(A, keys)
         elseif axes(r,1) == axes(A,d)
             r
         elseif length(r) == size(A,d)
-            OffsetArray(r, axes(A,d))
+            reshape(r, Base.IdentityUnitRange(axes(A,d)))
         elseif r isa AbstractRange
             l = size(A,d)
             r′ = extend_range(r, l)

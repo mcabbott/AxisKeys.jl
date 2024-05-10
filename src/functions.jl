@@ -43,38 +43,6 @@ function Base.mapreduce(f, op, A::KeyedArray; dims=:, kwargs...) # sum, prod, et
     return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
 end
 
-using Statistics
-for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be handled better?
-    @eval function Statistics.$fun(A::KeyedArray; dims=:, kwargs...)
-        dims === Colon() && return $fun(parent(A); kwargs...)
-        numerical_dims = NamedDims.dim(A, dims)
-        data = $fun(parent(A); dims=numerical_dims, kwargs...)
-        new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
-        return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
-    end
-end
-
-# Handle function interface for `mean` only
-if VERSION >= v"1.3"
-    @eval function Statistics.mean(f, A::KeyedArray; dims=:, kwargs...)
-        dims === Colon() && return mean(f, parent(A); kwargs...)
-        numerical_dims = NamedDims.dim(A, dims)
-        data = mean(f, parent(A); dims=numerical_dims, kwargs...)
-        new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
-        return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
-    end
-end
-
-for fun in [:cov, :cor] # Returned the axes work are different for cov and cor
-    @eval function Statistics.$fun(A::KeyedMatrix; dims=1, kwargs...)
-        numerical_dim = NamedDims.dim(A, dims)
-        data = $fun(parent(A); dims=numerical_dim, kwargs...)
-        # Use same remaining axis for both dimensions of data
-        rem_key = axiskeys(A, 3-numerical_dim)
-        KeyedArray(data, (copy(rem_key), copy(rem_key)))
-    end
-end
-
 function Base.dropdims(A::KeyedArray; dims)
     numerical_dims = NamedDims.dim(A, dims)
     data = dropdims(parent(A); dims=dims)
@@ -94,7 +62,13 @@ function Base.permutedims(A::KeyedArray, perm)
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
 
-if VERSION >= v"1.1"
+@static if VERSION > v"1.9-DEV"
+    function Base.eachslice(A::KeyedArray; dims)
+        dims_ix = AxisKeys.dim(A, dims) |> Tuple
+        data = @invoke eachslice(A::AbstractArray; dims=dims_ix)
+        return KeyedArray(NamedDimsArray(data, map(d -> dimnames(A, d), dims_ix)), map(d -> axiskeys(A, d), dims_ix))
+    end
+elseif VERSION >= v"1.1"
     # This copies the implementation from Base, except with numerical_dims:
     @inline function Base.eachslice(A::KeyedArray; dims)
         numerical_dims = NamedDims.dim(A, dims)
@@ -104,6 +78,19 @@ if VERSION >= v"1.1"
         inds_before = ntuple(d->(:), dim-1)
         inds_after = ntuple(d->(:), ndims(A)-dim)
         return (view(A, inds_before..., i, inds_after...) for i in axes(A, dim))
+    end
+end
+
+@static if VERSION > v"1.9-DEV"
+    # TODO: this will ERROR if given dims, instead of falling back to Base
+    # TODO: ideally it would dispatch on the element type, for e.g. a generator of KeyedArrays
+    function Base.stack(A::KeyedArray; dims::Colon=:)
+        data = @invoke stack(A::AbstractArray; dims)
+        if !allequal(named_axiskeys(a) for a in A)
+            throw(DimensionMismatch("stack expects uniform axiskeys for all arrays"))
+        end
+        akeys = (; named_axiskeys(first(A))..., named_axiskeys(A)...)
+        KeyedArray(data; akeys...)
     end
 end
 
@@ -173,6 +160,21 @@ for (T, S) in [ (:KeyedArray, :KeyedArray),
     end
 
 end
+# single argument
+Base.vcat(A::KeyedArray) = A
+function Base.hcat(A::KeyedArray)
+    data = hcat(keyless(A))
+    akeys = map(copy, (keys_or_axes(A, 1), keys_or_axes(A, 2)))
+    KeyedArray(data, akeys)
+end
+function Base.cat(A::KeyedArray; dims)
+    new_names = NamedDims.expand_dimnames(dimnames(A), dims)
+    numerical_dims = NamedDims.dim(new_names, dims)
+    data = cat(keyless(A); dims=dims)
+    new_keys = ntuple(d -> keys_or_axes(A, d), ndims(data))
+    KeyedArray(data, map(copy, new_keys)) # , copy(A.meta))
+end
+
 val_strip(dims::Val{d}) where {d} = d
 val_strip(dims) = dims
 key_vcat(a::AbstractVector, b::AbstractVector) = vcat(a,b)
@@ -426,4 +428,9 @@ function Base.filter!(f, a::KeyedVector)
     deleteat!(a, j:lastindex(a))
     return a
 end
-                                                                
+
+function Base.empty!(v::KeyedVector)
+    empty!(axiskeys(v, 1))
+    empty!(v.data)
+    return v
+end

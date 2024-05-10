@@ -1,3 +1,7 @@
+module AbstractFFTsExt
+
+using AxisKeys: KeyedArray, NdaKa, axiskeys, keyless, NamedDims
+using AbstractFFTs
 
 #=
 Simple support for FFTs using:
@@ -6,8 +10,6 @@ https://github.com/JuliaMath/AbstractFFTs.jl
 Does not (yet) cover plan_fft & friends,
 because extracting the dimensions from those is tricky
 =#
-
-using AbstractFFTs
 
 for fun in [:fft, :ifft, :bfft, :rfft]
     @eval function AbstractFFTs.$fun(A::Union{KeyedArray,NdaKa}, dims = ntuple(+,ndims(A)))
@@ -79,4 +81,6 @@ end
 function irfft_un_freq(x, len)
     s = inv(step(x) * len)
     range(zero(s), step = s, length = len)
+end
+
 end

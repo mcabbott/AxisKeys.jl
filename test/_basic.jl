@@ -151,7 +151,7 @@ end
     N2 = NamedDimsArray(KeyedArray(data, axiskeys(N1)), dimnames(N1))
     N3 = KeyedArray(NamedDimsArray(data, dimnames(N1)), axiskeys(N1))
 
-    @testset "with $(typeof(N).name) outside" for N in [N2, N3]
+    @testset "with $(typeof(N).name) outside" for N in (N2, N3)
         @test axiskeys(N) == (['a', 'b', 'c'], 10:10:40)
         @test axiskeys(N, :iter) == 10:10:40
         @test dimnames(N) == (:obs, :iter)
@@ -170,6 +170,16 @@ end
 
         @test_throws Exception N(obs=55)  # ideally ArgumentError
         @test_throws Exception N(obs='z') # ideally BoundsError
+        
+        new_obs = [:x, :y, :z]
+        new_iter = 1:4
+
+        # Rekey with Tuple
+        @test axiskeys(rekey(N, ([:x, :y, :z], 1:4))) == ([:x, :y, :z], 1:4)
+        # Rekey with dim => axiskey pair
+        @test axiskeys(rekey(N, 2 => 1:4)) == (['a', 'b', 'c'], 1:4)
+        # Rekey with dimname => axiskey pair
+        @test axiskeys(rekey(N, :iter => 1:4)) == (['a', 'b', 'c'], 1:4)
 
         Nc = copy(N)
         Nc(obs='a', iter=20, :) .= 1000
@@ -262,6 +272,17 @@ end
         @test unify_longest((OneTo(2), 1:2), (3:4, [1,2], [0,1])) == (3:4, 1:2, [0,1])
         @test_throws Exception unify_keys((1:2,), ([3,4],))
 
+    end
+    @testset "https://github.com/mcabbott/AxisKeys.jl/issues/128" begin
+        using LinearAlgebra
+
+        # Really simple test that broadcasting with linalg array types works.
+        v = rand(10)
+        σ = wrapdims(v; time=-4:5)
+        L = LowerTriangular(reshape(1.0:1.0:100, (10, 10)))
+        σ .* L
+        v .* L
+        @test σ .* L ≈ v .* L
     end
 end
 @testset "bitarray" begin

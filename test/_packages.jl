@@ -1,5 +1,10 @@
 using Test, AxisKeys
 
+function count_allocs(f, args...)
+    stats = @timed f(args...)
+    return Base.gc_alloc_count(stats.gcstats)
+end
+
 @testset "offset" begin
     using OffsetArrays
 
@@ -38,6 +43,14 @@ end
         @test dimnames(k) == (:aa,)
     end
 end
+@testset "DataFrames" begin
+    using DataFrames: DataFrame
+
+    X = KeyedArray(randn(1000, 1500), a=1:1000, b=1:1500)
+    df = DataFrame(X)
+    wrapdims(df, :value, :a, :b) # compile
+    @test count_allocs(wrapdims, df, :value, :a, :b) < 1_000
+end
 @testset "tables" begin
     using Tables
 
@@ -49,6 +62,15 @@ end
         @test keys(first(Tables.rows(N))) == (:a, :b, :value)
 
         @test Tables.columns(N).a == [11, 12, 11, 12, 11, 12]
+
+        # Regression test: https://github.com/mcabbott/AxisKeys.jl/pull/123
+        @testset "Tables.columns(::AxisKeys) type stability" begin
+            a = randn(5)
+            b = randn(Float32, 4)
+            @inferred AxisKeys._get_keys_columns((a, b))
+            X = wrapdims(randn(5, 4); a, b)
+            @inferred Tables.columns(X)
+        end
     end
     @testset "sink" begin
         A = KeyedArray(rand(24, 11, 3); time = 0:23, loc = -5:5, id = ["a", "b", "c"])
@@ -107,25 +129,25 @@ end
     end
 end
 @testset "stack" begin
-    using LazyStack
+    using LazyStack: stack as lstack
 
     rin = [wrapdims(1:3, a='a':'c') for i=1:4]
 
-    @test axiskeys(stack(rin), :a) == 'a':'c'
-    @test axiskeys(stack(:b, rin...), :a) == 'a':'c' # tuple
-    @test axiskeys(stack(z for z in rin), :a) == 'a':'c' # generator
+    @test axiskeys(lstack(rin), :a) == 'a':'c'
+    @test axiskeys(lstack(:b, rin...), :a) == 'a':'c' # tuple
+    @test axiskeys(lstack(z for z in rin), :a) == 'a':'c' # generator
 
     rout = wrapdims([[1,2], [3,4]], b=10:11)
-    @test axiskeys(stack(rout), :b) == 10:11
+    @test axiskeys(lstack(rout), :b) == 10:11
 
     rboth = wrapdims(rin, b=10:13)
-    @test axiskeys(stack(rboth), :a) == 'a':'c'
-    @test axiskeys(stack(rboth), :b) == 10:13
+    @test axiskeys(lstack(rboth), :a) == 'a':'c'
+    @test axiskeys(lstack(rboth), :b) == 10:13
 
     nts = [(i=i, j="j", k=33) for i=1:3]
-    @test axiskeys(stack(nts), 1) == [:i, :j, :k]
-    @test axiskeys(stack(:z, nts...), 1) == [:i, :j, :k]
-    @test axiskeys(stack(n for n in nts), 1) == [:i, :j, :k]
+    @test axiskeys(lstack(nts), 1) == [:i, :j, :k]
+    @test axiskeys(lstack(:z, nts...), 1) == [:i, :j, :k]
+    @test axiskeys(lstack(n for n in nts), 1) == [:i, :j, :k]
 
 end
 @testset "dates" begin
