@@ -170,7 +170,7 @@ end
 
         @test_throws Exception N(obs=55)  # ideally ArgumentError
         @test_throws Exception N(obs='z') # ideally BoundsError
-
+        
         new_obs = [:x, :y, :z]
         new_iter = 1:4
 
@@ -180,6 +180,10 @@ end
         @test axiskeys(rekey(N, 2 => 1:4)) == (['a', 'b', 'c'], 1:4)
         # Rekey with dimname => axiskey pair
         @test axiskeys(rekey(N, :iter => 1:4)) == (['a', 'b', 'c'], 1:4)
+
+        Nc = copy(N)
+        Nc(obs='a', iter=20, :) .= 1000
+        @test Nc(obs='a', iter=20) == 1000
     end
 
     @testset "named_axiskeys" begin
