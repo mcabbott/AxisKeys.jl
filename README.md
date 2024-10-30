@@ -32,7 +32,7 @@ Integer "keys" are allowed, and should have no surprising interactions with indi
 While it is further from zero-cost than [NamedDims.jl](https://github.com/invenia/NamedDims.jl), it aims to be light-weight,
 leaving as much functionality as possible to other packages.
 
-See <a href="#elsewhere">§ eleswhere</a> below for other packages doing similar things.
+See <a href="#elsewhere">§ elsewhere</a> below for other packages doing similar things.
 
 ### Selections
 
