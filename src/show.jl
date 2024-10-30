@@ -163,6 +163,7 @@ Base.alignment(io::IO, x::ShowWith) =  alignment(io, x.val) .+ (2,0) # extra bra
 Base.length(x::ShowWith) = length(string(x.val))
 Base.ncodeunits(x::ShowWith) = ncodeunits(string(x.val))
 Base.print(io::IO, x::ShowWith) = printstyled(io, string(x.val); x.nt...)
+Base.iterate(x::ShowWith) = nothing  # fix for https://github.com/mcabbott/AxisKeys.jl/issues/159
 
 # For higher-dim printing, I just want change the [:, :, 1] things, add name/key,
 # but can't see a way to hook in. So copy this huge function from Base?
