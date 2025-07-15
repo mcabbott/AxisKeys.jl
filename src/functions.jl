@@ -105,14 +105,21 @@ end
 
 Base.selectdim(A::KeyedArray, s::Symbol, i) = selectdim(A, NamedDims.dim(A, s), i)
 
-for (T, S) in [(:KeyedVecOrMat, :KeyedVecOrMat), # KeyedArray gives ambiguities
-    (:KeyedVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :KeyedVecOrMat),
-    (:NdaKaVoM, :NdaKaVoM),
-    (:NdaKaVoM, :KeyedVecOrMat), (:KeyedVecOrMat, :NdaKaVoM),
-    (:NdaKaVoM, :AbstractVecOrMat), (:AbstractVecOrMat, :NdaKaVoM),
+for (T, S, U) in [
+        (:KeyedVecOrMat, :KeyedVecOrMat, :AbstractVecOrMat), # KeyedArray gives ambiguities
+        (:KeyedVecOrMat, :AbstractVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :KeyedVecOrMat, :AbstractVecOrMat),
+        (:NdaKaVoM, :NdaKaVoM, :AbstractVecOrMat),
+        (:NdaKaVoM, :KeyedVecOrMat, :AbstractVecOrMat), (:KeyedVecOrMat, :NdaKaVoM, :AbstractVecOrMat),
+        (:NdaKaVoM, :AbstractVecOrMat, :AbstractVecOrMat), (:AbstractVecOrMat, :NdaKaVoM, :AbstractVecOrMat),
+        # needed since Julia 1.10 because of ambiguities introduced by SparseArrays:
+        (:(KeyedVecOrMat{<:Number}), :(KeyedVecOrMat{<:Number}), :(AbstractVecOrMat{<:Number})),
+        (:(KeyedVecOrMat{<:Number}), :(AbstractVecOrMat{<:Number}), :(AbstractVecOrMat{<:Number})), (:(AbstractVecOrMat{<:Number}), :(KeyedVecOrMat{<:Number}), :(AbstractVecOrMat{<:Number})),
+        (:(NdaKaVoM{<:Any,<:Number}), :(NdaKaVoM{<:Any,<:Number}), :(AbstractVecOrMat{<:Number})),
+        (:(NdaKaVoM{<:Any,<:Number}), :(KeyedVecOrMat{<:Number}), :(AbstractVecOrMat{<:Number})), (:(KeyedVecOrMat{<:Number}), :(NdaKaVoM{<:Any,<:Number}), :(AbstractVecOrMat{<:Number})),
+        (:(NdaKaVoM{<:Any,<:Number}), :(AbstractVecOrMat{<:Number}), :(AbstractVecOrMat{<:Number})), (:(AbstractVecOrMat{<:Number}), :(NdaKaVoM{<:Any,<:Number}), :(AbstractVecOrMat{<:Number})),
     ]
 
-    @eval function Base.vcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
+    @eval function Base.vcat(A::$T, B::$S, Cs::$U...)
         data = vcat(keyless(A), keyless(B), keyless.(Cs)...)
         new_1 = key_vcat(keys_or_axes(A,1), keys_or_axes(B,1), keys_or_axes.(Cs,1)...)
         new_keys = ndims(A) == 1 ? (new_1,) :
@@ -120,7 +127,7 @@ for (T, S) in [(:KeyedVecOrMat, :KeyedVecOrMat), # KeyedArray gives ambiguities
         KeyedArray(data, map(copy, new_keys))
     end
 
-    @eval function Base.hcat(A::$T, B::$S, Cs::AbstractVecOrMat...)
+    @eval function Base.hcat(A::$T, B::$S, Cs::$U...)
         data = hcat(keyless(A), keyless(B), keyless.(Cs)...)
         new_1 = unify_one(keys_or_axes(A,1), keys_or_axes(B,1), keys_or_axes.(Cs,1)...)
         new_2 = ndims(A) == 1 ? axes(data,2) :
