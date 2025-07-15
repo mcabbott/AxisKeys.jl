@@ -14,8 +14,10 @@ if VERSION >= v"1.2" # <(3) doesn't exist on 1.1, but Base.Fix2 is fine
         @test @inferred(AxisKeys.findindex(x, r)) isa AbstractUnitRange
 
         for x in -2:7
-
-            @test AxisKeys.findindex(x, r) == findfirst(==(x), collect(r))
+            ff = findfirst(==(x), collect(r))
+            isnothing(ff) ?
+                (@test_throws ArgumentError AxisKeys.findindex(x, r)) :
+                (@test AxisKeys.findindex(x, r) == ff)
 
             for op in (isequal, Base.:(==), Base.:<, Base.:<=, Base.:>, Base.:>=)
 
