@@ -5,7 +5,6 @@ using Test, AxisKeys
 # and tested more carefully here:
 # https://github.com/JuliaMath/IntervalSets.jl/pull/63
 
-if VERSION >= v"1.2" # <(3) doesn't exist on 1.1, but Base.Fix2 is fine
 @testset "unit ranges" begin
 
     for r in (Base.OneTo(5), 2:5)
@@ -55,4 +54,3 @@ end
     end
 
 end
-end # VERSION

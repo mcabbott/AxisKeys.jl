@@ -155,19 +155,14 @@ Base.getindex(::Type{Index}, i) = Index(i)
 findindex(sel::Index, range::AbstractArray) = sel.ind
 
 struct LastIndex <: Selector{Int} end
-
 Base.lastindex(::Type{Index}) = LastIndex()
-
 Index(::LastIndex) = LastIndex()
-
 findindex(sel::LastIndex, range::AbstractArray) = lastindex(range)
 
-if VERSION >= v"1.4" # same thing for Index[begin]
-    struct FirstIndex <: Selector{Int} end
-    Base.firstindex(::Type{Index}) = FirstIndex()
-    Index(::FirstIndex) = FirstIndex()
-    findindex(sel::FirstIndex, range::AbstractArray) = firstindex(range)
-end
+struct FirstIndex <: Selector{Int} end
+Base.firstindex(::Type{Index}) = FirstIndex()
+Index(::FirstIndex) = FirstIndex()
+findindex(sel::FirstIndex, range::AbstractArray) = firstindex(range)
 
 @doc _index_key_doc
 struct Key{T} <: Selector{T}
@@ -201,13 +196,7 @@ end
 @inline Base.to_indices(A::Union{KeyedArray,NdaKa}, ax, inds::Tuple{Function, Vararg}) =
     select_to_indices(A, ax, inds)
 
-using Base: to_indices, tail, safe_tail
-
-if VERSION > v"1.9-DEV"
-    const uncolon = Base.uncolon
-else
-    uncolon(inds) = Base.uncolon(inds, (:,))
-end
+using Base: to_indices, tail, safe_tail, uncolon
 
 @inline Base.to_indices(A::Union{KeyedArray,NdaKa}, inds, I::Tuple{Colon, Vararg{Any}}) =
     (uncolon(inds), to_indices(A, safe_tail(inds), tail(I))...)

@@ -14,14 +14,12 @@ for fun in [:mean, :std, :var] # These don't use mapreduce, but could perhaps be
 end
 
 # Handle function interface for `mean` only
-if VERSION >= v"1.3"
-    @eval function Statistics.mean(f, A::KeyedArray; dims=:, kwargs...)
-        dims === Colon() && return mean(f, parent(A); kwargs...)
-        numerical_dims = NamedDims.dim(A, dims)
-        data = mean(f, parent(A); dims=numerical_dims, kwargs...)
-        new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
-        return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
-    end
+function Statistics.mean(f, A::KeyedArray; dims=:, kwargs...)
+    dims === Colon() && return mean(f, parent(A); kwargs...)
+    numerical_dims = NamedDims.dim(A, dims)
+    data = mean(f, parent(A); dims=numerical_dims, kwargs...)
+    new_keys = ntuple(d -> d in numerical_dims ? Base.OneTo(1) : axiskeys(A,d), ndims(A))
+    return KeyedArray(data, map(copy, new_keys))#, copy(A.meta))
 end
 
 for fun in [:cov, :cor] # Returned the axes work are different for cov and cor
