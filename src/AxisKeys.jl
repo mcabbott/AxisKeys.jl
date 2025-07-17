@@ -26,15 +26,4 @@ include("show.jl")
 
 include("tables.jl") # Tables.jl
 
-if !isdefined(Base, :get_extension)
-    include("../ext/AbstractFFTsExt.jl")
-    include("../ext/ChainRulesCoreExt.jl")
-    include("../ext/CovarianceEstimationExt.jl")
-    include("../ext/InvertedIndicesExt.jl")
-    include("../ext/LazyStackExt.jl")
-    include("../ext/OffsetArraysExt.jl")
-    include("../ext/StatisticsExt.jl")
-    include("../ext/StatsBaseExt.jl")
-end
-
 end

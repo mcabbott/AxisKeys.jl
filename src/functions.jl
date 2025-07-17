@@ -62,36 +62,21 @@ function Base.permutedims(A::KeyedArray, perm)
     KeyedArray(data, new_keys)#, copy(A.meta))
 end
 
-@static if VERSION > v"1.9-DEV"
-    function Base.eachslice(A::KeyedArray; dims)
-        dims_ix = AxisKeys.dim(A, dims) |> Tuple
-        data = @invoke eachslice(A::AbstractArray; dims=dims_ix)
-        return KeyedArray(NamedDimsArray(data, map(d -> dimnames(A, d), dims_ix)), map(d -> axiskeys(A, d), dims_ix))
-    end
-elseif VERSION >= v"1.1"
-    # This copies the implementation from Base, except with numerical_dims:
-    @inline function Base.eachslice(A::KeyedArray; dims)
-        numerical_dims = NamedDims.dim(A, dims)
-        length(numerical_dims) == 1 || throw(ArgumentError("only single dimensions are supported"))
-        dim = first(numerical_dims)
-        dim <= ndims(A) || throw(DimensionMismatch("A doesn't have $dim dimensions"))
-        inds_before = ntuple(d->(:), dim-1)
-        inds_after = ntuple(d->(:), ndims(A)-dim)
-        return (view(A, inds_before..., i, inds_after...) for i in axes(A, dim))
-    end
+function Base.eachslice(A::KeyedArray; dims)
+    dims_ix = AxisKeys.dim(A, dims) |> Tuple
+    data = @invoke eachslice(A::AbstractArray; dims=dims_ix)
+    return KeyedArray(NamedDimsArray(data, map(d -> dimnames(A, d), dims_ix)), map(d -> axiskeys(A, d), dims_ix))
 end
 
-@static if VERSION > v"1.9-DEV"
-    # TODO: this will ERROR if given dims, instead of falling back to Base
-    # TODO: ideally it would dispatch on the element type, for e.g. a generator of KeyedArrays
-    function Base.stack(A::KeyedArray; dims::Colon=:)
-        data = @invoke stack(A::AbstractArray; dims)
-        if !allequal(named_axiskeys(a) for a in A)
-            throw(DimensionMismatch("stack expects uniform axiskeys for all arrays"))
-        end
-        akeys = (; named_axiskeys(first(A))..., named_axiskeys(A)...)
-        KeyedArray(data; akeys...)
+# TODO: this will ERROR if given dims, instead of falling back to Base
+# TODO: ideally it would dispatch on the element type, for e.g. a generator of KeyedArrays
+function Base.stack(A::KeyedArray; dims::Colon=:)
+    data = @invoke stack(A::AbstractArray; dims)
+    if !allequal(named_axiskeys(a) for a in A)
+        throw(DimensionMismatch("stack expects uniform axiskeys for all arrays"))
     end
+    akeys = (; named_axiskeys(first(A))..., named_axiskeys(A)...)
+    KeyedArray(data; akeys...)
 end
 
 function Base.mapslices(f, A::KeyedArray; dims)
@@ -273,17 +258,6 @@ function Base.sortslices(A::KeyedArray; dims, by=vec, kw...)
     end
     new_keys = map(getindex, axiskeys(A), perms)
     KeyedArray(keyless(A)[perms...], new_keys) # , copy(A.meta))
-end
-
-if VERSION < v"1.1" # defn copied Julia 1.4 Base abstractarraymath.jl:452
-    @inline function eachslice(A::AbstractArray; dims)
-        length(dims) == 1 || throw(ArgumentError("only single dimensions are supported"))
-        dim = first(dims)
-        dim <= ndims(A) || throw(DimensionMismatch("A doesn't have $dim dimensions"))
-        inds_before = ntuple(d->(:), dim-1)
-        inds_after = ntuple(d->(:), ndims(A)-dim)
-        return (view(A, inds_before..., i, inds_after...) for i in axes(A, dim))
-    end
 end
 
 @doc sort_doc
