@@ -128,7 +128,7 @@ function _inferdim(argT, types, subtypes=())
     if argT <: Selector || argT <: AbstractArray || argT <: Interval
         ds = findall(T -> eltype(argT) <: T, types)
     elseif argT <: Base.Fix2 # Base.Fix2{typeof(==),Int64}
-        ds = findall(T -> argT.parameters[2] <: T, types)
+        ds = findall(T -> argT.parameters[end] <: T, types)
     end
 
     if length(ds) == 1
