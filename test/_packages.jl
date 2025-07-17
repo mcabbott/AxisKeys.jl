@@ -32,7 +32,7 @@ end
 
 end
 @testset "namedarrays" begin
-    using NamedArrays
+    using NamedArrays: NamedArray, setdimnames!
 
     # NamedArrays lets us have strings as well as symbols for dimension names. Make sure
     # we can handle both.
