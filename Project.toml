@@ -1,7 +1,7 @@
 name = "AxisKeys"
 uuid = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 license = "MIT"
-version = "0.2.16"
+version = "0.2.17"
 
 [deps]
 IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
