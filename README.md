@@ -166,6 +166,10 @@ while `A.keys isa Tuple` for matrices & higher. But `axiskeys(A)` always returns
   if these are times such as [Unitful](https://github.com/PainterQubits/Unitful.jl)`.s` 
   then the results are fequency labels. ([PR#15](https://github.com/mcabbott/AxisKeys.jl/pull/15).)
 
+* [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) functions work with keyed arrays.
+  `interpolate(A, mode)` and `linear_interpolation(A)` both create interpolators
+  that accept keys as arguments, either positional or named: `itp(time=13.7)`.
+
 * [LazyStack](https://github.com/mcabbott/LazyStack.jl)`.stack` understands names and keys.
   Stacks of named tuples like `stack((a=i, b=i^2) for i=1:5)` create a matrix with `[:a, :b]`.
 
@@ -207,9 +211,6 @@ overloads for things like `findall(<=(42), 10:10:100)`.
 
 * There is also no automatic alignment by keys, like time. 
   But this could be done elsewhere?
-
-* There is no interaction with interpolation, although this seems a natural fit.
-  Why doesn't `A(:left, 13.7, :)` interpolate along continuous dimensions?
 
 ### Elsewhere
 
