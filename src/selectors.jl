@@ -5,6 +5,13 @@ findindex(int::Interval, r::AbstractVector) =
 findindex(int::Interval, r::AbstractRange{T}) where {T<:Union{Number,Char}} =
     findall(in(int), r)
 
+# find interval in a vector of intervals: same as generic findindex in lookup.jl
+function findindex(int::Interval, r::AbstractVector{<:Interval})
+    i = findfirst(isequal(int), r)
+    i === nothing && throw(ArgumentError("could not find key $(repr(a)) in vector $r"))
+    i
+end
+
 # Since that is now efficient for ranges, comparisons can go there:
 
 findindex(eq::Base.Fix2{typeof(<=)}, r::AbstractRange{T}) where {T<:Union{Number,Char}} =
