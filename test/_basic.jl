@@ -1,4 +1,4 @@
-using Test, AxisKeys
+using Test, AxisKeys, Unitful
 
 @testset "basics" begin
 
@@ -321,6 +321,21 @@ end
     V2 = KeyedArray(rand(3), Base.OneTo(3))
     @test axiskeys(push!(V2, 0)) === (Base.OneTo(4),)
     @test axiskeys(append!(V2, [7,7])) === (Base.OneTo(6),)
+
+    V3 = KeyedArray([3,5,7], [1, 5, 15])
+    # no natural value for integer axiskey:
+    @test_throws Exception push!(V3, 11)
+    @test_throws Exception append!(V3, [20, 25])
+
+    V4 = KeyedArray([3,5,7], [0.1, 0.5, 1.5])
+    push!(V4, 11)
+    append!(V4, [13, 17])
+    @test isequal(axiskeys(V4), ([0.1, 0.5, 1.5, NaN, NaN, NaN],))
+
+    V5 = KeyedArray([3,5,7], [0.1, 0.5, 1.5]u"m")
+    push!(V5, 11)
+    append!(V5, [13, 17])
+    @test isequal(axiskeys(V5), ([0.1, 0.5, 1.5, NaN, NaN, NaN]u"m",))
 
     AxisKeys.nameouter() || # fails with nda(ka(...))
         @test axiskeys(append!(V2, V),1) == [1, 2, 3, 4, 5, 6, 10, 20, 30, 40]
