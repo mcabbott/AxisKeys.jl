@@ -39,8 +39,8 @@ end
 extend_one!!(r::Base.OneTo) = Base.OneTo(last(r)+1)
 extend_one!!(r::UnitRange{Int}) = UnitRange(r.start, r.stop + 1)
 extend_one!!(r::StepRange{<:Any,Int}) = StepRange(r.start, r.step, r.stop + r.step)
-extend_one!!(r::Vector{<:Number}) = push!(r, length(r)+1)
-extend_one!!(r::AbstractVector) = vcat(r, length(r)+1)
+extend_one!!(r::Vector{<:Number}) = push!(r, eltype(r)(NaN))
+extend_one!!(r::AbstractVector{<:Number}) = vcat(r, eltype(r)(NaN))
 
 shorten_one!!(r::Base.OneTo) = Base.OneTo(last(r)-1)
 shorten_one!!(r::Vector) = pop!(r)
@@ -76,8 +76,8 @@ end
 extend_by!!(r::Base.OneTo, n::Int) = Base.OneTo(last(r)+n)
 extend_by!!(r::UnitRange{Int}, n::Int) = UnitRange(r.start, r.stop + n)
 extend_by!!(r::StepRange{<:Any,Int}, n::Int) = StepRange(r.start, r.step, r.stop + n * r.step)
-extend_by!!(r::Vector{<:Number}, n::Int) = append!(r, length(r)+1 : length(r)+n+1)
-extend_by!!(r::AbstractVector, n::Int) = vcat(r, length(r)+1 : length(r)+n+1)
+extend_by!!(r::Vector{<:Number}, n::Int) = append!(r, (eltype(r)(NaN) for _ in 1:n))
+extend_by!!(r::AbstractVector, n::Int) = vcat(r, (eltype(r)(NaN) for _ in 1:n))
 
 append!!(r::Vector, s::AbstractVector) = append!(r,s)
 append!!(r::AbstractVector, s::AbstractVector) = (extend_by!!(r, length(s)); vcat(r,s))
