@@ -84,18 +84,21 @@ function keyed_print_matrix(io::IO, A, reduce_size::Bool=false)
     h, w = displaysize(io)
     wn = w÷3 # integers take 3 columns each when printed, floats more
 
+    # Check if output should be limited; if not, show all rows/cols
+    limit = get(io, :limit, false)::Bool
+
     fakearray = if ndims(A) == 1
-        top =    size(A,1) < h ? Colon() : (1:(h÷2))
-        bottom = size(A,1) < h ? (1:0)   : size(A,1)-(h÷2):size(A,1)
+        top =    (!limit || size(A,1) < h) ? Colon() : (1:(h÷2))
+        bottom = (!limit || size(A,1) < h) ? (1:0)   : (size(A,1)-(h÷2)):size(A,1)
         hcat(vcat(ShowWith.(no_offset(axiskeys(A,1))[top]; color=colour(A,1)),
                   ShowWith.(no_offset(axiskeys(A,1))[bottom]; color=colour(A,1))),
              vcat(getindex(no_offset(unname(keyless(A))), top),
                   getindex(no_offset(unname(keyless(A))), bottom)) |> full)
     else
-        top    = size(A,1) < h  ? Colon() : (1:(h÷2))
-        bottom = size(A,1) < h  ? (1:0)   : size(A,1)-(h÷2):size(A,1)
-        left   = size(A,2) < wn ? Colon() : (1:(wn÷2))
-        right  = size(A,2) < wn ? (1:0)   : size(A,2)-(wn÷2)+1:size(A,2)
+        top    = (!limit || size(A,1) < h)  ? Colon() : (1:(h÷2))
+        bottom = (!limit || size(A,1) < h)  ? (1:0)   : (size(A,1)-(h÷2)):size(A,1)
+        left   = (!limit || size(A,2) < wn) ? Colon() : (1:(wn÷2))
+        right  = (!limit || size(A,2) < wn) ? (1:0)   : (size(A,2)-(wn÷2)+1):size(A,2)
 
         topleft = hcat(ShowWith.(no_offset(axiskeys(A,1))[top]; color=colour(A,1)),
                        getindex(no_offset(unname(keyless(A))), top, left) |> full)
@@ -173,7 +176,7 @@ using Base: tail, print_matrix, printstyled, alignment
 
 function Base.show_nd(io::IO, A::Union{KeyedArray, NamedDimsArray}, print_matrix::Function, label_slices::Bool)
     f = haskeys(A) ? keyed_print_matrix : Base.print_matrix
-    limit = get(io, :limit, false)
+    limit = get(io, :limit, false)::Bool
     if limit
         limited_show_nd(io, A, f, label_slices)
     else
@@ -195,8 +198,8 @@ function limited_show_nd(io::IO, a::AbstractArray, print_matrix::Function, label
     # If there are many slices, and they can't all fit, then we will print just 3
     if prod(length, tailinds) > 3 && (2+size(a,1)) * prod(length, tailinds) >  displaysize(io)[1]
         midI = CartesianIndex(map(ax -> ax[firstindex(ax) + length(ax)÷2], tailinds))
-        fewpanels = [CartesianIndex(first.(tailinds)), midI, CartesianIndex(last.(tailinds)) ]
-        printstyled(io, "[showing 3 of $(prod(length, tailinds)) slices]\n", color=c3)
+        fewpanels = unique([CartesianIndex(first.(tailinds)), midI, CartesianIndex(last.(tailinds))])
+        printstyled(io, "[showing $(length(fewpanels)) of $(prod(length, tailinds)) slices]\n", color=c3)
     else
         fewpanels = CartesianIndices(tailinds)
     end
