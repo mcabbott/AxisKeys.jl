@@ -156,7 +156,11 @@ while `A.keys isa Tuple` for matrices & higher. But `axiskeys(A)` always returns
   with `collect(keys(nt)) == Symbol.(axiskeys(V),1)`
 
 * The [Tables.jl](https://github.com/JuliaData/Tables.jl) interface is supported,
-  with `wrapdims(df, :val, :x, :y)` creating a matrix from 3 columns.
+  with `wrapdims(df, :val, :x, :y)` creating a matrix from 3 columns. Both row-
+  and column-access of `KeyedArray`s is supported, and constructing a table from
+  a `KeyedArray` (with any Tables.jl-compatible constructor, like
+  `Tables.columns`, `Tables.rows`, `DataFrames.DataFrame`, etc.) will produce a
+  table with one column per axis and values in a `:value` column.
 
 * Some [StatsBase.jl](https://github.com/JuliaStats/StatsBase.jl) and 
   [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) functions 
