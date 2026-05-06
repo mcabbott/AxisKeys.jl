@@ -77,6 +77,10 @@ end
     @test V(Near(0.12)) == V(0.1) == V[2]
     @test V(Interval(0.1, 0.3)) == V[2:4]
 
+    VI = KeyedArray([1, 2, 3], xs=[Interval(1, 2), Interval(2, 3), Interval(1, 3)])
+    @test VI(Interval(1, 3)) == VI[3]
+    @test VI([Interval(1, 2), Interval(1, 3)]) == VI[[1, 3]]
+
     @test V(Index[1]) == V[1]
     @test V(Index[2:3]) == V[2:3]
     @test V(Index[end]) == V[end]
