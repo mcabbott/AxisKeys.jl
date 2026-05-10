@@ -3,6 +3,8 @@ module AxisKeys
 include("struct.jl")
 export KeyedArray, axiskeys
 
+include("axes.jl")
+
 include("lookup.jl")
 
 include("names.jl")
