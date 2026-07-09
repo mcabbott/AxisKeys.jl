@@ -71,7 +71,7 @@ for (get_or_view, key_get, maybe_copy) in [
     ]
     @eval begin
 
-        @inline function Base.$get_or_view(A::KeyedArray, raw_inds...)
+        Base.@propagate_inbounds function Base.$get_or_view(A::KeyedArray, raw_inds...)
             inds = to_indices(A, raw_inds)
             @boundscheck checkbounds(parent(A), inds...)
             data = @inbounds $get_or_view(parent(A), inds...)

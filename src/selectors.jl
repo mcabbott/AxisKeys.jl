@@ -94,7 +94,7 @@ Base.show(io::IO, s::Near) = print(io, "Near(",s.val,")")
 Base.show(io::IO, ::MIME"text/plain", s::Near{T}) where {T} =
     print(io, "Near(",s.val,") ::Selector{",T,"}")
 
-findindex(sel::Near, range::AbstractArray) = argmin(map(x -> abs(x-sel.val), range))
+findindex(sel::Near, range::AbstractArray) = findmin(x -> abs(x-sel.val), range)[2]
 
 function findindex(sel::Near, range::AbstractRange)
     iplus = searchsortedfirst(range, sel.val; rev=step(range) < zero(step(range)))
