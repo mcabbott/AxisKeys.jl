@@ -178,6 +178,29 @@ end
     @test N[c=Not(2,4)] == N(c=Index[Not(2,4)]) == N(c=Not(2,4))
 
 end
+@testset "adapt" begin
+    using Adapt
+
+    # wrapdims wraps with a NamedDimsArray too, in either order depending on nameouter()
+    K = wrapdims([1.0 2.0 3.0; 4.0 5.0 6.0], a=[:one, :two], b=11:13)
+    res = adapt(Array{Float32}, K)
+    @test typeof(res).name == typeof(K).name  # same outer wrapper (KeyedArray or NamedDimsArray, per nameouter)
+    @test AxisKeys.keyless_unname(res) isa Matrix{Float32}
+    @test dimnames(res) == (:a, :b)
+    @test named_axiskeys(res) == named_axiskeys(K)
+    @test res == K
+
+    V = wrapdims([1.0, 2.0, 3.0], z='a':'c')
+    @test named_axiskeys(adapt(Array{Float32}, V)) == named_axiskeys(V)
+
+    # bare KeyedArray of a plain Array, without a NamedDimsArray layer
+    Ka = KeyedArray([1.0 2.0 3.0; 4.0 5.0 6.0], ([:one, :two], 11:13))
+    ra = adapt(Array{Float32}, Ka)
+    @test ra isa KeyedArray
+    @test parent(ra) isa Matrix{Float32}
+    @test axiskeys(ra) == axiskeys(Ka)
+    @test ra == Ka
+end
 @testset "fourier" begin
     using FFTW
 
