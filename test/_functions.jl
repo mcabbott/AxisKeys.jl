@@ -54,6 +54,15 @@ MND = wrapdims(rand(Int8, 2, 3), 11.0:12.0, [:a, :b, :c])
     sk = stack(arr)::KeyedArray
     @test sk == [1 3 5; 2 4 6]
     @test named_axiskeys(sk) == (a=[:x, :y], b=10:12)
+    sk1 = stack(arr; dims=1)
+    @test sk1 == [1 2; 3 4; 5 6]
+    @test named_axiskeys(sk1) == (b=10:12, a=[:x, :y])
+
+    plain = KeyedArray([[1, 2], [3, 4], [5, 6]], t='a':'c')
+    @test named_axiskeys(stack(plain)) == (_=Base.OneTo(2), t='a':'c')
+    @test named_axiskeys(stack(plain; dims=1)) == (t='a':'c', _=Base.OneTo(2))
+    @test axiskeys(stack(KeyedArray([[1, 2], [3, 4]], 10:11))) == (Base.OneTo(2), 10:11)
+    @test axiskeys(stack(KeyedArray(fill([1, 2], 2, 2), x=1:2, y=3:4); dims=2)) == (Base.OneTo(2), Base.OneTo(4))
 
     @test axiskeys(selectdim(M, :r, [true, false, true])) == (['a', 'c'], 2:5)
 
