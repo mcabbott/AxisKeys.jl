@@ -68,15 +68,26 @@ function Base.eachslice(A::KeyedArray; dims)
     return KeyedArray(NamedDimsArray(data, map(d -> dimnames(A, d), dims_ix)), map(d -> axiskeys(A, d), dims_ix))
 end
 
-# TODO: this will ERROR if given dims, instead of falling back to Base
 # TODO: ideally it would dispatch on the element type, for e.g. a generator of KeyedArrays
-function Base.stack(A::KeyedArray; dims::Colon=:)
+function Base.stack(A::KeyedArray; dims=:)
     data = @invoke stack(A::AbstractArray; dims)
-    if !allequal(named_axiskeys(a) for a in A)
-        throw(DimensionMismatch("stack expects uniform axiskeys for all arrays"))
+    x = first(A)
+    inner = if x isa KeyedArray
+        allequal(named_axiskeys(a) for a in A) ||
+            throw(DimensionMismatch("stack expects uniform axiskeys for all arrays"))
+        map(tuple, dimnames(x), axiskeys(x))
+    else
+        map(ax -> (:_, ax), axes(x))
     end
-    akeys = (; named_axiskeys(first(A))..., named_axiskeys(A)...)
-    KeyedArray(data; akeys...)
+    # integer dims iterates A linearly, so outer keys survive only for a vector
+    outer = if dims isa Colon || ndims(A) == 1
+        map(tuple, dimnames(A), axiskeys(A))
+    else
+        ((:_, axes(data, dims)),)
+    end
+    nk = dims isa Colon ? (inner..., outer...) : (inner[1:dims-1]..., outer..., inner[dims:end]...)
+    names, keys = map(first, nk), map(last, nk)
+    all(==(:_), names) ? KeyedArray(data, keys) : KeyedArray(NamedDimsArray(data, names), keys)
 end
 
 function Base.mapslices(f, A::KeyedArray; dims)
